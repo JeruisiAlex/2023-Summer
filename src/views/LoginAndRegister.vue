@@ -618,7 +618,7 @@ export default{
     },
     mounted() {
       if(store.state.isLogin==true){
-        this.$router.push("")
+        this.$router.push('/'+store.state.uid+'/GroupPage')
       }
       const sign_in_btn = document.querySelector("#sign-in-btn")
       const sign_up_btn = document.querySelector("#sign-up-btn")
@@ -637,8 +637,8 @@ export default{
               var promise=userLogin(this.loginForm.name,this.loginForm.password);
               promise.then((result)=>{
                 if(this.MessageCatch(result)){
-                  
-                  //this.$router.push()
+                  store.commit('Login',result.token);
+                  this.$router.push('/'+store.state.uid+'/GroupPage');
                 }
               })
             }
