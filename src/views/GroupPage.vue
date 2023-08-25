@@ -1,9 +1,9 @@
 <template>
   <el-container class="first-container">
-    <el-aside width="15%" class="left-aside">
+    <el-aside width="16%" class="left-aside">
       <el-scrollbar height="800px" max-height="640px">
-        <el-text class="scrollbar-title">我的团队列表</el-text>
-        <el-button type="primary" style="width: 40px;" @click="" ><el-icon><Plus /></el-icon></el-button>
+        <el-text class="scrollbar-title">团队列表</el-text>
+        <el-button type="primary"  @click="" ><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建团队</el-button>
         <el-button type="primary" v-for="item in 20" :key="item" :plain="group.textBoolList[item]" class="scrollbar-item">{{ item }}</el-button>
       </el-scrollbar>
     </el-aside>
@@ -26,24 +26,34 @@
         </el-container>
       </el-header>
       <el-container class="third-container">
-        <el-aside width="48%" style="background-color:brown;" class="bottom-aside">
-          <el-container calss="forth-container">
-            <el-header height="20%">
-              <el-text class="groupmember-title">团队成员</el-text>
+        <el-aside width="60%" class="bottom-aside">
+          <el-container class="forth-container">
+            <el-header style="display: flex;justify-content: center;align-items: center;">
+              <el-text class="project-title">项目列表</el-text>
+              <el-button type="primary" @click="" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建项目</el-button>
+              <el-button type="primary" @click="" style="height: 40px;"><el-icon style="margin-right: 4px;"><DeleteFilled /></el-icon>回收站</el-button>
             </el-header>
-            <el-main>
-              1
-            </el-main>
+            <div class="project-list">
+              <el-text class="project-name">姓名{{  }}</el-text>
+              <el-text class="creator-name">姓名{{ " " }}创建</el-text>
+              <el-button @click=""><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看项目</el-button>
+              <el-button @click=""><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除项目</el-button>
+              <el-button @click=""><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑项目</el-button>
+            </div>
           </el-container>
         </el-aside>
-        <el-aside width="48%" style="background-color:blueviolet;" class="bottom-aside">
-          <el-container calss="forth-container">
-            <el-header>
-
+        <el-aside width="38%" class="bottom-aside">
+          <el-container class="forth-container">
+            <el-header style="display: flex;justify-content: center;align-items: center;">
+              <el-text class="groupmember-title">成员列表</el-text>
+              <el-button type="primary" @click="" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>邀请新成员</el-button>
             </el-header>
-            <el-main>
-              
-            </el-main>
+            <div class="groupmember-list">
+              <el-avatar :size="40" :src="this.currentGroup.avator"/>
+              <el-text class="groupmember-name">姓名{{  }}</el-text>
+              <el-button @click=""><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看成员</el-button>
+              <el-button @click=""><el-icon style="margin-right: 4px;"><Delete /></el-icon>移除成员</el-button>
+            </div>
           </el-container>
         </el-aside>
       </el-container>
@@ -118,12 +128,62 @@
 }
 .groupmember-title{
   align-items: center;
-  justify-content: center;
+  width: 90%;
   height: 50px;
-  margin: 10px;
-  text-align: center;
   border-radius: 4px;
-  font-size:;
+  font-size:3ch;
+  font-weight: 500;
+  color: black;
+}
+.groupmember-list{
+  display: flex;
+  align-items: center;
+  height: 50px;
+  margin: 5px;
+  border-radius: 4px;
+  border-bottom: 1px solid #409EFF;
+}
+.groupmember-name{
+  width: 30%;
+  margin-left: 20px;
+  display: flex;
+  text-align: center;
+  font-size:medium;
+  font-weight: 500;
+  color: black;
+}
+.project-title{
+  align-items: center;
+  width: 90%;
+  height: 50px;
+  border-radius: 4px;
+  font-size:3ch;
+  font-weight: 500;
+  color: black;
+}
+.project-list{
+  display: flex;
+  align-items: center;
+  height: 50px;
+  margin: 5px;
+  border-radius: 4px;
+  border-bottom: 1px solid #409EFF;
+}
+.project-name{
+  width: 25%;
+  margin-left: 20px;
+  display: flex;
+  text-align: center;
+  font-size:medium;
+  font-weight: 500;
+  color: black;
+}
+.creator-name{
+  width: 30%;
+  margin-left: 20px;
+  display: flex;
+  text-align: center;
+  font-size:medium;
   font-weight: 500;
   color: black;
 }

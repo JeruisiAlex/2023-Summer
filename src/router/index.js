@@ -12,12 +12,12 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/ResetPassword.vue')
   },
   {
-    path: '/PersonalInfomation',
+    path: '/:uid/PersonalInfomation',
     name: 'PersonalInfomation',
     component: () => import(/* webpackChunkName: "about" */ '../views/PersonalInfomation.vue')
   },
   {
-    path: '/Chatroom',
+    path: '/:uid/Chatroom',
     name: 'Chatroom',
     component: () => import(/* webpackChunkName: "about" */ '../views/Chatroom.vue')
   },
@@ -27,17 +27,17 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/GroupPage.vue')
   },
   {
-    path: '/MyProject',
+    path: '/:uid/MyProject',
     name: 'MyProject',
     component: () => import(/* webpackChunkName: "about" */ '../views/MyProject.vue')
   },
   {
-    path: '/DesignPage',
+    path: '/:groupid/:projectid/DesignPage',
     name: 'DesignPage',
     component: () => import(/* webpackChunkName: "about" */ '../views/DesignPage.vue')
   },
   {
-    path: '/DecomentPage',
+    path: '/:groupid/:projectid/DecomentPage',
     name: 'DecomentPage',
     component: () => import(/* webpackChunkName: "about" */ '../views/DecomentPage.vue')
   }
