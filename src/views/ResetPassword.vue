@@ -1,5 +1,7 @@
-<template>
-  <div class="about">
-    <h1>This is an about page</h1>
-  </div>
-</template>
+<div id="app"> 
+  <ng-form-design  />
+</div>
+
+<script>
+Vue.use(NgFormElement) 
+</script>

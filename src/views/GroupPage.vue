@@ -3,40 +3,40 @@
     <el-aside width="15%" class="left-aside">
       <el-scrollbar height="800px" max-height="640px">
         <el-text class="scrollbar-title">我的团队列表</el-text>
-        <el-button type="primary" style="width: 75px;" @click="" ><el-icon><Plus /></el-icon></el-button>
+        <el-button type="primary" style="width: 40px;" @click="" ><el-icon><Plus /></el-icon></el-button>
         <el-button type="primary" v-for="item in 20" :key="item" :plain="group.textBoolList[item]" class="scrollbar-item">{{ item }}</el-button>
       </el-scrollbar>
     </el-aside>
     <el-container class="second-container">
-      <el-header height="20%" calss="header-content">
+      <el-header height="20%" class="header-content">
         <el-container>
           <el-aside width="10%">
-            1
+            <el-avatar :size="110" fit="fill" :src="this.currentGroup.avator"/>
           </el-aside>
           <el-aside width="80%">
             <el-container>
               <el-header height="50%">
-                1
+                <el-text class="group-title">{{ currentGroup.name }}</el-text>
               </el-header>
               <el-main>
-                1
+                <el-text class="group-introduction">团队简介:{{ currentGroup.introduction }}</el-text>
               </el-main>
             </el-container>
           </el-aside>
         </el-container>
       </el-header>
       <el-container class="third-container">
-        <el-aside width="50%" class="bottom-aside">
+        <el-aside width="48%" style="background-color:brown;" class="bottom-aside">
           <el-container calss="forth-container">
-            <el-header>
-
+            <el-header height="20%">
+              <el-text class="groupmember-title">团队成员</el-text>
             </el-header>
             <el-main>
-
+              1
             </el-main>
           </el-container>
         </el-aside>
-        <el-aside width="50%" class="bottom-aside">
+        <el-aside width="48%" style="background-color:blueviolet;" class="bottom-aside">
           <el-container calss="forth-container">
             <el-header>
 
@@ -67,10 +67,12 @@
   height: 100%;
 }
 .bottom-aside{
+  margin-top: 20px;
+  margin-right: 20px;
   height: 100%;
 }
 .header-content{
-  background-color: black;
+  border-bottom: 1px solid #409EFF;
 }
 .scrollbar-title {
   align-items: center;
@@ -79,7 +81,7 @@
   margin: 10px;
   text-align: center;
   border-radius: 4px;
-  font-size:2ch;
+  font-size: x-large;
   font-weight: 1000;
   color: black;
 }
@@ -91,6 +93,39 @@
   height: 40px;
   margin: 8px;
   text-align: center;
+}
+.group-title{
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  margin: 10px;
+  text-align: center;
+  border-radius: 4px;
+  font-size: xx-large;
+  font-weight: 1000;
+  color: black;
+}
+.group-introduction{
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  margin: 10px;
+  text-align: center;
+  border-radius: 4px;
+  font-size:medium;
+  font-weight: 500;
+  color: black;
+}
+.groupmember-title{
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  margin: 10px;
+  text-align: center;
+  border-radius: 4px;
+  font-size:;
+  font-weight: 500;
+  color: black;
 }
 </style>
 
@@ -108,9 +143,9 @@ export default{
         textBoolList: [],
       },
       currentGroup:{
-        avator: '',
-        name: '',
-        introduction: '',
+        avator: 'https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png',
+        name: 'OP',
+        introduction: '你好',
         personList: [],
         projectList: [],
       }
