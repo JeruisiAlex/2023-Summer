@@ -9,7 +9,7 @@ export function post(url,data){
                     message: "网络连接失败",
                     grouping: true,
                     type: 'error',
-                })
+                });
             });
     });
 }
@@ -22,7 +22,7 @@ export function get(url){
                     message: "网络连接失败",
                     grouping: true,
                     type: 'error',
-                })
+                });
             });
     });
 }

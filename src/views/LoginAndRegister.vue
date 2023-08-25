@@ -1,4 +1,37 @@
 <template>
+  <el-dialog v-model="this.dialogBool" width="600px">
+    <el-form ref="findPasswordRef" :model="findPassword" :rules="findPasswordRules">
+        <h2 class="title">找回密码</h2>
+        <div class="input-field">
+          <i class="fa-solid fa-envelope"></i>
+          <el-form-item prop="email">
+            <el-input v-model="findPassword.email" placeholder="输入你的邮箱" />
+          </el-form-item>
+        </div>
+        <div class="input-field">
+          <i class="fa-solid fa-envelope"></i>
+          <el-form-item prop="code">
+            <el-input v-model="findPassword.code" placeholder="输入验证码" style="width: auto;"/>
+            <el-button type="primary" @click="SendCode(this.findPassword,'Find_Password')" :disabled="codeBool" style="width: 30%;">{{ codeString }}</el-button>
+          </el-form-item>
+        </div>
+        <div class="input-field">
+          <i class="fa-solid fa-lock"></i>
+          <el-form-item prop="password">
+            <el-input v-model="findPassword.password" maxlength="30" type="password" placeholder="8-30位密码" autocomplete="off" show-password />
+          </el-form-item>
+        </div>
+        <div class="input-field">
+          <i class="fa-solid fa-lock"></i>
+          <el-form-item prop="confirmPassword">
+            <el-input v-model="findPassword.confirmPassword" maxlength="30" type="password" placeholder="确认密码" autocomplete="off" show-password />
+          </el-form-item>
+        </div>
+        <el-button type="primary" :loading="findPasswordLoading" @click="FindPassword()" class="btn form" round>
+          {{findPasswordLoading ? '重置中' : '重置'}}
+        </el-button>
+      </el-form>
+  </el-dialog>
   <div class="container" id="app">
   <div class="forms-container">
     <div class="signin-signup">
@@ -19,6 +52,9 @@
         </div>
         <el-button type="primary" :loading="loginLoading" @click="Login()" class="btn form" round>
           {{loginLoading ? '登 录 中' : '登 录'}}
+        </el-button>
+        <el-button type="primary" text="true" @click="ForgetPassword()" class="form" round>
+          忘记密码
         </el-button>
       </el-form>
       <el-form ref="signUpRef" :model="signUpForm" :rules="signUpRules" class="sign-up-form">
@@ -51,7 +87,7 @@
           <i class="fa-solid fa-envelope"></i>
           <el-form-item prop="code">
             <el-input v-model="signUpForm.code" placeholder="输入验证码" style="width: auto;"/>
-            <el-button type="primary" @click="SendCode()" :disabled="codeBool" style="width: 30%;">{{ codeString }}</el-button>
+            <el-button type="primary" @click="SendCode(this.signUpForm,'Register')" :disabled="codeBool" style="width: 30%;">{{ codeString }}</el-button>
           </el-form-item>
         </div>
         <el-button type="primary" :loading="signUploading" @click="SignUp()" class="btn form" round>
@@ -542,7 +578,7 @@ form {
 import store from '@/store';
 import { ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
-import { userRister, userLogin, sendVCode } from '../api/user.js';
+import { userRister, userLogin, sendVCode, findPassword} from '../api/user.js';
 
 export default{
   data() {
@@ -562,6 +598,50 @@ export default{
         email: '',
         code: ''
       },
+      dialogBool: false,
+      findPasswordLoading: false,
+      findPassword:{
+        email: '',
+        code: '',
+        password: '',
+        confirmPassword: '',
+      },
+      findPasswordRules: {
+        email: [{
+          validator: (rule, value, callback) => {
+            if (value === '') {
+              callback(new Error('请输入邮箱'));
+            } else {
+              callback();
+            }
+          }, type: 'string', trigger: 'blur'}],
+        code: [{
+          validator: (rule, value, callback) => {
+            if (value === '') {
+              callback(new Error('请输入验证码'));
+            } else {
+              callback();
+            }
+          }, type: 'string', trigger: 'blur'}],
+        password: [{ 
+          validator: (rule, value, callback) => {
+            if (value.length<8) {
+              callback(new Error('请输入至少8位密码'));
+            } else {
+              callback();
+            }
+          },type: 'string', trigger: 'blur' }],
+        confirmPassword: [{
+          validator: (rule, value, callback) => {
+            if (value === '') {
+              callback(new Error('请再次输入密码'));
+            } else if (value !== this.findPassword.password) {
+              callback(new Error('两次输入密码不一致!'));
+            } else {
+              callback();
+            }
+          }, type: 'string', trigger: 'blur'}]
+      },
       loginRules: {
         name: [{ required: true, message: '请输入用户名', type: 'string', trigger: 'blur' }],
         password: [{ 
@@ -572,44 +652,44 @@ export default{
               callback();
             }
           },type: 'string', trigger: 'blur' }],
-        },
-        signUpRules: {
-          name: [{ required: true, message: '请输入用户名', type: 'string', trigger: 'blur' }],
-          password: [{ 
-            validator: (rule, value, callback) => {
-              if (value.length<8) {
-                callback(new Error('请输入至少8位密码'));
-              } else {
-                callback();
-              }
-            },type: 'string', trigger: 'blur' }],
-          confirmPassword: [{
-            validator: (rule, value, callback) => {
-              if (value === '') {
-                callback(new Error('请再次输入密码'));
-              } else if (value !== this.signUpForm.password) {
-                callback(new Error('两次输入密码不一致!'));
-              } else {
-                callback();
-              }
-            }, type: 'string', trigger: 'blur'}],
-          email: [{
-            validator: (rule, value, callback) => {
-              if (value === '') {
-                callback(new Error('请输入邮箱'));
-              } else {
-                callback();
-              }
-            }, type: 'string', trigger: 'blur'}],
-          code: [{
-            validator: (rule, value, callback) => {
-              if (value === '') {
-                callback(new Error('请输入验证码'));
-              } else {
-                callback();
-              }
-            }, type: 'string', trigger: 'blur'}]
-        },
+      },
+      signUpRules: {
+        name: [{ required: true, message: '请输入用户名', type: 'string', trigger: 'blur' }],
+        password: [{ 
+          validator: (rule, value, callback) => {
+            if (value.length<8) {
+              callback(new Error('请输入至少8位密码'));
+            } else {
+              callback();
+            }
+          },type: 'string', trigger: 'blur' }],
+        confirmPassword: [{
+          validator: (rule, value, callback) => {
+            if (value === '') {
+              callback(new Error('请再次输入密码'));
+            } else if (value !== this.signUpForm.password) {
+              callback(new Error('两次输入密码不一致!'));
+            } else {
+              callback();
+            }
+          }, type: 'string', trigger: 'blur'}],
+        email: [{
+          validator: (rule, value, callback) => {
+            if (value === '') {
+              callback(new Error('请输入邮箱'));
+            } else {
+              callback();
+            }
+          }, type: 'string', trigger: 'blur'}],
+        code: [{
+          validator: (rule, value, callback) => {
+            if (value === '') {
+              callback(new Error('请输入验证码'));
+            } else {
+              callback();
+            }
+          }, type: 'string', trigger: 'blur'}]
+      },
     }
 },
     created() {
@@ -654,8 +734,22 @@ export default{
             }
           })
         },
-        SendCode(){
-          if(this.signUpForm.email==''){
+        ForgetPassword(){
+          this.dialogBool=true;
+        },
+        FindPassword(){
+          this.$refs.findPasswordRef.validate((valid) => {
+            if(valid){
+              var promise=findPassword(this.findPassword.email, this.findPassword.code, this.findPassword.password, this.findPassword.confirmPassword);
+              promise.then((result)=>{
+                this.MessageCatch(result);
+                this.dialogBool=false;
+              })
+            }
+          })
+        },
+        SendCode(form,type){
+          if(form.email==''){
             ElMessage({
               message: '请输入您的邮箱',
               grouping: true,
@@ -663,7 +757,7 @@ export default{
             })
           }
           else{
-            var promise=sendVCode(this.signUpForm.email,"Register");
+            var promise=sendVCode(form.email,type);
             promise.then((result)=>{
               if(this.MessageCatch(result)){
                 this.codeBool=true;
