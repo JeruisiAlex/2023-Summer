@@ -51,7 +51,7 @@
           <i class="fa-solid fa-envelope"></i>
           <el-form-item prop="code">
             <el-input v-model="signUpForm.code" placeholder="输入验证码" style="width: auto;"/>
-            <el-button type="primary" @click="SendCode()" style="width: 30%;">{{ codeString }}</el-button>
+            <el-button type="primary" @click="SendCode()" :disabled="codeBool" style="width: 30%;">{{ codeString }}</el-button>
           </el-form-item>
         </div>
         <el-button type="primary" :loading="signUploading" @click="SignUp()" class="btn form" round>
@@ -540,16 +540,15 @@ form {
 
 <script>
 import store from '@/store';
+import { ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { userRister, userLogin, sendVCode } from '../api/user.js';
 
 export default{
   data() {
     return {
-      codeString: '请输入验证码',
-      timeCount: 0,
-      code: 0,
-      message: null,
+      codeBool: false,
+      codeString: '获取验证码',
       loginLoading: false,
       signUploading: false,
       loginForm: {
@@ -618,6 +617,9 @@ export default{
       this.signUploading = false
     },
     mounted() {
+      if(store.state.isLogin==true){
+        this.$router.push("")
+      }
       const sign_in_btn = document.querySelector("#sign-in-btn")
       const sign_up_btn = document.querySelector("#sign-up-btn")
       const container = document.querySelector(".container")
@@ -630,27 +632,73 @@ export default{
     },
     methods: {
         Login() {
-          this.$refs.loginRef.validate(async (valid) => {
+          this.$refs.loginRef.validate((valid) => {
             if (valid) {
-              
+              var promise=userLogin(this.loginForm.name,this.loginForm.password);
+              promise.then((result)=>{
+                if(this.MessageCatch(result)){
+                  
+                  //this.$router.push()
+                }
+              })
             }
           })
         },
         SignUp() {
-          this.$refs.signUpRef.validate(async (valid) => {
+          this.$refs.signUpRef.validate((valid) => {
             if (valid) {
-              var data=await userRister(this.signUpForm.name, this.signUpForm.password, this.signUpForm.confirmPassword, this.signUpForm.email, this.signUpForm.code);
-              
+              var promise=userRister(this.signUpForm.name, this.signUpForm.password, this.signUpForm.confirmPassword, this.signUpForm.email, this.signUpForm.code);
+              promise.then((result)=>{
+                this.MessageCatch(result);
+              })
             }
           })
         },
         SendCode(){
           if(this.signUpForm.email==''){
             ElMessage({
-              message: 'this is a message.',
+              message: '请输入您的邮箱',
               grouping: true,
               type: 'warning',
             })
+          }
+          else{
+            var promise=sendVCode(this.signUpForm.email,"Register");
+            promise.then((result)=>{
+              if(this.MessageCatch(result)){
+                this.codeBool=true;
+                const num=ref(60);
+                watch(()=>num.value,(newValue)=>{
+                  this.codeString=newValue;
+                });
+                let timer=setInterval(function(){
+                  num.value--;
+                  if(num.value==0){
+                    this.codeString='获取验证码';
+                    this.codeBool=false;
+                    clearInterval(timer);
+                  }
+                },1000);
+              }
+            });
+          }
+        },
+        MessageCatch(data){
+          if(data.code!=0){
+            ElMessage({
+              message: data.msg,
+              grouping: true,
+              type: 'error',
+            })
+            return false;
+          }
+          else{
+            ElMessage({
+              message: data.msg,
+              grouping: true,
+              type: 'success',
+            })
+            return true;
           }
         }
     }

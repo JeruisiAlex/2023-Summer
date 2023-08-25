@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   {
-    path: '/LoginAndRegister',
+    path: '',
     name: 'LoginAndRegister',
     component: () => import(/* webpackChunkName: "about" */ '../views/LoginAndRegister.vue')
   },
