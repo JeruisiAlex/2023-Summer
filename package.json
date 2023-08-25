@@ -13,6 +13,7 @@
     "element-plus": "^2.3.9",
     "ng-form-element": "^2.1.0",
     "ng-form-elementplus": "^2.0.2",
+    "vditor": "^3.9.4",
     "vue": "^3.2.13",
     "vue-router": "^4.0.3",
     "vue3-draggable-resizable": "^1.6.5",

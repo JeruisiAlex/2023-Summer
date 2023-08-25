@@ -138,7 +138,8 @@
   <el-main style="overflow: hidden;">
     <el-scrollbar>
     <router-view/>
-    <el-button @click="testNotification(20)">添加20条消息</el-button>
+    <el-button @click="testNotification(20)">(测试用)添加20条消息</el-button>
+    <el-button @click="this.$router.push('/1/1/DecomentPage')">(测试用)富文本编辑器</el-button>
     </el-scrollbar>
   </el-main>
   <el-drawer
