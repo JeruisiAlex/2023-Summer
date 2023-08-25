@@ -1,5 +1,5 @@
 <template style="margin: 0; padding: 0">
-  <el-header v-if="header" style="height: 48px; background-color:rgb(42, 159, 235);">
+  <el-header v-if="this.$store.state.isLogin" style="height: 48px; background-color:rgb(42, 159, 235);">
     <el-row :gutter="10" style=" color: white;">
     <el-col :span="1" @click="displayDrawer">
       <div class="grid-content header-icon"><el-icon><Menu /></el-icon></div>
@@ -62,10 +62,19 @@
         </template>
           <div class="drawer-item">个人信息</div>
           <div class="drawer-item" @click="resetPassword()">修改密码</div>
-          <div id="logout-button" class="drawer-item">退出登录</div>
+          <div id="logout-button" @click="logout()" class="drawer-item">退出登录</div>
         </el-popover>
       </div>
     </el-col>
+    </el-row>
+  </el-header>
+  <el-header v-else style="height: 48px; background-color:rgb(42, 159, 235);">
+    <el-row :gutter="10" style=" color: white;">
+    <el-col :span="1"></el-col>
+    <el-col :span="6"><div class="grid-content" style="text-align: left;">Originate Pro</div></el-col>
+    <el-col :span="15"></el-col>
+    <el-col :span="1"></el-col>
+    <el-col :span="1"></el-col>
     </el-row>
   </el-header>
   <el-main style="overflow: hidden;">
@@ -673,6 +682,8 @@ import { ArrowDown, Menu, Bell, User} from '@element-plus/icons-vue';
 import { sendVCode, findPassword } from './api/user.js';
 import { ElMessage } from 'element-plus';
 import { ref, watch } from 'vue';
+import store from './store';
+import router from './router';
 
 
 export default {
@@ -683,7 +694,7 @@ export default {
     data () {
       return {
         sitename:"Originate Pro",
-        header: true,
+        header: false,
         drawer: false,
         notificationsDisplay: 1,
         notificationSets: {
@@ -761,6 +772,10 @@ export default {
               }
             },type: 'string', trigger: 'blur' }],
         },
+        logout() {
+          store.commit('Logout');
+          router.push('/');
+        }
       }
     },
 
