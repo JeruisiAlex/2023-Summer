@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   {
-    path: '/LoginAndRegister',
+    path: '/',
     name: 'LoginAndRegister',
     component: () => import(/* webpackChunkName: "about" */ '../views/LoginAndRegister.vue')
   },
@@ -22,7 +22,7 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/Chatroom.vue')
   },
   {
-    path: '/GroupPage',
+    path: '/:uid/GroupPage',
     name: 'GroupPage',
     component: () => import(/* webpackChunkName: "about" */ '../views/GroupPage.vue')
   },
