@@ -2,6 +2,7 @@
   <nav>
     <router-link to="/">Home</router-link> |
     <router-link to="/PersonalInfomation">About</router-link> |
+    <router-link to="/Chatroom">123</router-link> |
     <router-link to="/MyProject">123</router-link>
   </nav>
   
