@@ -1,10 +1,10 @@
-<template style="margin: 0; padding: 0">
+<template style="margin: 0; padding: 0; background-color: black">
   <el-header v-if="this.$store.state.isLogin" style="height: 48px; background-color:rgb(42, 159, 235);">
     <el-row :gutter="10" style=" color: white;">
     <el-col :span="1" @click="displayDrawer">
       <div class="grid-content header-icon"><el-icon><Menu /></el-icon></div>
     </el-col>
-    <el-col :span="6"><div class="grid-content" style="text-align: left;">Originate Pro</div></el-col>
+    <el-col :span="6"><div id="site-name" class="grid-content" style="text-align: left;" @click="this.$router.push('/'+this.$store.state.uid+'/GroupPage')">Originate Pro</div></el-col>
     <el-col :span="15"><div class="grid-content"></div></el-col>
     <el-col :span="1">
       <div class="grid-content header-icon">
@@ -22,28 +22,61 @@
           default-active="1"
           class="el-menu-demo"
           mode="horizontal"
+          :ellipsis="false"
         >
           <el-menu-item index="1" @click="displayNotification(1)">未读通知</el-menu-item>
           <el-menu-item index="2" @click="displayNotification(2)">已读通知</el-menu-item>
+          <div class="flex-grow" />
+          <el-menu-item index="3" @click="displayNotification(3)">操作</el-menu-item>
         </el-menu>
         <el-scrollbar max-height="500px" v-if="notificationsDisplay===1">
-          <div class="drawer-item" @click="undisplayDrawer">我的团队</div>
-          <div class="drawer-item" @click="undisplayDrawer">我的聊天</div>
-          <div class="drawer-item" @click="undisplayDrawer">我的项目</div>
+          <div class="notification-item">
+            <el-row style="margin-top: 1px;" justify="start">
+              <el-col :span="2">
+                <el-button type="primary" plain>邀请</el-button>
+              </el-col>
+              <el-col :span="2" :offset="18">
+                <el-icon class="notification-deal delete-message-btn"><Delete /></el-icon>
+              </el-col>
+              <el-col :span="2" class="notification-deal">
+                <el-icon><CircleCheckFilled /></el-icon>
+              </el-col>
+            </el-row>
+            <el-row class="notification-content">
+              A邀请你编辑文档“站会”
+            </el-row>
+            </div>
+            <div class="notification-item">
+            <el-row style="margin-top: 1px;" justify="start">
+              <el-col :span="2">
+                <el-button type="danger" plain>@你</el-button>
+              </el-col>
+              <el-col :span="2" :offset="18">
+                <el-icon class="delete-message-btn notification-deal"><Delete /></el-icon>
+              </el-col>
+              <el-col :span="2" class="notification-deal">
+                <el-icon><CircleCheckFilled /></el-icon>
+              </el-col>
+            </el-row>
+            <el-row class="notification-content">
+              B在团队 “软工小组”@了你1111111111111111111122222222222
+            </el-row>
+          </div>
         </el-scrollbar>
         <el-scrollbar max-height="500px" v-if="notificationsDisplay===2">
-          <div class="drawer-item" @click="undisplayDrawer">我的团队</div>
-          <div class="drawer-item" @click="undisplayDrawer">我的聊天</div>
-          <div class="drawer-item" @click="undisplayDrawer">我的项目</div>
-          <div class="drawer-item" @click="undisplayDrawer">我的团队</div>
-          <div class="drawer-item" @click="undisplayDrawer">我的聊天</div>
-          <div class="drawer-item" @click="undisplayDrawer">我的项目</div>
-          <div class="drawer-item" @click="undisplayDrawer">我的团队</div>
-          <div class="drawer-item" @click="undisplayDrawer">我的聊天</div>
-          <div class="drawer-item" @click="undisplayDrawer">我的项目</div>
-          <div class="drawer-item" @click="undisplayDrawer">我的团队</div>
-          <div class="drawer-item" @click="undisplayDrawer">我的聊天</div>
-          <div class="drawer-item" @click="undisplayDrawer">我的项目</div>
+
+        </el-scrollbar>
+        <el-scrollbar max-height="500px" v-if="notificationsDisplay===3">
+          <el-row style="margin-top: 10px;" justify="end">
+            <el-button type="primary" :icon="Search">设置所有通知为已读
+              <el-icon class="el-icon--right"><Finished /></el-icon>
+            </el-button>
+          </el-row>
+          <el-row style="margin-top: 10px;" justify="end">
+            <el-button type="danger">删除所有的已读通知
+              <el-icon class="el-icon--right"><DeleteFilled /></el-icon>
+            </el-button>
+          </el-row>
         </el-scrollbar>
         </el-popover>
       </div>
@@ -60,7 +93,7 @@
         <template #reference>
           <el-icon><User /></el-icon>
         </template>
-          <div class="drawer-item">个人信息</div>
+          <div class="drawer-item" @click="this.$router.push('/PersonalInfomation');">个人信息</div>
           <div class="drawer-item" @click="resetPassword()">修改密码</div>
           <div id="logout-button" @click="logout()" class="drawer-item">退出登录</div>
         </el-popover>
@@ -88,9 +121,9 @@
     direction="ltr"
     size="25%"
   >
-    <div class="drawer-item" @click="undisplayDrawer">我的团队</div>
-    <div class="drawer-item" @click="undisplayDrawer">我的聊天</div>
-    <div class="drawer-item" @click="undisplayDrawer">我的项目</div>
+    <div class="drawer-item" @click="undisplayDrawer(1)">我的团队</div>
+    <div class="drawer-item" @click="undisplayDrawer(2)">我的聊天</div>
+    <div class="drawer-item" @click="undisplayDrawer(3)">我的项目</div>
   </el-drawer>
   <el-dialog v-model="this.dialogBool" width="600px">
     <el-form ref="findPasswordRef" :model="findPassword" :rules="findPasswordRules">
@@ -149,6 +182,15 @@ nav a.router-link-exact-active {
   color: #42b983;
 }
 
+#site-name{
+  transition: 0.2s;
+}
+
+#site-name:hover{
+  cursor: pointer;
+  scale: 1.05;
+  transition: 0.2s;
+}
 
 .el-header {
   position: relative;
@@ -184,11 +226,13 @@ nav a.router-link-exact-active {
 
 .header-icon {
   margin-top: 4px;
-  /* scale: 1.5; */
+  transition: 0.2s;
 }
 
 .header-icon:hover {
   cursor: pointer;
+  scale: 1.2;
+  transition: 0.2s;
 }
 
 .drawer-item {
@@ -225,6 +269,60 @@ nav a.router-link-exact-active {
 
 #logout-button:hover {
   background: rgba(255, 0, 0, 0.25);
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+.notification-item {
+  align-items: center;
+  /*justify-content: center;*/
+  height: 80px;
+  line-height: 40px;
+  margin: 10px;
+  /*padding-left: 5px;*/
+  text-align: center;
+  border-radius: 4px;
+  color: black;
+  transition: 0.5s;
+  overflow: hidden;
+  border-bottom: rgba(42, 159, 235, 0.5) 1px solid;
+}
+
+.notification-item:hover {
+  cursor: pointer;
+  background: rgba(236, 245, 255, 1);
+  /* color: rgb(42, 159, 235); */
+  transition: 0.2s;
+}
+
+.notification-content {
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -o-text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  display: block;
+}
+
+.notification-deal {
+  transition: 0.2s;
+}
+
+.notification-deal:hover{
+  scale: 1.25;
+  transition: 0.2s;
+  /* color: rgb(42, 159, 235); */
+  color: white;
+  background-color: rgb(42, 159, 235);
+}
+
+.delete-message-btn:hover{
+  color: red;
+  scale: 1.5;
+  background-color: rgba(0,0,0,0);
 }
 
 </style>
@@ -678,7 +776,7 @@ form {
 </style>
 
 <script>
-import { ArrowDown, Menu, Bell, User} from '@element-plus/icons-vue';
+import { ArrowDown, Menu, Bell, User, Search, Finished, DeleteFilled} from '@element-plus/icons-vue';
 import { sendVCode, findPassword } from './api/user.js';
 import { ElMessage } from 'element-plus';
 import { ref, watch } from 'vue';
@@ -688,7 +786,7 @@ import router from './router';
 
 export default {
     components: {
-      ArrowDown, Menu, Bell, User
+      ArrowDown, Menu, Bell, User, Search, Finished, DeleteFilled,
     },
 
     data () {
@@ -697,12 +795,6 @@ export default {
         header: false,
         drawer: false,
         notificationsDisplay: 1,
-        notificationSets: {
-          type: "",
-          by: "",
-          content: "",
-          ms: [],
-        },
         notificationUnread: {
           type: "",
           by: "",
@@ -715,6 +807,8 @@ export default {
           content: "",
           ms: [],
         },
+
+
         codeBool: false,
         codeString: '获取验证码',
         dialogBool: false,
@@ -771,10 +865,6 @@ export default {
                 callback();
               }
             },type: 'string', trigger: 'blur' }],
-        },
-        logout() {
-          store.commit('Logout');
-          router.push('/');
         }
       }
     },
@@ -783,7 +873,13 @@ export default {
       displayDrawer() {
         this.drawer = true;
       },
-      undisplayDrawer() {
+      undisplayDrawer(jumpto) { //待添加聊天与项目的路由
+        if (jumpto===1)
+          router.push('/'+store.state.uid+'/GroupPage');
+        else if (jumpto===2)
+          router.push('/Chatroom');
+        else if (jumpto===3)
+          router.push('/MyProject');
         this.drawer = false;
       },
       displayNotification(type) {
@@ -792,6 +888,15 @@ export default {
       resetPassword() {
         this.dialogBool=true;
       },
+      logout() {
+          store.commit('Logout');
+          router.push('/');
+      },
+      jumpRouter(to) {
+        router.push(to);
+      },
+
+
       FindPassword(){
         this.$refs.findPasswordRef.validate((valid) => {
           if(valid){
