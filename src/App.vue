@@ -16,7 +16,8 @@
           content="进一步分为已读通知和未读通知"
         >
         <template #reference>
-          <el-icon><Bell /></el-icon>
+          <el-icon v-if="this.$store.state.notificationUnread.length!=0" style="color: orange"><BellFilled /></el-icon>  
+          <el-icon v-else><Bell /></el-icon>
         </template>
         <el-menu
           default-active="1"
@@ -34,31 +35,45 @@
             v-for="(item, index) in this.$store.state.notificationUnread"
             :key="index">
             <el-row v-if="item.t==='邀请'" style="margin-top: 1px;" justify="start">
-              <el-col :span="2">
+              <el-col :span="20" @click="calloutNotification(item,1)" style="text-align: left;">
                 <el-button type="primary" plain>邀请</el-button>
               </el-col>
-              <el-col :span="2" :offset="18">
+              <el-col :span="2">
                 <el-icon class="notification-deal delete-message-btn" @click="deleteNotification(item.id)"><Delete /></el-icon>
               </el-col>
               <el-col :span="2" class="notification-deal">
                 <el-icon @click="addReadNotification(item.id)"><CircleCheckFilled /></el-icon>
               </el-col>
             </el-row>
-            <el-row v-if="item.t==='邀请'" class="notification-content">
+            <el-row v-if="item.t==='邀请'" class="notification-content" @click="calloutNotification(item,1)">
               {{item.c}}
             </el-row>
             <el-row v-if="item.t==='@你'" style="margin-top: 1px;" justify="start">
-              <el-col :span="2">
+              <el-col :span="20" @click="calloutNotification(item,1)" style="text-align: left;">
                 <el-button type="danger" plain>@你</el-button>
               </el-col>
-              <el-col :span="2" :offset="18">
+              <el-col :span="2">
                 <el-icon class="delete-message-btn notification-deal" @click="deleteNotification(item.id)"><Delete /></el-icon>
               </el-col>
               <el-col :span="2" class="notification-deal">
                 <el-icon @click="addReadNotification(item.id)"><CircleCheckFilled /></el-icon>
               </el-col>
             </el-row>
-            <el-row v-if="item.t==='@你'" class="notification-content">
+            <el-row v-if="item.t==='@你'" class="notification-content" @click="calloutNotification(item,1)">
+              {{item.c}}
+            </el-row>
+            <el-row v-if="item.t==='普通'" style="margin-top: 1px;" justify="start">
+              <el-col :span="20" @click="calloutNotification(item,1)" style="text-align: left;">
+                <el-button type="info" plain>普通</el-button>
+              </el-col>
+              <el-col :span="2">
+                <el-icon class="notification-deal delete-message-btn" @click="deleteNotification(item.id)"><Delete /></el-icon>
+              </el-col>
+              <el-col :span="2" class="notification-deal">
+                <el-icon @click="addReadNotification(item.id)"><CircleCheckFilled /></el-icon>
+              </el-col>
+            </el-row>
+            <el-row v-if="item.t==='普通'" class="notification-content" @click="calloutNotification(item,1)">
               {{item.c}}
             </el-row>
           </div>
@@ -68,25 +83,36 @@
             v-for="(item, index) in this.$store.state.notificationRead"
             :key="index">
             <el-row v-if="item.t==='邀请'" style="margin-top: 1px;" justify="start">
-              <el-col :span="2">
+              <el-col :span="22" @click="calloutNotification(item,2)" style="text-align: left;">
                 <el-button type="primary" plain>邀请</el-button>
               </el-col>
-              <el-col :span="2" :offset="20">
+              <el-col :span="2">
                 <el-icon class="notification-deal delete-message-btn" @click="deleteNotification(item.id)"><Delete /></el-icon>
               </el-col>
             </el-row>
-            <el-row v-if="item.t==='邀请'" class="notification-content">
+            <el-row v-if="item.t==='邀请'" class="notification-content" :title="item.c" @click="calloutNotification(item,2)">
               {{item.c}}
             </el-row>
             <el-row v-if="item.t==='@你'" style="margin-top: 1px;" justify="start">
-              <el-col :span="2">
+              <el-col :span="22" @click="calloutNotification(item,2)" style="text-align: left;">
                 <el-button type="danger" plain>@你</el-button>
               </el-col>
-              <el-col :span="2" :offset="20">
+              <el-col :span="2">
                 <el-icon class="delete-message-btn notification-deal" @click="deleteNotification(item.id)"><Delete /></el-icon>
               </el-col>
             </el-row>
-            <el-row v-if="item.t==='@你'" class="notification-content">
+            <el-row v-if="item.t==='@你'" class="notification-content" :title="item.c" @click="calloutNotification(item,2)">
+              {{item.c}}
+            </el-row>
+            <el-row v-if="item.t==='普通'" style="margin-top: 1px;" justify="start">
+              <el-col :span="22" @click="calloutNotification(item,2)" style="text-align: left;">
+                <el-button type="info" plain>普通</el-button>
+              </el-col>
+              <el-col :span="2">
+                <el-icon class="notification-deal delete-message-btn" @click="deleteNotification(item.id)"><Delete /></el-icon>
+              </el-col>
+            </el-row>
+            <el-row v-if="item.t==='普通'" class="notification-content" :title="item.c" @click="calloutNotification(item,2)">
               {{item.c}}
             </el-row>
           </div>
@@ -140,7 +166,7 @@
     <router-view/>
     <el-button @click="testNotification(20)">(测试用)添加20条消息</el-button>
     <el-button @click="this.$router.push('/1/1/DecomentPage')">(测试用)富文本编辑器</el-button>
-    </el-scrollbar>
+  </el-scrollbar>
   </el-main>
   <el-drawer
     v-model="drawer"
@@ -184,6 +210,26 @@
           {{findPasswordLoading ? '重置中' : '重置'}}
         </el-button>
       </el-form>
+  </el-dialog>
+  <el-dialog v-model="centerDialogVisible" title="通知详情" width="35%" center>
+    <el-scrollbar max-height="300px">
+      <div style="max-width: 100%; word-break: break-all; text-align: center;">{{ localDialogNotification.content }}</div>
+    </el-scrollbar>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button v-if="localDialogNotification.type==='邀请'" type="danger" @click="centerDialogVisible = false">拒绝</el-button>
+        <el-button v-if="localDialogNotification.type==='邀请'" type="success" @click="centerDialogVisible = false">接受</el-button>
+        <el-button v-if="localDialogNotification.type==='@你'" type="warning" @click="centerDialogVisible = false">
+          跳转
+        </el-button>
+        <el-button v-if="localDialogNotification.type==='@你'" type="primary" @click="centerDialogVisible = false">
+          确定
+        </el-button>
+        <el-button v-if="localDialogNotification.type==='普通'" type="primary" @click="centerDialogVisible = false">
+          确定
+        </el-button>
+      </span>
+    </template>
   </el-dialog>
 </template>
 
@@ -236,7 +282,7 @@ nav a.router-link-exact-active {
 
 
 .el-row {
-  /* margin-bottom: 20px; */
+  
 }
 .el-row:last-child {
   margin-bottom: 0;
@@ -829,7 +875,14 @@ export default {
           content: "",
           ms: [],
         },
-
+        centerDialogVisible: false,
+        localDialogNotification: {
+            type: "邀请",
+            by: "来自我",
+            forthing: "为了爱",
+            content: "这是一个示例通知",
+            from: 1,
+        },
 
         codeBool: false,
         codeString: '获取验证码',
@@ -916,6 +969,15 @@ export default {
       },
       jumpRouter(to) {
         router.push(to);
+      },
+      calloutNotification(item,from){
+        this.localDialogNotification.type = item.t;
+        this.localDialogNotification.by = item.b;
+        this.localDialogNotification.forthing = item.f;
+        this.localDialogNotification.content = item.c;
+        this.centerDialogVisible = true;
+        if (from===1)
+          this.addReadNotification(item.id);
       },
 
 
@@ -1006,10 +1068,18 @@ export default {
             forthing: "团队"+i.toString(),
             content: "user"+i.toString()+"在团队"+"\""+i.toString()+"\""+"中@了你",
           }
-          if (i%2)
+          var data3={
+            type: "普通",
+            by: "user"+i.toString(),
+            forthing: "团队"+i.toString(),
+            content: "user"+i.toString()+"在团队"+"\""+i.toString()+"\""+"发了一个消息",
+          }
+          if (i%3===0)
             store.commit('addNotificationUnread',data);
-          else
+          else if (i%3===1)
             store.commit('addNotificationUnread',data2);
+          else
+            store.commit('addNotificationUnread',data3);
         }
         console.log(store.state.notificationUnread);
       }
