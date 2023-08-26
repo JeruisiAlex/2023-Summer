@@ -68,7 +68,7 @@ export default {
 }
 </script>
 
-<!-- 下面的是另一个支持协作的富文本编辑器，但是可惜的是它不支持markdown自动渲染，以后再说 -->
+<!-- 下面的是另一个支持协作的富文本编辑器，但是可惜它不支持markdown自动渲染，以后再说 -->
 <!-- <template>
     <div ref="editorContainer"></div>
   </template>
