@@ -57,10 +57,12 @@ export default {
         this.contentEditor.setValue("123");
     },
     changeDisplayMode(){
-        if (this.value1===true)
-            this.contentEditor.setTheme("light");
-        else
-        this.contentEditor.setTheme("dark");
+        if (this.value1===true) {
+            this.contentEditor.setTheme("light","light","light");
+        }
+        else {
+            this.contentEditor.setTheme("dark","dark","dark");
+        }
     },
   }
 }
