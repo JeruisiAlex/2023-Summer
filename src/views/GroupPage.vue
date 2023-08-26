@@ -15,8 +15,9 @@
           </el-aside>
           <el-aside width="80%">
             <el-container>
-              <el-header height="50%">
+              <el-header height="50%" style="display: flex;justify-content: center;align-items: center;">
                 <el-text class="group-title">{{ currentGroup.name }}</el-text>
+                <el-button type="primary" @click="" style="height: 50px;"><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑项目</el-button>
               </el-header>
               <el-main>
                 <el-text class="group-introduction">团队简介:{{ currentGroup.introduction }}</el-text>
@@ -33,13 +34,15 @@
               <el-button type="primary" @click="" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建项目</el-button>
               <el-button type="primary" @click="" style="height: 40px;"><el-icon style="margin-right: 4px;"><DeleteFilled /></el-icon>回收站</el-button>
             </el-header>
-            <div class="project-list">
-              <el-text class="project-name">姓名{{  }}</el-text>
-              <el-text class="creator-name">姓名{{ " " }}创建</el-text>
-              <el-button @click=""><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看项目</el-button>
-              <el-button @click=""><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除项目</el-button>
-              <el-button @click=""><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑项目</el-button>
-            </div>
+            <el-scrollbar>
+              <div v-for="item in 20" :key="item" class="project-list">
+                <el-text class="project-name">姓名{{  }}</el-text>
+                <el-text class="creator-name">姓名{{ " " }}创建</el-text>
+                <el-button @click=""><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看项目</el-button>
+                <el-button @click=""><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除项目</el-button>
+                <el-button @click=""><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑项目</el-button>
+              </div>
+            </el-scrollbar>
           </el-container>
         </el-aside>
         <el-aside width="38%" class="bottom-aside">
@@ -48,12 +51,14 @@
               <el-text class="groupmember-title">成员列表</el-text>
               <el-button type="primary" @click="" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>邀请新成员</el-button>
             </el-header>
-            <div class="groupmember-list">
-              <el-avatar :size="40" :src="this.currentGroup.avator"/>
-              <el-text class="groupmember-name">姓名{{  }}</el-text>
-              <el-button @click=""><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看成员</el-button>
-              <el-button @click=""><el-icon style="margin-right: 4px;"><Delete /></el-icon>移除成员</el-button>
-            </div>
+            <el-scrollbar>
+              <div v-for="item in 20" :key="item"  class="groupmember-list">
+                <el-avatar :size="40" :src="this.currentGroup.avator"/>
+                <el-text class="groupmember-name">姓名{{  }}</el-text>
+                <el-button @click=""><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看成员</el-button>
+                <el-button @click=""><el-icon style="margin-right: 4px;"><Delete /></el-icon>移除成员</el-button>
+              </div>
+            </el-scrollbar>
           </el-container>
         </el-aside>
       </el-container>
@@ -107,9 +112,9 @@
 .group-title{
   align-items: center;
   justify-content: center;
+  width: 100%;
   height: 50px;
   margin: 10px;
-  text-align: center;
   border-radius: 4px;
   font-size: xx-large;
   font-weight: 1000;
@@ -234,13 +239,13 @@ export default{
   },
   mounted(){
     this.uid=this.$route.params.uid;
-    if(store.state.isLogin==false){
-      this.$router.push('/');
-    }
-    else if(store.state.uid!=this.uid){
-      this.$router.push('/'+store.state.uid+'/GroupPage');
-      this.uid=store.state.uid;
-    }
+    // if(store.state.isLogin==false){
+    //   this.$router.push('/');
+    // }
+    // else if(store.state.uid!=this.uid){
+    //   this.$router.push('/'+store.state.uid+'/GroupPage');
+    //   this.uid=store.state.uid;
+    // }
     for(var i=1;i<=21;i++){
       this.group.textBoolList.push(true);
     }
