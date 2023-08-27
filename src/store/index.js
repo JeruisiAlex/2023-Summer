@@ -22,6 +22,7 @@ export default createStore({
       state.uid=0;
       state.userName='';
       state.userImage='';
+      state.userGroupList=[];
       state.hasMessage=false;
     },
     Login(state,token){

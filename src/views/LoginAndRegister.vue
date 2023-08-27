@@ -729,6 +729,14 @@ export default{
                         this.$router.push('/'+store.state.uid+'/GroupPage/'+store.state.userGroupList[0].id);
                       }
                     }
+                    else{
+                      ElMessage({
+                        message: "获取信息失败，已退出登录",
+                        grouping: true,
+                        type: 'error',
+                      })
+                      store.commit('Logout');
+                    }
                   })
                 }
               })

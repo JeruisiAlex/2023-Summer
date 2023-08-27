@@ -58,8 +58,8 @@
                 <el-text class="groupmember-name">{{ this.currentGroup.personList[item-1].true_name }}</el-text>
                 <el-text class="groupmember-email">{{ this.currentGroup.personList[item-1].email }}</el-text>
                 <el-button @click="this.Jump('/'+this.currentGroup.personList[item-1].id+'/PersonalInfomation')"><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看成员</el-button>
-                <el-button @click=""><el-icon style="margin-right: 4px;"><Avatar /></el-icon>{{ this.currentGroup.authList[item-1] }}</el-button>
-                <el-button @click=""><el-icon style="margin-right: 4px;"><CircleClose /></el-icon>移除成员</el-button>
+                <el-button @click="this.ChangeAuth(this.currentGroup.personList[item-1].id,this.currentGroup.personList[item-1].position==='admin'? 1 : 2)"><el-icon style="margin-right: 4px;"><Avatar /></el-icon>{{ this.currentGroup.authList[item-1] }}</el-button>
+                <el-button @click="this.ChangeAuth(this.currentGroup.personList[item-1].id,3)"><el-icon style="margin-right: 4px;"><CircleClose /></el-icon>移除成员</el-button>
               </div>
             </el-scrollbar>
           </el-container>
@@ -493,6 +493,7 @@ export default{
         this.currentGroup.personCount=this.currentGroup.personList.length;
         this.currentGroup.projectList=result.data.project_list;
         this.currentGroup.projectCount=this.currentGroup.projectList.length;
+        this.currentGroup.authList=[];
         for(var i=0;i<this.currentGroup.personCount;i++){
           if(this.currentGroup.personList[i].position==='creator'){
             this.currentGroup.authList.push('创建者')
@@ -521,8 +522,66 @@ export default{
           if(this.currentGroup.personList[i].id==store.state.uid){
             ownPosition=this.currentGroup.personList[i].position;
           }
-          if(this.currentGroup){
-
+          if(this.currentGroup.personList[i].id==userid){
+            userPosition=this.currentGroup.personList[i].position;
+          }
+        }
+        if(opcode==1){
+          if(ownPosition==='creator'){
+            var promise1=changeAuth(userid,this.currentGroup.id,opcode);
+            promise1.then((result)=>{
+              if(this.MessageCatch(result)){
+                this.GetCurrenGroup(this.currentGroup.id);
+              }
+            })
+          }
+          else{
+            ElMessage({
+              message: "只有创建者可以将管理员降为普通成员",
+              grouping: true,
+              type: 'warning',
+            })
+          }
+        }
+        else if(opcode==2){
+          if(ownPosition==='creator'||ownPosition==='admin'){
+            var promise1=changeAuth(userid,this.currentGroup.id,opcode);
+            promise1.then((result)=>{
+              if(this.MessageCatch(result)){
+                this.GetCurrenGroup(this.currentGroup.id);
+              }
+            })
+          }
+          else{
+            ElMessage({
+              message: "普通成员不能修改其他人的权限",
+              grouping: true,
+              type: 'warning',
+            })
+          }
+        }
+        else{
+          if(ownPosition==='creator'||(ownPosition==='admin'&&userPosition==='member')){
+            var promise1=changeAuth(userid,this.currentGroup.id,opcode);
+            promise1.then((result)=>{
+              if(this.MessageCatch){
+                this.GetCurrenGroup(this.currentGroup.id);
+              }
+            })
+          }
+          else if(ownPosition==='admin'){
+            ElMessage({
+              message: "管理员不能移除管理员",
+              grouping: true,
+              type: 'warning',
+            })
+          }
+          else{
+            ElMessage({
+              message: "普通成员不能移除其他人",
+              grouping: true,
+              type: 'warning',
+            })
           }
         }
       }
