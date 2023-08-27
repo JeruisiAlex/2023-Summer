@@ -4,7 +4,7 @@
     <el-col :span="1" @click="displayDrawer">
       <div class="grid-content header-icon"><el-icon><Menu /></el-icon></div>
     </el-col>
-    <el-col :span="6"><div id="site-name" class="grid-content" style="text-align: left;" @click="this.$router.push('/'+this.$store.state.uid+'/GroupPage')">Originate Pro</div></el-col>
+    <el-col :span="6"><div id="site-name" class="grid-content" style="text-align: left;" @click="this.$router.push('/'+this.$store.state.uid+'/GroupPage/0')">Originate Pro</div></el-col>
     <el-col :span="15"><div class="grid-content">    <el-button @click="testNotification(20)">(测试用)添加20条消息</el-button>
     <el-button @click="this.$router.push('/1/1/DecomentPage')">(测试用)富文本编辑器</el-button></div></el-col>
     <el-col :span="1">
@@ -165,7 +165,7 @@
   <el-main style="overflow: hidden;">
     <el-scrollbar>
     <router-view/>
-  </el-scrollbar>
+    </el-scrollbar>
   </el-main>
   <el-drawer
     v-model="drawer"
@@ -217,7 +217,7 @@
     <template #footer>
       <span class="dialog-footer">
         <el-button v-if="localDialogNotification.type==='邀请'" type="danger" @click="centerDialogVisible = false">拒绝</el-button>
-        <el-button v-if="localDialogNotification.type==='邀请'" type="success" @click="centerDialogVisible = false">接受</el-button>
+        <el-button v-if="localDialogNotification.type==='邀请'" type="success" @click="centerDialogVisible = false; acceptInvitation()">接受</el-button>
         <el-button v-if="localDialogNotification.type==='@你'" type="warning" @click="centerDialogVisible = false">
           跳转
         </el-button>
@@ -962,7 +962,7 @@ export default {
       },
       undisplayDrawer(jumpto) {
         if (jumpto===1)
-          router.push('/'+store.state.uid+'/GroupPage');
+          router.push('/'+store.state.uid+'/GroupPage/0');
         else if (jumpto===2)
           router.push('/'+store.state.uid+'/Chatroom');
         else if (jumpto===3)
@@ -976,9 +976,10 @@ export default {
         this.dialogBool=true;
       },
       logout() {
+        if (ws)
           ws.close();
-          store.commit('Logout');
-          router.push('/');
+        store.commit('Logout');
+        router.push('/');
       },
       jumpRouter(to) {
         router.push(to);
@@ -1072,19 +1073,63 @@ export default {
       };
       ws.onmessage = function (message) {
         var parsedData = JSON.parse(message.data);
-        var newObj = {
-          type: parsedType,
-          by: parsedData.operator_name,
-          forthing: parsedData.team_name,
-          content: parsedData.msg,
-        };
+        var isMyMessage = true;
         console.log(parsedData);
-        console.log(newObj);
+        if (parsedData.receiver_id && parsedData.receiver_id!=store.state.uid){
+          isMyMessage = false;
+          console.log("not my message!");
+        }
+        if (isMyMessage) {
+          if (parsedData.type==='invite') {
+            var newObj = {
+              id: parsedData.id,
+              type: "邀请",
+              by: parsedData.sender_id,
+              forthing: parsedData.team_id,
+              content: parsedData.content,
+            };
+            if (parsedData.processed===false){
+              store.commit('addNotificationUnread',newObj);
+            } else {
+              store.commit('addNotificationRead',newObj);
+            }
+            console.log(newObj);
+          } else if (parsedData.type==='at') {
+            var newObj = {
+              id: parsedData.id,
+              type: "@你",
+              by: parsedData.sender_id,
+              forthing: parsedData.team_id,
+              content: parsedData.content,
+            };
+            if (parsedData.processed===false){
+              store.commit('addNotificationUnread',newObj);
+            } else {
+              store.commit('addNotificationRead',newObj);
+            }
+          } else if (parsedData.type==='normal') {
+            var newObj = {
+              id: parsedData.id,
+              type: "普通",
+              by: parsedData.sender_id,
+              forthing: "",
+              content: parsedData.content,
+            };
+            if (parsedData.processed===false){
+              store.commit('addNotificationUnread',newObj);
+            } else {
+              store.commit('addNotificationRead',newObj);
+            }
+          }
+        }
       };
       ws.onclose = function () {
-        //服务器连接关闭
         console.log("消息中心的websocket已关闭");
       };
+    },
+
+    acceptInvitation() {
+
     },
     sendMessage() {
       const now = new Date();

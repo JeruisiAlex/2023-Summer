@@ -42,22 +42,40 @@ export default createStore({
       state.userGroupList=groupList;
     },
     addNotificationUnread(state,data) {
-      state.notificationUnread.unshift({ //对象数组
-        id: data.id,
-        t: data.type,
-        b: data.by,
-        f: data.forthing,
-        c: data.content,
+      var hasMessage = false;
+      state.notificationUnread.some(function (value) {
+        if (value.id === data.id) {
+          hasMessage = true;
+          return true;
+        }
       });
+      if (hasMessage=== false){
+        state.notificationUnread.unshift({ //对象数组
+          id: data.id,
+          t: data.type,
+          b: data.by,
+          f: data.forthing,
+          c: data.content,
+        });
+      }
     },
     addNotificationReadDirect(state,data) {
-      state.notificationRead.unshift({ //对象数组
-        id: data.id,
-        t: data.type,
-        b: data.by,
-        f: data.forthing,
-        c: data.content,
+      var hasMessage = false;
+      state.notificationRead.some(function (value) {
+        if (value.id === data.id) {
+          hasMessage = true;
+          return true;
+        }
       });
+      if (hasMessage === false){
+        state.notificationRead.unshift({ //对象数组
+          id: data.id,
+          t: data.type,
+          b: data.by,
+          f: data.forthing,
+          c: data.content,
+        });
+      }
     },
     addNotificationRead(state,id) {
       state.notificationUnread.some(function (value) {
@@ -70,20 +88,20 @@ export default createStore({
     },
     deleteNotification(state,id) {
       var fromRead = false;
-        state.notificationRead.some(function (value) {
+      state.notificationRead.some(function (value) {
+        if (value.id === id) {
+          state.notificationRead.splice(state.notificationRead.indexOf(value),1);
+          fromRead = true;
+          return true;
+        }
+      });
+      if (fromRead === false)
+        state.notificationUnread.some(function (value) {
           if (value.id === id) {
-            state.notificationRead.splice(state.notificationRead.indexOf(value),1);
-            fromRead = true;
+            state.notificationUnread.splice(state.notificationUnread.indexOf(value),1);
             return true;
           }
-        });
-        if (fromRead === false)
-          state.notificationUnread.some(function (value) {
-            if (value.id === id) {
-              state.notificationUnread.splice(state.notificationUnread.indexOf(value),1);
-              return true;
-            }
-        });
+      });
     },
     setAllNotificationRead(state) {
       state.notificationUnread.some(function (value) {
@@ -93,6 +111,19 @@ export default createStore({
     },
     deleteAllNotificationRead(state) {
       state.notificationRead=[];
+    },
+    searchNotification(state,id) {
+      state.notificationRead.some(function (value) {
+        if (value.id === id) {
+          return true;
+        }
+      });
+      state.notificationUnread.some(function (value) {
+        if (value.id === id) {
+          return true;
+        }
+      });
+      return false;
     }
   },
   actions: {
