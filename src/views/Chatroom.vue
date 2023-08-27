@@ -84,7 +84,7 @@
   </el-scrollbar>
 </template>
 
-<script>
+<script scoped>
 let ws;
 import { ref } from "vue";
 
