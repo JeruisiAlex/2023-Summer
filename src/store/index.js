@@ -8,7 +8,6 @@ export default createStore({
     userName: '',
     userImage: '',
     hasMessage: false,
-    localNotificationid: 0,
     notificationUnread: [],
     notificationRead: [],
   },
@@ -40,15 +39,22 @@ export default createStore({
       state.isLogin=true;
     },
     addNotificationUnread(state,data) {
-      console.log(data.by);
       state.notificationUnread.unshift({ //对象数组
-        id: state.localNotificationid,
+        id: data.id,
         t: data.type,
         b: data.by,
         f: data.forthing,
         c: data.content,
       });
-      state.localNotificationid++;
+    },
+    addNotificationReadDirect(state,data) {
+      state.notificationRead.unshift({ //对象数组
+        id: data.id,
+        t: data.type,
+        b: data.by,
+        f: data.forthing,
+        c: data.content,
+      });
     },
     addNotificationRead(state,id) {
       state.notificationUnread.some(function (value) {
