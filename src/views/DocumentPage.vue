@@ -1,8 +1,16 @@
 <template>
     <div style="height: 30px;">
         <el-row style=" color: black;">
-            <el-col :span="20" style="font-size: large; font-weight: bold;">{{ fileName }}</el-col>
-            <el-col :span="4" :offset="0" style="text-align: right; font-size: small;">
+            <el-col :span="16" style="font-size: large; font-weight: bold;">{{ fileName }}</el-col>
+            <el-col :span="6" style="text-align: right;" >
+              <el-button type="warning" @click="atDocument()" size="small">
+                @邀请
+              </el-button>
+              <el-button type="primary" @click="saveDocument()" size="small">
+                保存<el-icon class="el-icon--right"><Upload /></el-icon>
+              </el-button>
+            </el-col>
+            <el-col :span="2" :offset="0" style="text-align: right; font-size: small;">
                 Mode: <el-switch
                     v-model="value1"
                     inline-prompt
@@ -17,7 +25,10 @@
     <div id="vditor" name="description" style="z-index: 999;"></div>
     <el-button @click="setEditArea()">(测试用)改变富文本编辑器内容</el-button>
     <el-button @click="getEditArea()">(测试用)提取富文本编辑器内容</el-button>
+    <el-button @click="exportDocument1()">(测试用)使失效</el-button>
+    <el-button @click="exportDocument2()">(测试用)使生效</el-button>
     <span>{{ editorContent }}</span>
+    <div>{{ cursorPosition }}</div>
 </template>
 <script>
   import Vditor from "vditor"
@@ -26,10 +37,13 @@
 export default {
   data(){
       return{
-          contentEditor:"",
+          contentEditor: "",
           value1: false,
           fileName: "Markdown在线编辑(以后这里会显示文件名)",
-          editorContent:"",
+          editorContent: "",
+          cursorPosition: {top: 0, left: 0},
+          edible: true,
+          shareable: true,
       }
   },
   mounted(){
@@ -54,7 +68,10 @@ export default {
               this.contentEditor.setValue("hello,Vditor+Vue!"),
               this.contentEditor.setTheme("dark")
           }
-      })
+      });
+      setInterval(() => {
+        this.cursorPosition = this.contentEditor.getCursorPosition();
+      }, 500)
   },
   methods:{
     setEditArea() {
@@ -71,11 +88,21 @@ export default {
             this.contentEditor.setTheme("dark","dark","dark");
         }
     },
+    exportDocument1() {
+        // var test = this.contentEditor.exportJSON(this.editorContent);
+        // console.log(test);
+        this.contentEditor.disabled();
+    },
+    exportDocument2() {
+        // var test = this.contentEditor.exportJSON(this.editorContent);
+        // console.log(test);
+        this.contentEditor.enable();
+    },
     websocketInit() {
       var that = this;
-      ws = new WebSocket("ws://8.130.25.189/ws/notification/");
+      ws = new WebSocket("ws://8.130.25.189/ws/text/");
       ws.onopen = function () {
-        console.log("websockt已经打开");
+        console.log("文档websocket已经打开");
       };
       ws.onmessage = function (message) {
         var parsedData = JSON.parse(message.data);
@@ -88,7 +115,7 @@ export default {
       };
       ws.onclose = function () {
         //服务器连接关闭
-        console.log("websocket已关闭");
+        console.log("文档websocket已关闭");
       };
     },
     sendMessage() {
