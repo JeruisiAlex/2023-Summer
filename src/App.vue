@@ -5,7 +5,8 @@
       <div class="grid-content header-icon"><el-icon><Menu /></el-icon></div>
     </el-col>
     <el-col :span="6"><div id="site-name" class="grid-content" style="text-align: left;" @click="this.$router.push('/'+this.$store.state.uid+'/GroupPage')">Originate Pro</div></el-col>
-    <el-col :span="15"><div class="grid-content"></div></el-col>
+    <el-col :span="15"><div class="grid-content">    <el-button @click="testNotification(20)">(测试用)添加20条消息</el-button>
+    <el-button @click="this.$router.push('/1/1/DecomentPage')">(测试用)富文本编辑器</el-button></div></el-col>
     <el-col :span="1">
       <div class="grid-content header-icon">
         <el-popover
@@ -164,8 +165,6 @@
   <el-main style="overflow: hidden;">
     <el-scrollbar>
     <router-view/>
-    <el-button @click="testNotification(20)">(测试用)添加20条消息</el-button>
-    <el-button @click="this.$router.push('/1/1/DecomentPage')">(测试用)富文本编辑器</el-button>
   </el-scrollbar>
   </el-main>
   <el-drawer
