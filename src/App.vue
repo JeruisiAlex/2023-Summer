@@ -6,7 +6,7 @@
     </el-col>
     <el-col :span="6"><div id="site-name" class="grid-content" style="text-align: left;" @click="this.$router.push('/'+this.$store.state.uid+'/GroupPage/0')">Originate Pro</div></el-col>
     <el-col :span="15"><div class="grid-content">    <el-button @click="testNotification(20)">(测试用)添加20条消息</el-button>
-    <el-button @click="this.$router.push('/1/1/DecomentPage')">(测试用)富文本编辑器</el-button></div></el-col>
+    <el-button @click="this.$router.push('/1/1/1/DocumentPage')">(测试用)富文本编辑器</el-button></div></el-col>
     <el-col :span="1">
       <div class="grid-content header-icon">
         <el-popover
@@ -1053,15 +1053,46 @@ export default {
       },
       addReadNotification(id) {
         store.commit('addNotificationRead',id);
-
+        var newObj = {
+          type: "func",
+          func: "process",
+          data: [id],
+        }
+        ws.send(JSON.stringify(newObj));
       },
       deleteNotification(id) {
         store.commit('deleteNotification',id);
+        var newObj = {
+          type: "func",
+          func: "delete",
+          data: [id],
+        }
+        ws.send(JSON.stringify(newObj));
       },
       setAllReadNotificationRead() {
+        var messageList=[];
+        state.notificationUnread.some(function (value) {
+          messageList.push(value.id);
+        });
+        var newObj = {
+          type: "func",
+          func: "process",
+          data: messageList,
+        }
+        ws.send(JSON.stringify(newObj));
         store.commit('setAllNotificationRead');
       },
       deleteAllNotificaitonRead() {
+        var messageList=[];
+        state.notificationRead.some(function (value) {
+          messageList.push(value.id);
+        });
+        var newObj = {
+          type: "func",
+          func: "delete",
+          data: messageList,
+        }
+        ws.send(JSON.stringify(newObj));
         store.commit('deleteAllNotificationRead');
       },
 
@@ -1139,10 +1170,17 @@ export default {
       ws.send(JSON.stringify(newObj));
     },
     rejectInvitaion() {
-
+      var newObj = {
+        type: "invite.response",
+        response: "FALSE",
+        sender_id: this.localDialogNotification.by,
+        receiver_id: store.state.uid,
+        team_id: this.localDialogNotification.forthing
+      }
+      ws.send(JSON.stringify(newObj));
     },
     jumpToTeamChat() {
-
+      // 待开发
     },
     sendMessage() {
       const now = new Date();

@@ -33,8 +33,8 @@ const routes = [
   },
   {
     path: '/:groupid/:projectid/:documentid/DocumentPage',
-    name: 'DecomentPage',
-    component: () => import(/* webpackChunkName: "about" */ '../views/DecomentPage.vue')
+    name: 'DocumentPage',
+    component: () => import(/* webpackChunkName: "about" */ '../views/DocumentPage.vue')
   }
 ]
 
