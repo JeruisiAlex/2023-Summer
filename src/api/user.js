@@ -44,3 +44,11 @@ export function updateUserInformation(username,first_name,last_name,gender,phone
 	data.append("icon",icon);
     return post('/api/user/change_profile/',data);
 }
+
+export function getUserInformation(user_id){
+	return get('/api/user/get_profile/?user_id='+user_id);
+}
+
+export function getUserGroup(){
+    return get('/api/user/get_team/');
+}

@@ -7,6 +7,7 @@ export default createStore({
     uid: 0,
     userName: '',
     userImage: '',
+    userGroupList: [],
     hasMessage: false,
     localNotificationid: 0,
     notificationUnread: [],
@@ -31,12 +32,15 @@ export default createStore({
         for(;lenth<4;lenth++){
           s[1]=s[1]+'=';
         }
-        console.log(s[1]);
       }
       var message=JSON.parse(atob(s[1]));
+      state.token=token;
       state.uid=message.id;
       state.userName=message.username;
       state.isLogin=true;
+    },
+    updateGroupList(state,groupList){
+      state.userGroupList=groupList;
     },
     addNotificationUnread(state,data) {
       console.log(data.by);

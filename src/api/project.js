@@ -1,9 +1,9 @@
 import { post, get} from './api';
 
-export function createProject(name,creator_id,introduction){
+export function createProject(name,team_id,introduction){
 	var data=new FormData();
 	data.append("name",name);
-	data.append("creator_id",creator_id);
+	data.append("team_id",team_id);
 	data.append("introduction",introduction);
 	return post('/api/project/create/',data);
 }
