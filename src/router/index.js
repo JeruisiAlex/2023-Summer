@@ -22,22 +22,22 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/Chatroom.vue')
   },
   {
-    path: '/:uid/GroupPage',
+    path: '/:uid/GroupPage/:groupid',
     name: 'GroupPage',
     component: () => import(/* webpackChunkName: "about" */ '../views/GroupPage.vue')
   },
   {
-    path: '/:uid/MyProject',
+    path: '/:uid/MyProject/:projectid',
     name: 'MyProject',
     component: () => import(/* webpackChunkName: "about" */ '../views/MyProject.vue')
   },
   {
-    path: '/:groupid/:projectid/DesignPage',
+    path: '/:groupid/:projectid/:designid/DesignPage',
     name: 'DesignPage',
     component: () => import(/* webpackChunkName: "about" */ '../views/DesignPage.vue')
   },
   {
-    path: '/:groupid/:projectid/DecomentPage',
+    path: '/:groupid/:projectid/:documentid/DocumentPage',
     name: 'DecomentPage',
     component: () => import(/* webpackChunkName: "about" */ '../views/DecomentPage.vue')
   }

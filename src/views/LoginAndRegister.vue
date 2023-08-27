@@ -578,7 +578,7 @@ form {
 import store from '@/store';
 import { ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
-import { userRister, userLogin, sendVCode, findPassword} from '../api/user.js';
+import { userRister, userLogin, sendVCode, findPassword, getUserGroup } from '../api/user.js';
 
 export default{
   data() {
@@ -714,11 +714,22 @@ export default{
         Login() {
           this.$refs.loginRef.validate((valid) => {
             if (valid) {
-              var promise=userLogin(this.loginForm.name,this.loginForm.password);
-              promise.then((result)=>{
+              var promise1=userLogin(this.loginForm.name,this.loginForm.password);
+              promise1.then((result)=>{
                 if(this.MessageCatch(result)){
                   store.commit('Login',result.token);
-                  this.$router.push('/'+store.state.uid+'/GroupPage');
+                  var promise2=getUserGroup();
+                  promise2.then((result)=>{
+                    if(this.MessageCatch(result)){
+                      store.commit('updateGroupList',result.data);
+                      if(store.state.userGroupList.length==0){
+                        this.$router.push('/'+store.state.uid+'/GroupPage/0');
+                      }
+                      else{
+                        this.$router.push('/'+store.state.uid+'/GroupPage/'+store.state.userGroupList[0].id);
+                      }
+                    }
+                  })
                 }
               })
             }

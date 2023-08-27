@@ -280,9 +280,9 @@ nav a.router-link-exact-active {
 }
 
 
-.el-row {
+/* .el-row {
   
-}
+} */
 .el-row:last-child {
   margin-bottom: 0;
 }
@@ -297,7 +297,7 @@ nav a.router-link-exact-active {
 }
 
 .header-icon {
-  margin-top: 4px;
+  margin-top: 3px;
   transition: 0.2s;
 }
 
@@ -848,6 +848,7 @@ form {
 </style>
 
 <script>
+let ws;
 import { sendVCode, findPassword } from './api/user.js';
 import { ElMessage } from 'element-plus';
 import { ref, watch } from 'vue';
@@ -943,11 +944,23 @@ export default {
       }
     },
 
+    mounted() {
+      // this.websocketInit();
+    },
+
+    watch: {
+      "$store.state.isLogin" (newStore,oldStore){
+        if (newStore===true)
+          this.websocketInit();
+      },
+
+    },
+
     methods: {
       displayDrawer() {
         this.drawer = true;
       },
-      undisplayDrawer(jumpto) { //待添加聊天与项目的路由
+      undisplayDrawer(jumpto) {
         if (jumpto===1)
           router.push('/'+store.state.uid+'/GroupPage');
         else if (jumpto===2)
@@ -963,6 +976,7 @@ export default {
         this.dialogBool=true;
       },
       logout() {
+          ws.close();
           store.commit('Logout');
           router.push('/');
       },
@@ -978,7 +992,6 @@ export default {
         if (from===1)
           this.addReadNotification(item.id);
       },
-
 
       FindPassword(){
         this.$refs.findPasswordRef.validate((valid) => {
@@ -1050,38 +1063,82 @@ export default {
       deleteAllNotificaitonRead() {
         store.commit('deleteAllNotificationRead');
       },
+
+      websocketInit() {
+      var that = this;
+      ws = new WebSocket("ws://8.130.25.189/ws/notification/");
+      ws.onopen = function () {
+        console.log("消息中心的websocket已打开");
+      };
+      ws.onmessage = function (message) {
+        var parsedData = JSON.parse(message.data);
+        var newObj = {
+          type: parsedType,
+          by: parsedData.operator_name,
+          forthing: parsedData.team_name,
+          content: parsedData.msg,
+        };
+        console.log(parsedData);
+        console.log(newObj);
+      };
+      ws.onclose = function () {
+        //服务器连接关闭
+        console.log("消息中心的websocket已关闭");
+      };
+    },
+    sendMessage() {
+      const now = new Date();
+      console.log(now)
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1; // 月份从0开始，所以要加1
+      const day = now.getDate();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const seconds = now.getSeconds();
+      var newObj = {
+        name: "kangjiaqi",
+        content: this.messageInput,
+        time: `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`,
+        realtime : now
+      };
+      ws.send(JSON.stringify(newObj));
+      this.messageInput = "";
+    },
       // 下列函数仅供测试
-      testNotification(num) {
-        for (var i=0;i<num;i++) {
-          var j=i.toString();
-          console.log(j);
-          var data={
-            type: "邀请",
-            by: "user"+j,
-            forthing: "文档"+j,
-            content: "user"+j+"邀请你编写文档"+"\""+j+"\"",
-          };
-          var data2={
-            type: "@你",
-            by: "user"+i.toString(),
-            forthing: "团队"+i.toString(),
-            content: "user"+i.toString()+"在团队"+"\""+i.toString()+"\""+"中@了你",
-          }
-          var data3={
-            type: "普通",
-            by: "user"+i.toString(),
-            forthing: "团队"+i.toString(),
-            content: "user"+i.toString()+"在团队"+"\""+i.toString()+"\""+"发了一个消息",
-          }
-          if (i%3===0)
-            store.commit('addNotificationUnread',data);
-          else if (i%3===1)
-            store.commit('addNotificationUnread',data2);
-          else
-            store.commit('addNotificationUnread',data3);
+    testNotification(num) {
+      for (var i=0;i<num;i++) {
+        var j=i.toString();
+        console.log(j);
+        var data={
+          id: i,
+          type: "邀请",
+          by: "user"+j,
+          forthing: "文档"+j,
+          content: "user"+j+"邀请你编写文档"+"\""+j+"\"",
+        };
+        var data2={
+          id: i,
+          type: "@你",
+          by: "user"+i.toString(),
+          forthing: "团队"+i.toString(),
+          content: "user"+i.toString()+"在团队"+"\""+i.toString()+"\""+"中@了你",
         }
-        console.log(store.state.notificationUnread);
+        var data3={
+          id: i,
+          type: "普通",
+          by: "user"+i.toString(),
+          forthing: "团队"+i.toString(),
+          content: "user"+i.toString()+"在团队"+"\""+i.toString()+"\""+"发了一个消息",
+        }
+        if (i%3===0)
+          store.commit('addNotificationUnread',data);
+        else if (i%3===1)
+          store.commit('addNotificationUnread',data2);
+        else
+          store.commit('addNotificationUnread',data3);
       }
+      console.log(store.state.notificationUnread);
     }
+  }
 }
 </script>

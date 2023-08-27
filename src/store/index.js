@@ -7,8 +7,8 @@ export default createStore({
     uid: 0,
     userName: '',
     userImage: '',
+    userGroupList: [],
     hasMessage: false,
-    localNotificationid: 0,
     notificationUnread: [],
     notificationRead: [],
   },
@@ -31,24 +31,33 @@ export default createStore({
         for(;lenth<4;lenth++){
           s[1]=s[1]+'=';
         }
-        console.log(s[1]);
       }
       var message=JSON.parse(atob(s[1]));
-      console.log(message);
+      state.token=token;
       state.uid=message.id;
       state.userName=message.username;
       state.isLogin=true;
     },
+    updateGroupList(state,groupList){
+      state.userGroupList=groupList;
+    },
     addNotificationUnread(state,data) {
-      console.log(data.by);
       state.notificationUnread.unshift({ //对象数组
-        id: state.localNotificationid,
+        id: data.id,
         t: data.type,
         b: data.by,
         f: data.forthing,
         c: data.content,
       });
-      state.localNotificationid++;
+    },
+    addNotificationReadDirect(state,data) {
+      state.notificationRead.unshift({ //对象数组
+        id: data.id,
+        t: data.type,
+        b: data.by,
+        f: data.forthing,
+        c: data.content,
+      });
     },
     addNotificationRead(state,id) {
       state.notificationUnread.some(function (value) {

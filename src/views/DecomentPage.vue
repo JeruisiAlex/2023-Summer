@@ -22,7 +22,7 @@
 <script>
   import Vditor from "vditor"
   import "vditor/dist/index.css"
-
+  let ws;
 export default {
   data(){
       return{
@@ -33,6 +33,7 @@ export default {
       }
   },
   mounted(){
+      // this.websocketInit();
       this.contentEditor = new Vditor("vditor",{
           height:600,
           toolbarConfig:{
@@ -69,6 +70,44 @@ export default {
         else {
             this.contentEditor.setTheme("dark","dark","dark");
         }
+    },
+    websocketInit() {
+      var that = this;
+      ws = new WebSocket("ws://8.130.25.189/ws/notification/");
+      ws.onopen = function () {
+        console.log("websockt已经打开");
+      };
+      ws.onmessage = function (message) {
+        var parsedData = JSON.parse(message.data);
+        var newObj = {
+          name: parsedData.name,
+          content: parsedData.content,
+          time: parsedData.time,
+        };
+        that.nowChosenGroup.contentArray.push(newObj);
+      };
+      ws.onclose = function () {
+        //服务器连接关闭
+        console.log("websocket已关闭");
+      };
+    },
+    sendMessage() {
+      const now = new Date();
+      console.log(now)
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1; // 月份从0开始，所以要加1
+      const day = now.getDate();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const seconds = now.getSeconds();
+      var newObj = {
+        name: "kangjiaqi",
+        content: this.messageInput,
+        time: `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`,
+        realtime : now
+      };
+      ws.send(JSON.stringify(newObj));
+      this.messageInput = "";
     },
   }
 }
