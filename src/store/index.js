@@ -8,6 +8,9 @@ export default createStore({
     userName: '',
     userImage: '',
     hasMessage: false,
+    localNotificationid: 0,
+    notificationUnread: [],
+    notificationRead: [],
   },
   getters: {
 
@@ -36,6 +39,52 @@ export default createStore({
       state.userName=message.username;
       state.isLogin=true;
     },
+    addNotificationUnread(state,data) {
+      console.log(data.by);
+      state.notificationUnread.unshift({ //对象数组
+        id: state.localNotificationid,
+        t: data.type,
+        b: data.by,
+        f: data.forthing,
+        c: data.content,
+      });
+      state.localNotificationid++;
+    },
+    addNotificationRead(state,id) {
+      state.notificationUnread.some(function (value) {
+        if (value.id === id) {
+          state.notificationRead.push(value);
+          state.notificationUnread.splice(state.notificationUnread.indexOf(value),1);
+          return true;
+        }
+      });
+    },
+    deleteNotification(state,id) {
+      var fromRead = false;
+        state.notificationRead.some(function (value) {
+          if (value.id === id) {
+            state.notificationRead.splice(state.notificationRead.indexOf(value),1);
+            fromRead = true;
+            return true;
+          }
+        });
+        if (fromRead === false)
+          state.notificationUnread.some(function (value) {
+            if (value.id === id) {
+              state.notificationUnread.splice(state.notificationUnread.indexOf(value),1);
+              return true;
+            }
+        });
+    },
+    setAllNotificationRead(state) {
+      state.notificationUnread.some(function (value) {
+          state.notificationRead.push(value);
+      });
+      state.notificationUnread=[];
+    },
+    deleteAllNotificationRead(state) {
+      state.notificationRead=[];
+    }
   },
   actions: {
 
