@@ -1,7 +1,7 @@
 <template>
     <div style="height: 30px;">
         <el-row style=" color: black;">
-            <el-col :span="20" style="font-size: large; font-weight: bold;">{{ FileName }}</el-col>
+            <el-col :span="20" style="font-size: large; font-weight: bold;">{{ fileName }}</el-col>
             <el-col :span="4" :offset="0" style="text-align: right; font-size: small;">
                 Mode: <el-switch
                     v-model="value1"
@@ -16,17 +16,20 @@
     </div>
     <div id="vditor" name="description" style="z-index: 999;"></div>
     <el-button @click="setEditArea()">(测试用)改变富文本编辑器内容</el-button>
+    <el-button @click="getEditArea()">(测试用)提取富文本编辑器内容</el-button>
+    <span>{{ editorContent }}</span>
 </template>
 <script>
   import Vditor from "vditor"
   import "vditor/dist/index.css"
-  import { Hide, View, Check, Close} from '@element-plus/icons-vue'
+
 export default {
   data(){
       return{
           contentEditor:"",
           value1: false,
-          FileName: "Markdown在线编辑(以后这里会显示文件名)"
+          fileName: "Markdown在线编辑(以后这里会显示文件名)",
+          editorContent:"",
       }
   },
   mounted(){
@@ -53,10 +56,13 @@ export default {
       })
   },
   methods:{
-    setEditArea(){
-        this.contentEditor.setValue("123");
+    setEditArea() {
+        this.contentEditor.setValue(this.editorContent);
     },
-    changeDisplayMode(){
+    getEditArea() {
+        this.editorContent = this.contentEditor.getValue();
+    },
+    changeDisplayMode() {
         if (this.value1===true) {
             this.contentEditor.setTheme("light","light","light");
         }

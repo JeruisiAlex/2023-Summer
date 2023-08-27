@@ -180,7 +180,7 @@
   </el-drawer>
   <el-dialog v-model="this.dialogBool" width="600px">
     <el-form ref="findPasswordRef" :model="findPassword" :rules="findPasswordRules">
-        <h2 class="title">找回密码</h2>
+        <h2 class="title">修改密码</h2>
         <div class="input-field">
           <i class="fa-solid fa-envelope"></i>
           <el-form-item prop="email">
