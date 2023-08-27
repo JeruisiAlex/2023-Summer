@@ -1071,7 +1071,7 @@ export default {
       },
       setAllReadNotificationRead() {
         var messageList=[];
-        state.notificationUnread.some(function (value) {
+        store.state.notificationUnread.some(function (value) {
           messageList.push(value.id);
         });
         var newObj = {
@@ -1084,7 +1084,7 @@ export default {
       },
       deleteAllNotificaitonRead() {
         var messageList=[];
-        state.notificationRead.some(function (value) {
+        store.state.notificationRead.some(function (value) {
           messageList.push(value.id);
         });
         var newObj = {
@@ -1163,8 +1163,8 @@ export default {
       var newObj = {
         type: "invite.response",
         response: "TRUE",
-        sender_id: this.localDialogNotification.by,
-        receiver_id: store.state.uid,
+        sender_id: store.state.uid,
+        receiver_id: this.localDialogNotification.by,
         team_id: this.localDialogNotification.forthing
       }
       ws.send(JSON.stringify(newObj));
@@ -1173,8 +1173,8 @@ export default {
       var newObj = {
         type: "invite.response",
         response: "FALSE",
-        sender_id: this.localDialogNotification.by,
-        receiver_id: store.state.uid,
+        sender_id: store.state.uid,
+        receiver_id: this.localDialogNotification.by,
         team_id: this.localDialogNotification.forthing
       }
       ws.send(JSON.stringify(newObj));
