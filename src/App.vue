@@ -216,9 +216,9 @@
     </el-scrollbar>
     <template #footer>
       <span class="dialog-footer">
-        <el-button v-if="localDialogNotification.type==='邀请'" type="danger" @click="centerDialogVisible = false">拒绝</el-button>
+        <el-button v-if="localDialogNotification.type==='邀请'" type="danger" @click="centerDialogVisible = false; rejectInvitaion()">拒绝</el-button>
         <el-button v-if="localDialogNotification.type==='邀请'" type="success" @click="centerDialogVisible = false; acceptInvitation()">接受</el-button>
-        <el-button v-if="localDialogNotification.type==='@你'" type="warning" @click="centerDialogVisible = false">
+        <el-button v-if="localDialogNotification.type==='@你'" type="warning" @click="centerDialogVisible = false; jumpToTeamChat()">
           跳转
         </el-button>
         <el-button v-if="localDialogNotification.type==='@你'" type="primary" @click="centerDialogVisible = false">
@@ -953,7 +953,6 @@ export default {
         if (newStore===true)
           this.websocketInit();
       },
-
     },
 
     methods: {
@@ -1054,6 +1053,7 @@ export default {
       },
       addReadNotification(id) {
         store.commit('addNotificationRead',id);
+
       },
       deleteNotification(id) {
         store.commit('deleteNotification',id);
@@ -1091,7 +1091,7 @@ export default {
             if (parsedData.processed===false){
               store.commit('addNotificationUnread',newObj);
             } else {
-              store.commit('addNotificationRead',newObj);
+              store.commit('addNotificationReadDirect',newObj);
             }
             console.log(newObj);
           } else if (parsedData.type==='at') {
@@ -1105,7 +1105,7 @@ export default {
             if (parsedData.processed===false){
               store.commit('addNotificationUnread',newObj);
             } else {
-              store.commit('addNotificationRead',newObj);
+              store.commit('addNotificationReadDirect',newObj);
             }
           } else if (parsedData.type==='normal') {
             var newObj = {
@@ -1118,7 +1118,7 @@ export default {
             if (parsedData.processed===false){
               store.commit('addNotificationUnread',newObj);
             } else {
-              store.commit('addNotificationRead',newObj);
+              store.commit('addNotificationReadDirect',newObj);
             }
           }
         }
@@ -1129,6 +1129,19 @@ export default {
     },
 
     acceptInvitation() {
+      var newObj = {
+        type: "invite.response",
+        response: "TRUE",
+        sender_id: this.localDialogNotification.by,
+        receiver_id: store.state.uid,
+        team_id: this.localDialogNotification.forthing
+      }
+      ws.send(JSON.stringify(newObj));
+    },
+    rejectInvitaion() {
+
+    },
+    jumpToTeamChat() {
 
     },
     sendMessage() {
