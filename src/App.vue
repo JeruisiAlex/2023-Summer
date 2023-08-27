@@ -1181,6 +1181,7 @@ export default {
     },
     jumpToTeamChat() {
       // 待开发
+      router.push('/'+store.state.uid+'/Chatroom');
     },
     sendMessage() {
       const now = new Date();
