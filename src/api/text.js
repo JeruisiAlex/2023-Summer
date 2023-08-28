@@ -16,9 +16,17 @@ export function deleteText(text_id){
 }
 
 export function getAText(text_id,project_id){
-	return get('/api/text/gettexts/?text_id='+text_id+'&project_id='+project_id);
+	return get('/api/text/gettext/?text_id='+text_id+'&project_id='+project_id);
 }
 
 export function getAllText(project_id){
 	return get('/api/text/gettexts/?project_id='+project_id);
+}
+
+export function saveText(text_id,project_id,content){
+	var data=new FormData();
+	data.append("text_id",text_id);
+	data.append("project_id",project_id);
+	data.append("content",content);
+	return post('/api/text/save/',data);
 }
