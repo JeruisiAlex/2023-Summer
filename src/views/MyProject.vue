@@ -5,7 +5,7 @@
         <el-text class="scrollbar-title">项目列表</el-text>
         <el-button type="primary" @click="" ><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建项目</el-button>
         <el-button type="primary" @click="" ><el-icon style="margin-right: 4px;"><Switch /></el-icon>切换团队</el-button>
-        <el-button type="primary" v-for="item in this.currentGroup.projectCount" :key="item" :plain="item-1!=this.currentGroup.current" class="scrollbar-item">{{ this.currentGroup.projectList[item-1].name }}</el-button>
+        <el-button type="primary" v-for="item in this.currentGroup.projectCount" :key="item" :plain="item-1!=this.currentGroup.current" @click="this.SwitchProject(this.currentGroup.projectList[item-1].id)" class="scrollbar-item">{{ this.currentGroup.projectList[item-1].name }}</el-button>
       </el-scrollbar>
     </el-aside>
     <el-container class="second-container">
@@ -13,7 +13,7 @@
         <el-container>
           <el-header height="20%" style="display: flex;justify-content: center;align-items: center;">
             <el-text class="group-title">{{ this.currentProject.name }}</el-text>
-            <el-button type="primary" @click="" style="height: 50px;"><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑项目信息</el-button>
+            <el-button type="primary" v-if="this.currentProject.id!=0" @click="this.OpenDialog(2)" style="height: 50px;"><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑项目信息</el-button>
           </el-header>
           <el-main>
             <el-text class="group-introduction">项目简介:{{ this.currentProject.introduction }}</el-text>
@@ -56,6 +56,19 @@
       </el-container>
     </el-container>
   </el-container>
+  <el-dialog v-model="this.updateProject.isOpen" title="编辑项目信息" width="500px">
+    <el-form ref="updateProjectRef" :model="updateProject" :rules="updateProjectRules" label-width="70px">
+        <el-form-item prop="name" label="项目名称" class="dialog-form-item">
+          <el-input type="text" v-model="updateProject.name" placeholder="请输入项目名称" maxlength="20" class="dialog-input" />
+        </el-form-item>
+        <el-form-item prop="introduction" label="项目简介" class="dialog-form-item">
+          <el-input type="textarea" v-model="updateProject.introduction" placeholder="请输入项目介绍" maxlength="200" show-word-limit="true" :autosize="{ minRows: 2, maxRows: 6 }" class="dialog-input" />
+        </el-form-item>
+        <el-form-item >
+          <el-button type="primary" @click="this.UpdateProject()" style="width: 100px;">保存编辑</el-button>
+        </el-form-item>
+    </el-form>
+  </el-dialog>
   <el-dialog v-model="this.createGraph.isOpen" title="创建页面原型" width="500px">
     <el-form ref="createGraphRef" :model="createGraph" :rules="createGraphRules" label-width="70px">
         <el-form-item prop="name" label="页面名称" class="dialog-form-item">
@@ -219,7 +232,7 @@ import store from '@/store';
 import { ElMessage } from 'element-plus';
 import { getUserGroup, checkUserInGroup } from '../api/user.js';
 import { getGroupInformation } from '../api/group.js';
-import { getProjectInformation } from '../api/project.js';
+import { getProjectInformation, updateProject } from '../api/project.js';
 import { createGraph, deleteGraph } from '../api/graph.js';
 import { createText, deleteText } from '../api/text.js';
 
@@ -268,6 +281,22 @@ export default{
         isOpen: false,
         name: '',
       },
+      updateProjectRules:{
+        name:[{
+          validator: (rule, value, callback) => {
+            if(value === ''){
+              callback("请输入项目名称");
+            }
+            callback()
+          }, type: 'string', trigger: 'blur'}],
+        introduction:[{
+          validator: (rule, value, callback) => {
+            if(value === ''){
+              callback("请输入项目简介");
+            }
+            callback()
+          }, type: 'string', trigger: 'blur'}],
+      },
       createGraphRules:{
         name:[{
           validator: (rule, value, callback) => {
@@ -292,14 +321,40 @@ export default{
     SwitchGroup(){
 
     },
-    SwitchProject(){
-
+    SwitchProject(projectid){
+      var promise=checkUserInGroup(this.uid,this.currentGroup.id);
+      promise.then((result) => {
+        if(result.code==0){
+          this.Load(true, this.currentGroup.id, projectid);
+        }
+        else{
+          this.Load(true, this.currentGroup.id, projectid);
+        }
+      })
     },
     CreateProject(){
 
     },
     UpdateProject(){
-
+      this.$refs.updateProjectRef.validate((valid) => {
+        if(valid){
+          var promise1=checkUserInGroup(this.uid,this.currentGroup.id);
+          promise1.then((value) => {
+            if(value.code==0){
+              var promise2=updateProject(this.currentProject.id, this.updateProject.name, this.updateProject.introduction);
+              promise2.then((result) => {
+                if(this.MessageCatch(result, true)){
+                  this.Load(false, this.currentGroup.id, this.currentProject.id);
+                }
+              })
+            }
+            else{
+              this.Load(true, this.currentGroup.id, this.currentProject.id);
+            }
+            this.updateProject.isOpen=false;
+          })
+        }
+      })
     },
     CreateGraph(){
       this.$refs.createGraphRef.validate((valid) => {
@@ -426,11 +481,13 @@ export default{
               break;
             }
             if(this.group.count-i==1){
-              ElMessage({
-                message: '您不在该团队中，已重新加载您所在团队',
-                grouping: true,
-                type: 'warning',
-              })
+              if(groupid>0){
+                ElMessage({
+                  message: '您不在该团队中，已重新加载您所在团队',
+                  grouping: true,
+                  type: 'warning',
+                })
+              }
               this.currentGroup.id=this.group.list[0].id;
               this.group.current=0;
             }
@@ -454,11 +511,13 @@ export default{
               break;
             }
             if(this.currentGroup.projectCount-i==1){
-              ElMessage({
-                message: '该项目不存在，已重新加载存在项目',
-                grouping: true,
-                type: 'warning',
-              })
+              if(projectid>0){
+                ElMessage({
+                  message: '该项目不存在，已重新加载存在项目',
+                  grouping: true,
+                  type: 'warning',
+                })
+              }
               this.currentProject.id=this.currentGroup.projectList[0].id;
               this.currentGroup.current=0;
             }
