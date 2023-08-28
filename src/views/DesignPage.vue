@@ -68,15 +68,15 @@ export default {
       return selectElement;
     },
     init() {
-      var ele = document.querySelector(
+      var ele1 = document.querySelector(
         "#app > section > header > div > div > div:nth-child(3) > span > button:nth-child(2)"
       );
-      ele.addEventListener("click", () => {
+      ele1.addEventListener("click", () => {
         this.showPreview = true;
         var ele;
         while (ele == null) {
           ele = document.querySelector(
-            "body > div:nth-child(3) > div > div > header > button"
+            "body > div:nth-child(4) > div > div > header > button"
           );
         }
 
@@ -100,7 +100,7 @@ export default {
         });
         this.selectBox = this.createSelectBox();
         var header = document.querySelector(
-          "body > div:nth-child(3) > div > div > footer > span"
+          "body > div:nth-child(4) > div > div > footer > span"
         );
         header.appendChild(newElButton);
         header.appendChild(this.selectBox)

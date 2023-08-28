@@ -29,7 +29,7 @@
       class="eachMessageContainer"
       v-for="(item, index) in groupMessage[nowWs].content"
       :key="index"
-      v-if="nowWs !=-1"
+      v-if="nowWs != -1"
     >
       <div class="timeContainer">
         <div v-if="isTimeDifferenceGreaterThan5Second(index)">
@@ -37,7 +37,9 @@
         </div>
       </div>
       <div class="bubble left" v-if="item.name !== $store.state.userName">
-        <a class="avatar" @click="jumpPersonalPage(item)"><img :src="item.icon" @click="jumpPersonalPage(item)" /></a>
+        <a class="avatar" @click="jumpPersonalPage(item)"
+          ><img :src="item.icon" @click="jumpPersonalPage(item)"
+        /></a>
         <div class="wrap">
           <div class="nameContainer">{{ item.name }}</div>
           <div class="content">
@@ -46,7 +48,9 @@
         </div>
       </div>
       <div class="bubble right" v-else>
-        <a class="avatar" @click="jumpPersonalPage(item)"><img :src="item.icon" @click="jumpPersonalPage(item)" /></a>
+        <a class="avatar" @click="jumpPersonalPage(item)"
+          ><img :src="item.icon" @click="jumpPersonalPage(item)"
+        /></a>
         <div class="wrap">
           <div class="nameContainer">{{ item.name }}</div>
           <div class="content">
@@ -103,7 +107,6 @@ export default {
     this.prepareGroupMessage();
     this.scrollToBottom();
     this.websocketInit();
-    console.log(store.state.userName)
   },
   data() {
     return {
@@ -122,18 +125,33 @@ export default {
       wsArray: [],
     };
   },
+  beforeRouteUpdate(to, form, next) {
+    next((vm) => {
+      vm.closeWebsocket()
+      console.log("1")
+    });
+  },
+  beforeRouteLeave (to, form, next) {
+    next((vm) => {
+      vm.closeWebsocket()
+    });
+  },
   methods: {
-    jumpPersonalPage(item){
+    closeWebsocket() {
+      window.addEventListener("beforeunload", () => {
+        for (var i = 0; i < this.wsArray.length; i++) {
+          this.wsArray[i].close();
+          console.log("websocket" + i + "已关闭");
+        }
+      });
+    },
+    jumpPersonalPage(item) {
       var uid;
-      for(var i = 0;i < this.allGroupMember.length;i++)
-      {
-        console.log(this.allGroupMember[i])
-        if(this.nowChosenGroup.id === this.allGroupMember[i].groupid)
-        {
-          for(var j = 0;j < this.allGroupMember[i].member.length;j++)
-          {
-            if(this.allGroupMember[i].member[j].username == item.name)
-            uid = this.allGroupMember[i].member[j].id
+      for (var i = 0; i < this.allGroupMember.length; i++) {
+        if (this.nowChosenGroup.id === this.allGroupMember[i].groupid) {
+          for (var j = 0; j < this.allGroupMember[i].member.length; j++) {
+            if (this.allGroupMember[i].member[j].username == item.name)
+              uid = this.allGroupMember[i].member[j].id;
           }
         }
       }
@@ -179,7 +197,9 @@ export default {
     isTimeDifferenceGreaterThan5Second(index) {
       if (index === 0) return true;
       var date1 = new Date(this.groupMessage[this.nowWs].content[index].time);
-      var date2 = new Date(this.groupMessage[this.nowWs].content[index - 1].time);
+      var date2 = new Date(
+        this.groupMessage[this.nowWs].content[index - 1].time
+      );
       const timeDifferenceInMilliseconds = date1 - date2;
       const timeDifferenceInSeconds = timeDifferenceInMilliseconds / 1000;
       return timeDifferenceInSeconds > 300;
@@ -205,36 +225,32 @@ export default {
             var username;
             var userIcon;
             var j = 0;
-            if (tid) console.log(tid);
             var flag = false;
-            var teamNum;
+
             for (j = 0; j < that.groupSize; j++) {
-              if (that.allGroupMember[j].groupid === tid) {
+              if (that.allGroupMember[j].groupid == tid) {
                 for (var k = 0; k < that.allGroupMember[j].member.length; k++) {
-                  console.log(that.allGroupMember[j].member[k].id);
                   if (that.allGroupMember[j].member[k].id === uid) {
-                    console.log("kangjaiqi");
                     username = that.allGroupMember[j].member[k].username;
                     userIcon = that.allGroupMember[j].member[k].icon_address;
                     flag = true;
-                    teamNum = j;
                     break;
                   }
                 }
               }
               if (flag) break;
             }
-            console.log(username);
-            console.log(userIcon);
             var newObj = {
               name: username,
               icon: userIcon,
               content: parsedData.content,
               time: parsedData.timestamp,
             };
-            console.log(teamNum);
-            that.groupMessage[j].content.push(newObj);
-            console.log(newObj);
+            for (var m = 0; m < that.groupMessage.length; m++) {
+              if (that.groupMessage[m].id === tid) {
+                that.groupMessage[m].content.push(newObj);
+              }
+            }
           }
         };
         this.wsArray[i].onclose = function () {
@@ -244,10 +260,9 @@ export default {
       }
     },
     sendMessage() {
-      if(this.nowWs === -1)
-      {
-        this.messageInput = ""
-        return
+      if (this.nowWs === -1) {
+        this.messageInput = "";
+        return;
       }
       const now = new Date();
       const year = now.getFullYear();
@@ -278,8 +293,7 @@ export default {
         },
       };
       this.wsArray[this.nowWs].send(JSON.stringify(newObj));
-      console.log(JSON.stringify(newObj));
-      this.messageInput = ""
+      this.messageInput = "";
     },
     scrollToBottom() {
       this.$nextTick(() => {
@@ -311,7 +325,6 @@ export default {
           team_id: this.nowChosenGroup.id,
         };
         this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
-        console.log(JSON.stringify(leaveObj));
       }
       this.nowWs = i;
       this.nowChosenGroup = item;
@@ -334,7 +347,6 @@ export default {
         team_id: this.nowChosenGroup.id,
       };
       this.wsArray[this.nowWs].send(JSON.stringify(enterobj));
-      console.log(JSON.stringify(enterobj));
     },
   },
   watch: {

@@ -32,7 +32,7 @@
                 <el-text class="project-name">{{ this.currentProject.graphList[item-1].name }}</el-text>
                 <el-text class="creator-name">{{ this.currentProject.graphList[item-1].creator.name }}创建</el-text>
                 <el-button @click="this.DeleteGraph(this.currentProject.graphList[item-1].graph_id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除页面</el-button>
-                <el-button @click="this.Jump('/'+this.currentGroup.id+'/'+this.currentProject.id+'/'+this.currentProject.graphList[item-1].grahp_id+'/DesignPage')"><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑页面</el-button>
+                <el-button @click="this.Jump('/5/4/3/DesignPage')"><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑页面</el-button>
               </div>
             </el-scrollbar>
           </el-container>
