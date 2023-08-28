@@ -1,15 +1,5 @@
 <template>
   <div id="app">
-    <!-- <div
-      style="
-      position: absolute;
-        top: 0px;
-        width: 300px;
-        background-color: white;
-        height: 40px;
-        z-index: 2;
-      "
-    ></div> -->
     <ng-form-design ref="formDesign" />
     <ng-form-build ref="formBuild" />
     <button @click="test1">test1</button>
@@ -20,7 +10,6 @@
 import NgFormElementPlus from "ng-form-elementplus";
 import "ng-form-elementplus/lib/style.css";
 import ConvertJsonToTable from "../components/json-to-table";
-import { ElButton } from "element-plus";
 import html2canvas from "html2canvas";
 export default {
   components: {
@@ -34,18 +23,22 @@ export default {
       formTemplate: {},
       temp: "",
       showPreview: false,
+      selectBox : ""
     };
   },
   methods: {
     getPicture() {
       var ele = document.querySelector(".el-dialog__body");
       if (ele) {
+        var that = this
         html2canvas(ele)
           .then(function (canvas) {
             const imgUrl = canvas.toDataURL("image/jpeg", 1.0);
             const link = document.createElement("a");
             link.href = imgUrl;
-            link.download = "exported_image.jpg"; // Set the download filename
+            var str = that.selectBox.value
+            link.download = "exported_image." + str; // Set the download filename
+            console.log(link.download)
             link.click();
           })
           .catch(function (error) {
@@ -61,17 +54,30 @@ export default {
     test2() {
       this.$refs.formDesign.initModel(this.temp);
     },
+    createSelectBox() {
+      var selectElement = document.createElement("select");
+      var option1 = document.createElement("option");
+      option1.value = "jpg";
+      option1.text = "jpg";
+      var option2 = document.createElement("option");
+      option2.value = "png";
+      option2.text = "png";
+      selectElement.appendChild(option1);
+      selectElement.appendChild(option2);
+      selectElement.classList.add('custom-select');
+      return selectElement;
+    },
     init() {
       var ele = document.querySelector(
         "#app > section > header > div > div > div:nth-child(3) > span > button:nth-child(2)"
       );
       ele.addEventListener("click", () => {
         this.showPreview = true;
-        var ele
+        var ele;
         while (ele == null) {
           ele = document.querySelector(
-          "body > div:nth-child(3) > div > div > header > button"
-        );      
+            "body > div:nth-child(3) > div > div > header > button"
+          );
         }
 
         ele.addEventListener("click", () => {
@@ -79,7 +85,6 @@ export default {
         });
         var dialog = document.querySelector("body > div:nth-child(3) > div");
         dialog.style.zIndex = "9999";
-
         var newElButton = document.createElement("button");
         newElButton.setAttribute("type", "primary");
         newElButton.setAttribute("class", "previewButton");
@@ -93,10 +98,12 @@ export default {
         newElButton.addEventListener("mouseout", () => {
           newElButton.style.backgroundColor = "#409EFF";
         });
+        this.selectBox = this.createSelectBox();
         var header = document.querySelector(
           "body > div:nth-child(3) > div > div > footer > span"
         );
         header.appendChild(newElButton);
+        header.appendChild(this.selectBox)
         console.log(header);
       });
       var elementToDelete = document.querySelector(
@@ -116,4 +123,13 @@ export default {
   },
 };
 </script>
-<style></style>
+<style>
+.custom-select{
+  margin-left: 10px;
+  height: 24px;
+  background-color: #409EFF;
+  color: white;
+  border: 0;
+  border-radius: 3px;
+}
+</style>
