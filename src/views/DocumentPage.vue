@@ -54,9 +54,9 @@ export default {
   mounted(){
     var url = this.$route.path;
     var infos = url.split('/');
-    this.group_id = parseInt(infos[0]);
-    this.project_id = parseInt(infos[1]);
-    this.text_id = parseInt(infos[2]);
+    this.group_id = parseInt(infos[1]);
+    this.project_id = parseInt(infos[2]);
+    this.text_id = parseInt(infos[3]);
     // this.websocketInit();
     this.contentEditor = new Vditor("vditor",{
         height:600,
@@ -81,7 +81,8 @@ export default {
         }
     });
 
-    var promise=getAText(this.text_id,this.project_id);
+    var promise=getAText(parseInt(infos[3]),parseInt(infos[2]));
+    console.log(infos);
     promise.then((result)=>{
       console.log(result);
       this.fileName = result.data.name;
