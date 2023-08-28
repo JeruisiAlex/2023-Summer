@@ -16,7 +16,7 @@ export function deleteText(text_id){
 }
 
 export function getAText(text_id,project_id){
-	return get('/api/text/gettexts/?text_id='+text_id+'&project_id='+project_id);
+	return get('/api/text/gettext/?text_id='+text_id+'&project_id='+project_id);
 }
 
 export function getAllText(project_id){

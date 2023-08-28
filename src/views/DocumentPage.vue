@@ -1,16 +1,16 @@
 <template>
     <div style="height: 30px;">
         <el-row style=" color: black;">
-            <el-col :span="16" style="font-size: large; font-weight: bold;">{{ fileName }}</el-col>
-            <el-col :span="6" style="text-align: right;" >
+            <el-col :span="14" style="font-size: large; font-weight: bold; text-overflow: ellipsis;-o-text-overflow: ellipsis; white-space: nowrap; max-width: 100%; display: block;">{{ fileName }}</el-col>
+            <el-col :span="10" style="text-align: right;" >
               <el-button type="warning" @click="atDocument()" size="small">
                 @邀请
               </el-button>
               <el-button type="primary" @click="saveDocument()" size="small">
                 保存<el-icon class="el-icon--right"><Upload /></el-icon>
               </el-button>
-            </el-col>
-            <el-col :span="2" :offset="0" style="text-align: right; font-size: small;">
+            <!-- </el-col> -->
+            <!-- <el-col :span="4" :offset="0" style="text-align: right; font-size: small;"> -->
                 Mode: <el-switch
                     v-model="value1"
                     inline-prompt
@@ -28,50 +28,65 @@
     <el-button @click="exportDocument1()">(测试用)使失效</el-button>
     <el-button @click="exportDocument2()">(测试用)使生效</el-button>
     <span>{{ editorContent }}</span>
-    <div>{{ cursorPosition }}</div>
+    <!-- <div>{{ cursorPosition }}</div> -->
 </template>
 <script>
   import Vditor from "vditor"
   import "vditor/dist/index.css"
+  import { getAText } from '../api/text.js';
   let ws;
 export default {
   data(){
       return{
           contentEditor: "",
           value1: false,
-          fileName: "Markdown在线编辑(以后这里会显示文件名)",
+          fileName: "文档获取中…",
           editorContent: "",
+          creator: 0,
           cursorPosition: {top: 0, left: 0},
           edible: true,
           shareable: true,
       }
   },
   mounted(){
-      // this.websocketInit();
-      this.contentEditor = new Vditor("vditor",{
-          height:600,
-          toolbarConfig:{
-              pin:true
-          },
-          preview:{
-            theme:{
-                current: "dark"
-            }
-          },
-          cache:{
-              enable: false
-          },
-          counter:{
-            enable: true
-          },
-          after:()=>{
-              this.contentEditor.setValue("hello,Vditor+Vue!"),
-              this.contentEditor.setTheme("dark")
+
+    // this.websocketInit();
+    this.contentEditor = new Vditor("vditor",{
+        height:600,
+        placeholder: "在这里开始编辑",
+        toolbarConfig:{
+            pin:true
+        },
+        preview:{
+          theme:{
+              current: "dark"
           }
-      });
-      setInterval(() => {
-        this.cursorPosition = this.contentEditor.getCursorPosition();
-      }, 500)
+        },
+        cache:{
+            enable: false
+        },
+        counter:{
+          enable: true
+        },
+        after:()=>{
+            this.contentEditor.setValue(""),
+            this.contentEditor.setTheme("dark")
+        }
+    });
+
+    var promise=getAText(1,2);
+    promise.then((result)=>{
+      console.log(result);
+      this.fileName = result.data.name;
+      this.contentEditor.setValue(result.data.content);
+      this.creator = result.data.creator;
+    });
+
+    setInterval(() => {
+      this.editorContent = this.contentEditor.getValue();
+
+      // this.cursorPosition = this.contentEditor.getCursorPosition();
+    }, 500)
   },
   methods:{
     setEditArea() {
@@ -117,6 +132,12 @@ export default {
         //服务器连接关闭
         console.log("文档websocket已关闭");
       };
+    },
+    atDocument() {
+
+    },
+    saveDocument() {
+
     },
     sendMessage() {
       const now = new Date();

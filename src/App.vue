@@ -965,7 +965,7 @@ export default {
         else if (jumpto===2)
           router.push('/'+store.state.uid+'/Chatroom');
         else if (jumpto===3)
-          router.push('/'+store.state.uid+'/MyProject');
+          router.push('/'+store.state.uid+'/0/MyProject/0');
         this.drawer = false;
       },
       displayNotification(type) {
@@ -1101,6 +1101,12 @@ export default {
       ws = new WebSocket("ws://8.130.25.189/ws/notification/");
       ws.onopen = function () {
         console.log("消息中心的websocket已打开");
+        var newObj = {
+          type: "func",
+          func: "get",
+          data: [store.state.uid],
+        }
+        ws.send(JSON.stringify(newObj));
       };
       ws.onmessage = function (message) {
         var parsedData = JSON.parse(message.data);
