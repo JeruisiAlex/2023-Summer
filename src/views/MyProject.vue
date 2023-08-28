@@ -5,18 +5,18 @@
         <el-text class="scrollbar-title">项目列表</el-text>
         <el-button type="primary" @click="" ><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建项目</el-button>
         <el-button type="primary" @click="" ><el-icon style="margin-right: 4px;"><Switch /></el-icon>切换团队</el-button>
-        <el-button type="primary" v-for="item in 20" :key="item" :plain="group.textBoolList[item]" class="scrollbar-item">{{ item }}</el-button>
+        <el-button type="primary" v-for="item in this.currentGroup.projectCount" :key="item" :plain="item-1!=this.currentGroup.current" class="scrollbar-item">{{ this.currentGroup.projectList[item-1].name }}</el-button>
       </el-scrollbar>
     </el-aside>
     <el-container class="second-container">
       <el-header height="20%" class="header-content">
         <el-container>
           <el-header height="20%" style="display: flex;justify-content: center;align-items: center;">
-            <el-text class="group-title">{{ currentGroup.name }}</el-text>
+            <el-text class="group-title">{{ this.currentProject.name }}</el-text>
             <el-button type="primary" @click="" style="height: 50px;"><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑项目信息</el-button>
           </el-header>
           <el-main>
-            <el-text class="group-introduction">项目简介:{{ currentGroup.introduction }}</el-text>
+            <el-text class="group-introduction">项目简介:{{ this.currentProject.introduction }}</el-text>
           </el-main>
         </el-container>
       </el-header>
@@ -25,14 +25,14 @@
           <el-container class="forth-container">
             <el-header style="display: flex;justify-content: center;align-items: center;">
               <el-text class="project-title">设计原型列表</el-text>
-              <el-button type="primary" @click="" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建页面</el-button>
+              <el-button type="primary" @click="this.OpenDialog(3)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建页面</el-button>
             </el-header>
             <el-scrollbar>
-              <div v-for="item in 20" :key="item" class="project-list">
-                <el-text class="project-name">页面名称{{  }}</el-text>
-                <el-text class="creator-name">姓名{{ " " }}创建</el-text>
-                <el-button @click=""><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除页面</el-button>
-                <el-button @click=""><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑页面</el-button>
+              <div v-for="item in this.currentProject.graphCount" :key="item" class="project-list">
+                <el-text class="project-name">{{ this.currentProject.graphList[item-1].name }}</el-text>
+                <el-text class="creator-name">{{ this.currentProject.graphList[item-1].creator.name }}创建</el-text>
+                <el-button @click="this.DeleteGraph(this.currentProject.graphList[item-1].graph_id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除页面</el-button>
+                <el-button @click="this.Jump('/'+this.currentGroup.id+'/'+this.currentProject.id+'/'+this.currentProject.graphList[item-1].grahp_id+'/DesignPage')"><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑页面</el-button>
               </div>
             </el-scrollbar>
           </el-container>
@@ -41,14 +41,14 @@
           <el-container class="forth-container">
             <el-header style="display: flex;justify-content: center;align-items: center;">
               <el-text class="project-title">文档列表</el-text>
-              <el-button type="primary" @click="" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建文档</el-button>
+              <el-button type="primary" @click="this.OpenDialog(4)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建文档</el-button>
             </el-header>
             <el-scrollbar>
-              <div v-for="item in 20" :key="item" class="project-list">
-                <el-text class="project-name">文档名称{{  }}</el-text>
-                <el-text class="creator-name">姓名{{ " " }}创建</el-text>
-                <el-button @click=""><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除文档</el-button>
-                <el-button @click=""><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑文档</el-button>
+              <div v-for="item in this.currentProject.textCount" :key="item" class="project-list">
+                <el-text class="project-name">{{ this.currentProject.textList[item-1].name }}</el-text>
+                <el-text class="creator-name">{{ this.currentProject.textList[item-1].creator.name }}创建</el-text>
+                <el-button @click="this.DeleteText(this.currentProject.textList[item-1].text_id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除文档</el-button>
+                <el-button @click="this.Jump('/'+this.currentGroup.id+'/'+this.currentProject.id+'/'+this.currentProject.textList[item-1].text_id+'/DocumentPage')"><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑文档</el-button>
               </div>
             </el-scrollbar>
           </el-container>
@@ -56,9 +56,29 @@
       </el-container>
     </el-container>
   </el-container>
+  <el-dialog v-model="this.createGraph.isOpen" title="创建页面原型" width="500px">
+    <el-form ref="createGraphRef" :model="createGraph" :rules="createGraphRules" label-width="70px">
+        <el-form-item prop="name" label="页面名称" class="dialog-form-item">
+          <el-input type="text" v-model="createGraph.name" placeholder="请输入页面名称" maxlength="20" class="dialog-input" />
+        </el-form-item>
+        <el-form-item >
+          <el-button type="primary" @click="this.CreateGraph()" style="width: 100px;">创建页面原型</el-button>
+        </el-form-item>
+    </el-form>
+  </el-dialog>
+  <el-dialog v-model="this.createText.isOpen" title="创建在线文档" width="500px">
+    <el-form ref="createTextRef" :model="createText" :rules="createTextRules" label-width="70px">
+        <el-form-item prop="name" label="文档名称" class="dialog-form-item">
+          <el-input type="text" v-model="createText.name" placeholder="请输入文档名称" maxlength="20" class="dialog-input" />
+        </el-form-item>
+        <el-form-item >
+          <el-button type="primary" @click="this.CreateText()" style="width: 100px;">创建在线文档</el-button>
+        </el-form-item>
+    </el-form>
+  </el-dialog>
 </template>
 
-<style>
+<style scoped>
 .dialog-form-item{
 width: 500px;
 margin-bottom: 30px;
@@ -208,34 +228,257 @@ export default{
     return{
       uid: store.state.uid,
       group:{
-        nameList: [],
-        idList: [],
-        textBoolList: [],
+        current: 0,
+        list: [],
+        count: 0,
+      },
+      currentGroup:{
+        id: '',
+        current: 0,
+        projectList: '',
+        projectCount: 0,
       },
       currentProject:{
-        avator: 'https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png',
-        name: 'OP',
-        introduction: '你好',
-        personList: [],
-        projectList: [],
+        id: 0,
+        name: '您还没有任何项目',
+        introduction: '快去创建一个项目吧',
+        graphCount: 0,
+        textCount: 0,
+        graphList: [],
+        textList: [],
+      },
+      switchGroup:{
+        isOpen: false,
+      },
+      createProject:{
+        isOpen: false,
+        name: '',
+        introduction: '',
+      },
+      updateProject:{
+        isOpen: false,
+        name: '',
+        introduction: '',
+      },
+      createGraph:{
+        isOpen: false,
+        name: '',
+      },
+      createText:{
+        isOpen: false,
+        name: '',
+      },
+      createGraphRules:{
+        name:[{
+          validator: (rule, value, callback) => {
+            if(value === ''){
+              callback("请输入页面名称");
+            }
+            callback()
+          }, type: 'string', trigger: 'blur'}],
+      },
+      createTextRules:{
+        name:[{
+          validator: (rule, value, callback) => {
+            if(value === ''){
+              callback("请输入文档名称");
+            }
+            callback()
+          }, type: 'string', trigger: 'blur'}],
       }
     }
   },
   methods:{
+    SwitchGroup(){
 
-    Load(groupid,projectid){
-      if(groupid>=0){
+    },
+    SwitchProject(){
+
+    },
+    CreateProject(){
+
+    },
+    UpdateProject(){
+
+    },
+    CreateGraph(){
+      this.$refs.createGraphRef.validate((valid) => {
+        if(valid){
+          var promise1=checkUserInGroup(this.uid,this.currentGroup.id);
+          promise1.then((value) => {
+            if(value.code==0){
+              var promise2=createGraph(this.createGraph.name, this.currentProject.id, '', '');
+              promise2.then((result) => {
+                if(this.MessageCatch(result, true)){
+                  this.Load(false, this.currentGroup.id, this.currentProject.id);
+                }
+              })
+            }
+            else{
+              this.Load(true, this.currentGroup.id, this.currentProject.id);
+            }
+            this.createGraph.isOpen=false;
+          })
+        }
+      })
+    },
+    DeleteGraph(graphid){
+      var promise1=checkUserInGroup(this.uid,this.currentGroup.id);
+      promise1.then((value) => {
+        if(value.code==0){
+          console.log(graphid);
+          var promise2=deleteGraph(graphid, this.currentProject.id);
+          promise2.then((result) => {
+            if(this.MessageCatch(result, true)){
+              this.Load(false, this.currentGroup.id, this.currentProject.id);
+            }
+          })
+        }
+        else{
+          this.Load(true, this.currentGroup.id, this.currentProject.id);
+        }
+      })
+    },
+    CreateText(){
+      this.$refs.createTextRef.validate((valid) => {
+        if(valid){
+          var promise1=checkUserInGroup(this.uid,this.currentGroup.id);
+          promise1.then((value) => {
+            if(value.code==0){
+              var promise2=createText(this.createText.name, this.currentProject.id, '');
+              promise2.then((result) => {
+                if(this.MessageCatch(result, true)){
+                  this.Load(false, this.currentGroup.id, this.currentProject.id);
+                  
+                }
+              })
+            }
+            else{
+              this.Load(true, this.currentGroup.id, this.currentProject.id);
+            }
+          })
+          this.createText.isOpen=false;
+        }
+      })
+    },
+    DeleteText(textid){
+      var promise1=checkUserInGroup(this.uid,this.currentGroup.id);
+      promise1.then((value) => {
+        if(value.code==0){
+          console.log(textid);
+          var promise2=deleteText(textid);
+          promise2.then((result) => {
+            if(this.MessageCatch(result, true)){
+              this.Load(false, this.currentGroup.id, this.currentProject.id);
+            }
+          })
+        }
+        else{
+          this.Load(true, this.currentGroup.id, this.currentProject.id);
+        }
+      })
+    },
+    OpenDialog(opcode){
+      if(opcode==0){
+        this.switchGroup.isOpen=true;
+      }
+      else if(opcode==1){
+        this.createProject.name='';
+        this.createProject.introduction='';
+        this.createProject.isOpen=true;
+      }
+      else if(opcode==2){
+        this.updateProject.name=this.currentProject.name;
+        this.updateProject.introduction=this.currentProject.introduction;
+        this.updateProject.isOpen=true;
+      }
+      else if(opcode==3){
+        this.createGraph.name='';
+        this.createGraph.isOpen=true;
+      }
+      else{
+        this.createText.name='';
+        this.createText.isOpen=true;
+      }
+    },
+    Jump(url){
+      console.log(url);
+      this.$router.push(url);
+    },
+    Load(changeGroup,groupid,projectid){
+      if(changeGroup==true){
         this.LoadGroup(groupid,projectid);
       }
       else{
-        this.LoadProject(projectid);
+        this.LoadProject(groupid,projectid);
       }
     },
     LoadGroup(groupid,projectid){
-
+      var promise11=getUserGroup();
+      promise11.then((result) =>{
+        if(this.MessageCatch(result,false)){
+          this.group.list=result.data;
+          this.group.count=this.group.list.length;
+          for(var i=0;i<this.group.count;i++){
+            if(this.group.list[i].id==groupid){
+              this.currentGroup.id=groupid;
+              this.group.current=i;
+              break;
+            }
+            if(this.group.count-i==1){
+              ElMessage({
+                message: '您不在该团队中，已重新加载您所在团队',
+                grouping: true,
+                type: 'warning',
+              })
+              this.currentGroup.id=this.group.list[0].id;
+              this.group.current=0;
+            }
+          }
+          if(this.group.count>0){
+            this.LoadProject(this.currentGroup.id,projectid);
+          }
+        }
+      })
     },
-    LoadProject(projectid){
-
+    LoadProject(groupid,projectid){
+      var promise1=getGroupInformation(groupid);
+      promise1.then((result) => {
+        if(this.MessageCatch(result,false)){
+          this.currentGroup.projectList=result.data.project_list;
+          this.currentGroup.projectCount=this.currentGroup.projectList.length;
+          for(var i=0;i<this.currentGroup.projectCount;i++){
+            if(this.currentGroup.projectList[i].id==projectid){
+              this.currentProject.id=projectid;
+              this.currentGroup.current=i;
+              break;
+            }
+            if(this.currentGroup.projectCount-i==1){
+              ElMessage({
+                message: '该项目不存在，已重新加载存在项目',
+                grouping: true,
+                type: 'warning',
+              })
+              this.currentProject.id=this.currentGroup.projectList[0].id;
+              this.currentGroup.current=0;
+            }
+          }
+          if(this.currentGroup.projectCount>0){
+            var promise2=getProjectInformation(this.currentProject.id);
+            promise2.then((value) => {
+              if(this.MessageCatch(value,false)){
+                this.currentProject.name=value.data.name;
+                this.currentProject.introduction=value.data.introduction;
+                this.currentProject.graphList=value.data.graph_list;
+                this.currentProject.textList=value.data.text_list;
+                this.currentProject.graphCount=this.currentProject.graphList.length;
+                this.currentProject.textCount=this.currentProject.textList.length;
+              }
+            })
+          }
+          this.Jump('/'+this.uid+'/'+this.currentGroup.id+'/MyProject/'+this.currentProject.id);
+        }
+      })
     },
     MessageCatch(data,opcode){
       if(data.code!=0){
@@ -258,6 +501,8 @@ export default{
   },
   mounted(){
     this.uid=this.$route.params.uid;
+    var groupid=this.$route.params.groupid;
+    var projectid=this.$route.params.projectid;
     if(store.state.isLogin==false){
       this.$router.push('/');
     }
@@ -265,10 +510,9 @@ export default{
       this.$router.push('/'+store.state.uid+'/MyProject');
       this.uid=store.state.uid;
     }
-    for(var i=1;i<=21;i++){
-      this.group.textBoolList.push(true);
+    else{
+      this.Load(true,groupid,projectid);
     }
-    this.group.textBoolList[2]=false;
   }
 }
 </script>

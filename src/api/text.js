@@ -1,11 +1,11 @@
 import { post, get} from './api';
 
-export function createText(name,introduction,content,project_id){
+export function createText(name,project_id,content){
 	var data=new FormData();
 	data.append("name",name);
-	data.append("introduction",introduction);
+    data.append("project_id",project_id);
 	data.append("content",content);
-	data.append("project_id",project_id);
+    console.log(data);
 	return post('/api/text/create/',data);
 }
 

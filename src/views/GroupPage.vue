@@ -39,7 +39,7 @@
               <div v-for="item in this.currentGroup.projectCount" :key="item" class="project-list">
                 <el-text class="project-name">{{ this.currentGroup.projectList[item-1].name }}</el-text>
                 <el-text class="creator-name">{{ this.currentGroup.projectList[item-1].creator_name }}创建</el-text>
-                <el-button @click="this.Jump('/'+this.$store.state.uid+'/MyProject/'+this.currentGroup.projectList[item-1].id)"><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看项目</el-button>
+                <el-button @click="this.Jump('/'+this.$store.state.uid+'/'+this.currentGroup.id+'/MyProject/'+this.currentGroup.projectList[item-1].id)"><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看项目</el-button>
                 <el-button @click="this.DeleteProject(this.currentGroup.projectList[item-1].id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除项目</el-button>
               </div>
             </el-scrollbar>
@@ -121,7 +121,7 @@
   </el-dialog>
 </template>
 
-<style>
+<style scoped>
 .dialog-form-item{
   width: 500px;
   margin-bottom: 30px;
