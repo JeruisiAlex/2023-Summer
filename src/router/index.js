@@ -22,7 +22,7 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/GroupPage.vue')
   },
   {
-    path: '/:uid/MyProject/:projectid',
+    path: '/:uid/:groupid/MyProject/:projectid',
     name: 'MyProject',
     component: () => import(/* webpackChunkName: "about" */ '../views/MyProject.vue')
   },

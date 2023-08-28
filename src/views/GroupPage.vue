@@ -386,6 +386,7 @@ export default{
     CreateGroup(){
       this.$refs.createGroupRef.validate((valid) => {
         if(valid){
+          console.log(this.createGroup.name+' '+this.createGroup.introduction);
           var promise1=createGroup(this.createGroup.name,this.createGroup.introduction);
           promise1.then((result)=>{
             if(this.MessageCatch(result)){

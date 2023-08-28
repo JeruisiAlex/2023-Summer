@@ -197,6 +197,11 @@ margin-bottom: 30px;
 <script>
 import store from '@/store';
 import { ElMessage } from 'element-plus';
+import { getUserGroup, checkUserInGroup } from '../api/user.js';
+import { getGroupInformation } from '../api/group.js';
+import { getProjectInformation } from '../api/project.js';
+import { createGraph, deleteGraph } from '../api/graph.js';
+import { createText, deleteText } from '../api/text.js';
 
 export default{
   data(){
@@ -207,7 +212,7 @@ export default{
         idList: [],
         textBoolList: [],
       },
-      currentGroup:{
+      currentProject:{
         avator: 'https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png',
         name: 'OP',
         introduction: '你好',
@@ -218,7 +223,21 @@ export default{
   },
   methods:{
 
-    MessageCatch(data){
+    Load(groupid,projectid){
+      if(groupid>=0){
+        this.LoadGroup(groupid,projectid);
+      }
+      else{
+        this.LoadProject(projectid);
+      }
+    },
+    LoadGroup(groupid,projectid){
+
+    },
+    LoadProject(projectid){
+
+    },
+    MessageCatch(data,opcode){
       if(data.code!=0){
         ElMessage({
           message: data.msg,
@@ -227,25 +246,25 @@ export default{
         })
         return false;
       }
-      else{
+      if(opcode==true&&data.code==0){
         ElMessage({
           message: data.msg,
           grouping: true,
           type: 'success',
         })
-        return true;
       }
+      return true;
     }
   },
   mounted(){
     this.uid=this.$route.params.uid;
-    // if(store.state.isLogin==false){
-    //   this.$router.push('/');
-    // }
-    // else if(store.state.uid!=this.uid){
-    //   this.$router.push('/'+store.state.uid+'/MyProject');
-    //   this.uid=store.state.uid;
-    // }
+    if(store.state.isLogin==false){
+      this.$router.push('/');
+    }
+    else if(store.state.uid!=this.uid){
+      this.$router.push('/'+store.state.uid+'/MyProject');
+      this.uid=store.state.uid;
+    }
     for(var i=1;i<=21;i++){
       this.group.textBoolList.push(true);
     }

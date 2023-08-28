@@ -31,3 +31,12 @@ export function inviteMember(team_id,email){
 export function getGroupInformation(team_id){
 	return get('/api/team/get_info/?team_id='+team_id);
 }
+
+export function updateGroup(team_id,name,introduction,icon){
+	var data=new FormData();
+	data.append("team_id",team_id);
+	data.append("name",name);
+	data.append("introduction",introduction);
+	data.append("icon",icon);
+	return post('/api/team/change_profile/',data);
+}

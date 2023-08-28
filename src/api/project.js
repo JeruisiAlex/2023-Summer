@@ -22,3 +22,23 @@ export function updateProject(project_id,name,introduction){
 	return post('/api/project/update/',data);
 }
 
+export function restoreProject(project_id){
+	var data=new FormData();
+	data.append("project_id",project_id);
+	return post('/api/project/restore/',data);
+}
+
+export function emptyRestore(){
+	var data=new FormData();
+	return post('/api/project/empty/',data);
+}
+
+export function removeProject(project_id){
+	var data=new FormData();
+	data.append("project_id",project_id);
+	return post('/api/project/remove/',data);
+}
+
+export function getProjectInformation(project_id){
+	return get('/api/project/getinfo/?project_id='+project_id);
+}
