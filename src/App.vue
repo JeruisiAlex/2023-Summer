@@ -5,8 +5,10 @@
       <div class="grid-content header-icon"><el-icon><Menu /></el-icon></div>
     </el-col>
     <el-col :span="6"><div id="site-name" class="grid-content" style="text-align: left;" @click="this.$router.push('/'+this.$store.state.uid+'/GroupPage/0')">Originate Pro</div></el-col>
-    <el-col :span="15"><div class="grid-content">    <el-button @click="testNotification(20)">(测试用)添加20条消息</el-button>
-    <el-button @click="this.$router.push('/1/1/1/DocumentPage')">(测试用)富文本编辑器</el-button></div></el-col>
+    <el-col :span="15">
+      <!-- <div class="grid-content">    <el-button @click="testNotification(20)">(测试用)添加20条消息</el-button>
+      <el-button @click="this.$router.push('/1/1/1/DocumentPage')">(测试用)富文本编辑器</el-button></div> -->
+    </el-col>
     <el-col :span="1">
       <div class="grid-content header-icon">
         <el-popover
@@ -1110,59 +1112,170 @@ export default {
       };
       ws.onmessage = function (message) {
         var parsedData = JSON.parse(message.data);
-        var isMyMessage = true;
-        console.log(parsedData);
-        if (parsedData.receiver_id && parsedData.receiver_id!=store.state.uid){
-          isMyMessage = false;
-          console.log("not my message!");
+        if (parsedData.type){
+          var isMyMessage = true;
+      console.log("single",parsedData);
+      if (parsedData.receiver_id && parsedData.receiver_id!=store.state.uid){
+        isMyMessage = false;
+        console.log("not my message!");
+          }
+          if (isMyMessage) {
+            if (parsedData.type==='invite') {
+              var newObj = {
+                id: parsedData.id,
+                type: "邀请",
+                by: parsedData.sender_id,
+                forthing: parsedData.team_id,
+                content: parsedData.content,
+              };
+              if (parsedData.processed===false){
+                store.commit('addNotificationUnread',newObj);
+              } else {
+                store.commit('addNotificationReadDirect',newObj);
+              }
+              console.log(newObj);
+            } else if (parsedData.type==='at') {
+              var newObj = {
+                id: parsedData.id,
+                type: "@你",
+                by: parsedData.sender_id,
+                forthing: parsedData.team_id,
+                content: parsedData.content,
+              };
+              if (parsedData.processed===false){
+                store.commit('addNotificationUnread',newObj);
+              } else {
+                store.commit('addNotificationReadDirect',newObj);
+              }
+            } else if (parsedData.type==='normal') {
+              var newObj = {
+                id: parsedData.id,
+                type: "普通",
+                by: parsedData.sender_id,
+                forthing: "",
+                content: parsedData.content,
+              };
+              if (parsedData.processed===false){
+                store.commit('addNotificationUnread',newObj);
+              } else {
+                store.commit('addNotificationReadDirect',newObj);
+              }
+            }
+          }
         }
-        if (isMyMessage) {
-          if (parsedData.type==='invite') {
-            var newObj = {
-              id: parsedData.id,
-              type: "邀请",
-              by: parsedData.sender_id,
-              forthing: parsedData.team_id,
-              content: parsedData.content,
-            };
-            if (parsedData.processed===false){
-              store.commit('addNotificationUnread',newObj);
-            } else {
-              store.commit('addNotificationReadDirect',newObj);
-            }
-            console.log(newObj);
-          } else if (parsedData.type==='at') {
-            var newObj = {
-              id: parsedData.id,
-              type: "@你",
-              by: parsedData.sender_id,
-              forthing: parsedData.team_id,
-              content: parsedData.content,
-            };
-            if (parsedData.processed===false){
-              store.commit('addNotificationUnread',newObj);
-            } else {
-              store.commit('addNotificationReadDirect',newObj);
-            }
-          } else if (parsedData.type==='normal') {
-            var newObj = {
-              id: parsedData.id,
-              type: "普通",
-              by: parsedData.sender_id,
-              forthing: "",
-              content: parsedData.content,
-            };
-            if (parsedData.processed===false){
-              store.commit('addNotificationUnread',newObj);
-            } else {
-              store.commit('addNotificationReadDirect',newObj);
-            }
+        else {
+          var dataset = parsedData.data.data;
+          console.log(dataset[0]);
+          for (var i=0;i<dataset.length;i++){
+              parsedData = dataset[i];
+              console.log("plural",parsedData);
+                var isMyMessage = true;
+                console.log(parsedData);
+                if (parsedData.receiver_id && parsedData.receiver_id!=store.state.uid){
+                  isMyMessage = false;
+                  console.log("not my message!");
+                }
+                if (isMyMessage) {
+                  if (parsedData.type==='invite') {
+                    var newObj = {
+                      id: parsedData.id,
+                      type: "邀请",
+                      by: parsedData.sender_id,
+                      forthing: parsedData.team_id,
+                      content: parsedData.content,
+                    };
+                    if (parsedData.processed===false){
+                      store.commit('addNotificationUnread',newObj);
+                    } else {
+                      store.commit('addNotificationReadDirect',newObj);
+                    }
+                    console.log(newObj);
+                  } else if (parsedData.type==='at') {
+                    var newObj = {
+                      id: parsedData.id,
+                      type: "@你",
+                      by: parsedData.sender_id,
+                      forthing: parsedData.team_id,
+                      content: parsedData.content,
+                    };
+                    if (parsedData.processed===false){
+                      store.commit('addNotificationUnread',newObj);
+                    } else {
+                      store.commit('addNotificationReadDirect',newObj);
+                    }
+                  } else if (parsedData.type==='normal') {
+                    var newObj = {
+                      id: parsedData.id,
+                      type: "普通",
+                      by: parsedData.sender_id,
+                      forthing: "",
+                      content: parsedData.content,
+                    };
+                    if (parsedData.processed===false){
+                      store.commit('addNotificationUnread',newObj);
+                    } else {
+                      store.commit('addNotificationReadDirect',newObj);
+                    }
+                  }
+                }
           }
         }
       };
       ws.onclose = function () {
         console.log("消息中心的websocket已关闭");
       };
+    },
+
+    displayMessage(parsedData) {
+      var isMyMessage = true;
+      console.log(parsedData);
+      if (parsedData.receiver_id && parsedData.receiver_id!=store.state.uid){
+        isMyMessage = false;
+        console.log("not my message!");
+      }
+      if (isMyMessage) {
+        if (parsedData.type==='invite') {
+          var newObj = {
+            id: parsedData.id,
+            type: "邀请",
+            by: parsedData.sender_id,
+            forthing: parsedData.team_id,
+            content: parsedData.content,
+          };
+          if (parsedData.processed===false){
+            store.commit('addNotificationUnread',newObj);
+          } else {
+            store.commit('addNotificationReadDirect',newObj);
+          }
+          console.log(newObj);
+        } else if (parsedData.type==='at') {
+          var newObj = {
+            id: parsedData.id,
+            type: "@你",
+            by: parsedData.sender_id,
+            forthing: parsedData.team_id,
+            content: parsedData.content,
+          };
+          if (parsedData.processed===false){
+            store.commit('addNotificationUnread',newObj);
+          } else {
+            store.commit('addNotificationReadDirect',newObj);
+          }
+        } else if (parsedData.type==='normal') {
+          var newObj = {
+            id: parsedData.id,
+            type: "普通",
+            by: parsedData.sender_id,
+            forthing: "",
+            content: parsedData.content,
+          };
+          if (parsedData.processed===false){
+            store.commit('addNotificationUnread',newObj);
+          } else {
+            store.commit('addNotificationReadDirect',newObj);
+          }
+        }
+      }
     },
 
     acceptInvitation() {

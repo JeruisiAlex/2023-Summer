@@ -23,17 +23,17 @@
         </el-row>
     </div>
     <div id="vditor" name="description" style="z-index: 999;"></div>
-    <el-button @click="setEditArea()">(测试用)改变富文本编辑器内容</el-button>
+    <!-- <el-button @click="setEditArea()">(测试用)改变富文本编辑器内容</el-button>
     <el-button @click="getEditArea()">(测试用)提取富文本编辑器内容</el-button>
     <el-button @click="exportDocument1()">(测试用)使失效</el-button>
     <el-button @click="exportDocument2()">(测试用)使生效</el-button>
-    <span>{{ editorContent }}</span>
+    <span>{{ editorContent }}</span> -->
     <!-- <div>{{ cursorPosition }}</div> -->
 </template>
 <script>
   import Vditor from "vditor"
   import "vditor/dist/index.css"
-  import { getAText } from '../api/text.js';
+  import { getAText, saveText} from '../api/text.js';
   let ws;
 export default {
   data(){
@@ -43,13 +43,20 @@ export default {
           fileName: "文档获取中…",
           editorContent: "",
           creator: 0,
+          text_id: 0,
+          project_id: 0,
+          group_id: 0,
           cursorPosition: {top: 0, left: 0},
           edible: true,
           shareable: true,
       }
   },
   mounted(){
-
+    var url = this.$route.path;
+    var infos = url.split('/');
+    this.group_id = parseInt(infos[0]);
+    this.project_id = parseInt(infos[1]);
+    this.text_id = parseInt(infos[2]);
     // this.websocketInit();
     this.contentEditor = new Vditor("vditor",{
         height:600,
@@ -74,7 +81,7 @@ export default {
         }
     });
 
-    var promise=getAText(1,2);
+    var promise=getAText(this.text_id,this.project_id);
     promise.then((result)=>{
       console.log(result);
       this.fileName = result.data.name;
@@ -137,7 +144,10 @@ export default {
 
     },
     saveDocument() {
-
+      var promise=saveText(this.text_id,this.project_id,this.contentEditor.getValue());
+      promise.then((result)=>{
+        console.log(result);
+      });
     },
     sendMessage() {
       const now = new Date();

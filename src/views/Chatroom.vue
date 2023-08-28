@@ -36,8 +36,17 @@
           {{ item.time }}
         </div>
       </div>
-      <div class="bubble left">
-        <a class="avatar" href><img :src="item.icon" alt /></a>
+      <div class="bubble left" v-if="item.name !== $store.state.userName">
+        <a class="avatar" @click="jumpPersonalPage(item)"><img :src="item.icon" @click="jumpPersonalPage(item)" /></a>
+        <div class="wrap">
+          <div class="nameContainer">{{ item.name }}</div>
+          <div class="content">
+            {{ item.content }}
+          </div>
+        </div>
+      </div>
+      <div class="bubble right" v-else>
+        <a class="avatar" @click="jumpPersonalPage(item)"><img :src="item.icon" @click="jumpPersonalPage(item)" /></a>
         <div class="wrap">
           <div class="nameContainer">{{ item.name }}</div>
           <div class="content">
@@ -94,6 +103,7 @@ export default {
     this.prepareGroupMessage();
     this.scrollToBottom();
     this.websocketInit();
+    console.log(store.state.userName)
   },
   data() {
     return {
@@ -113,6 +123,22 @@ export default {
     };
   },
   methods: {
+    jumpPersonalPage(item){
+      var uid;
+      for(var i = 0;i < this.allGroupMember.length;i++)
+      {
+        console.log(this.allGroupMember[i])
+        if(this.nowChosenGroup.id === this.allGroupMember[i].groupid)
+        {
+          for(var j = 0;j < this.allGroupMember[i].member.length;j++)
+          {
+            if(this.allGroupMember[i].member[j].username == item.name)
+            uid = this.allGroupMember[i].member[j].id
+          }
+        }
+      }
+      this.$router.push("/" + uid + "/PersonalInfomation");
+    },
     prepareGroupMessage() {
       for (var i = 0; i < this.allGroupArray.length; i++) {
         {
@@ -151,13 +177,12 @@ export default {
       // this.$router.push('/' + store.state.uid + '/Chatroom')
     },
     isTimeDifferenceGreaterThan5Second(index) {
-      return true;
-      // if (index === 0) return true;
-      // var date1 = new Date(this.nowChosenGroup.contentArray[index].time);
-      // var date2 = new Date(this.nowChosenGroup.contentArray[index - 1].time);
-      // const timeDifferenceInMilliseconds = date1 - date2;
-      // const timeDifferenceInSeconds = timeDifferenceInMilliseconds / 1000;
-      // return timeDifferenceInSeconds > 5;
+      if (index === 0) return true;
+      var date1 = new Date(this.groupMessage[this.nowWs].content[index].time);
+      var date2 = new Date(this.groupMessage[this.nowWs].content[index - 1].time);
+      const timeDifferenceInMilliseconds = date1 - date2;
+      const timeDifferenceInSeconds = timeDifferenceInMilliseconds / 1000;
+      return timeDifferenceInSeconds > 300;
     },
     websocketInit() {
       for (var i = 0; i < this.allGroupArray.length; i++) {
@@ -219,6 +244,11 @@ export default {
       }
     },
     sendMessage() {
+      if(this.nowWs === -1)
+      {
+        this.messageInput = ""
+        return
+      }
       const now = new Date();
       const year = now.getFullYear();
       const month = now.getMonth() + 1; // 月份从0开始，所以要加1
@@ -249,7 +279,7 @@ export default {
       };
       this.wsArray[this.nowWs].send(JSON.stringify(newObj));
       console.log(JSON.stringify(newObj));
-      this.messageInput = "";
+      this.messageInput = ""
     },
     scrollToBottom() {
       this.$nextTick(() => {
