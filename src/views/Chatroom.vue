@@ -27,8 +27,9 @@
   <div class="textarea" @scroll="loadMore">
     <div
       class="eachMessageContainer"
-      v-for="(item, index) in nowChosenGroup.contentArray"
+      v-for="(item, index) in groupMessage[nowWs].content"
       :key="index"
+      v-if="nowWs !=-1"
     >
       <div class="timeContainer">
         <div v-if="isTimeDifferenceGreaterThan5Second(index)">
@@ -36,11 +37,7 @@
         </div>
       </div>
       <div class="bubble left">
-        <a class="avatar" href
-          ><img
-            :src="item.url"
-            alt
-        /></a>
+        <a class="avatar" href><img :src="item.icon" alt /></a>
         <div class="wrap">
           <div class="nameContainer">{{ item.name }}</div>
           <div class="content">
@@ -54,9 +51,7 @@
   <el-button type="primary" plain class="sendButton" @click="sendMessage"
     >发送</el-button
   >
-  <div class="teamGroupTitle">
-    团队成员
-  </div>
+  <div class="teamGroupTitle">团队成员</div>
   <div class="searchContainer" style="left: 1055px; top: 90px; height: 40px">
     <el-input
       v-model="searchInput"
@@ -74,22 +69,29 @@
     style="left: 1100px; top: 130px"
   >
     <p
-      v-for="item in 20"
-      :key="item"
+      v-for="(item, index) in nowGroupMember"
+      :key="index"
       class="scrollbar-demo-item"
       style="width: 350px"
     >
-      {{ item }}
+      <img :src="item.icon_address" class="userIcon" />
+      <span>
+        {{ item.username }}
+      </span>
     </p>
   </el-scrollbar>
 </template>
 
 <script scoped>
-let ws;
 import { ref } from "vue";
-
+import store from "@/store";
+import { getGroupInformation } from "../api/group";
 export default {
   mounted() {
+    this.judgeSamePerson();
+    this.getMygroup();
+    this.getAllGroupMember();
+    this.prepareGroupMessage();
     this.scrollToBottom();
     this.websocketInit();
   },
@@ -101,296 +103,152 @@ export default {
       count: ref(20),
       tempGroupArray: [],
       nowGroupArray: [],
-      allGroupArray: [
-        {
-          name: "group1",
-          contentArray: [
-            {
-              name: "123",
-              url: "https://2023summer-se-1316618142.cos.ap-beijing.myqcloud.com/icon/user/3.jpg",
-              content: 123,
-              time: "2021-7-12 17:12:12",
-            },
-          ],
-        },
-        {
-          name: "group2",
-          contentArray: [
-            {
-              name: "123",
-              url: "http://2023summer-se-1316618142.cos.ap-beijing.myqcloud.com/icon/user/3.jpg",
-              content: "123",
-              time: "2021-7-12 17:12:12",
-            },
-          ],
-        },
-        {
-          name: "group3",
-          contentArray: [
-            {
-              name: "123",
-              url: "https://img0.baidu.com/it/u=3953639057,245238928&fm=15&fmt=auto&gp=0.jpg",
-              content: 123,
-              time: "2021-7-12 17:12:12",
-            },
-          ],
-        },
-        {
-          name: "group1",
-          contentArray: [
-            {
-              name: "123",
-              url: "https://img0.baidu.com/it/u=3953639057,245238928&fm=15&fmt=auto&gp=0.jpg",
-              content: 123,
-              time: "2021-7-12 17:12:12",
-            },
-            {
-              name: "456",
-              url: "https://img0.baidu.com/it/u=1741172190,3962404342&fm=26&fmt=auto&gp=0.jpg",
-              content: "123",
-              time: "2021-7-12 17:12:46",
-            },
-          ],
-        },
-        {
-          name: "group1",
-          contentArray: [
-            {
-              name: "123",
-              url: "https://img0.baidu.com/it/u=3953639057,245238928&fm=15&fmt=auto&gp=0.jpg",
-              content: 123,
-              time: "2021-7-12 17:12:12",
-            },
-            {
-              name: "456",
-              url: "https://img0.baidu.com/it/u=1741172190,3962404342&fm=26&fmt=auto&gp=0.jpg",
-              content: "123",
-              time: "2021-7-12 17:12:46",
-            },
-          ],
-        },
-        {
-          name: "group1",
-          contentArray: [
-            {
-              name: "123",
-              url: "https://img0.baidu.com/it/u=3953639057,245238928&fm=15&fmt=auto&gp=0.jpg",
-              content: 123,
-              time: "2021-7-12 17:12:12",
-            },
-            {
-              name: "456",
-              url: "https://img0.baidu.com/it/u=1741172190,3962404342&fm=26&fmt=auto&gp=0.jpg",
-              content: "123",
-              time: "2021-7-12 17:12:46",
-            },
-          ],
-        },
-        {
-          name: "group1",
-          contentArray: [
-            {
-              name: "123",
-              url: "https://img0.baidu.com/it/u=3953639057,245238928&fm=15&fmt=auto&gp=0.jpg",
-              content: 123,
-              time: "2021-7-12 17:12:12",
-            },
-            {
-              name: "456",
-              url: "https://img0.baidu.com/it/u=1741172190,3962404342&fm=26&fmt=auto&gp=0.jpg",
-              content: "123",
-              time: "2021-7-12 17:12:46",
-            },
-          ],
-        },
-        {
-          name: "group1",
-          contentArray: [
-            {
-              name: "123",
-              url: "https://img0.baidu.com/it/u=3953639057,245238928&fm=15&fmt=auto&gp=0.jpg",
-              content: 123,
-              time: "2021-7-12 17:12:12",
-            },
-            {
-              name: "456",
-              url: "https://img0.baidu.com/it/u=1741172190,3962404342&fm=26&fmt=auto&gp=0.jpg",
-              content: "123",
-              time: "2021-7-12 17:12:46",
-            },
-          ],
-        },
-        {
-          name: "group1",
-          contentArray: [
-            {
-              name: "123",
-              url: "https://img0.baidu.com/it/u=3953639057,245238928&fm=15&fmt=auto&gp=0.jpg",
-              content: 123,
-              time: "2021-7-12 17:12:12",
-            },
-            {
-              name: "456",
-              url: "https://img0.baidu.com/it/u=1741172190,3962404342&fm=26&fmt=auto&gp=0.jpg",
-              content: "123",
-              time: "2021-7-12 17:12:46",
-            },
-          ],
-        },
-        {
-          name: "group1",
-          contentArray: [
-            {
-              name: "123",
-              url: "https://img0.baidu.com/it/u=3953639057,245238928&fm=15&fmt=auto&gp=0.jpg",
-              content: 123,
-              time: "2021-7-12 17:12:12",
-            },
-            {
-              name: "456",
-              url: "https://img0.baidu.com/it/u=1741172190,3962404342&fm=26&fmt=auto&gp=0.jpg",
-              content: "123",
-              time: "2021-7-12 17:12:46",
-            },
-          ],
-        },
-        {
-          name: "group1",
-          contentArray: [
-            {
-              name: "123",
-              url: "https://img0.baidu.com/it/u=3953639057,245238928&fm=15&fmt=auto&gp=0.jpg",
-              content: 123,
-              time: "2021-7-12 17:12:12",
-            },
-            {
-              name: "456",
-              url: "https://img0.baidu.com/it/u=1741172190,3962404342&fm=26&fmt=auto&gp=0.jpg",
-              content: "123",
-              time: "2021-7-12 17:12:46",
-            },
-          ],
-        },
-        {
-          name: "group1",
-          contentArray: [
-            {
-              name: "123",
-              url: "https://img0.baidu.com/it/u=3953639057,245238928&fm=15&fmt=auto&gp=0.jpg",
-              content: 123,
-              time: "2021-7-12 17:12:12",
-            },
-            {
-              name: "456",
-              url: "https://img0.baidu.com/it/u=1741172190,3962404342&fm=26&fmt=auto&gp=0.jpg",
-              content: "123",
-              time: "2021-7-12 17:12:46",
-            },
-          ],
-        },
-        {
-          name: "group1",
-          contentArray: [
-            {
-              name: "123",
-              url: "https://img0.baidu.com/it/u=3953639057,245238928&fm=15&fmt=auto&gp=0.jpg",
-              content: 123,
-              time: "2021-7-12 17:12:12",
-            },
-            {
-              name: "456",
-              url: "https://img0.baidu.com/it/u=1741172190,3962404342&fm=26&fmt=auto&gp=0.jpg",
-              content: "123",
-              time: "2021-7-12 17:12:46",
-            },
-          ],
-        },
-        {
-          name: "group1",
-          contentArray: [
-            {
-              name: "123",
-              url: "https://img0.baidu.com/it/u=3953639057,245238928&fm=15&fmt=auto&gp=0.jpg",
-              content: 123,
-              time: "2021-7-12 17:12:12",
-            },
-            {
-              name: "456",
-              url: "https://img0.baidu.com/it/u=1741172190,3962404342&fm=26&fmt=auto&gp=0.jpg",
-              content: "123",
-              time: "2021-7-12 17:12:46",
-            },
-          ],
-        },
-        {
-          name: "group1",
-          contentArray: [
-            {
-              name: "123",
-              url: "https://img0.baidu.com/it/u=3953639057,245238928&fm=15&fmt=auto&gp=0.jpg",
-              content: 123,
-              time: "2021-7-12 17:12:12",
-            },
-            {
-              name: "456",
-              url: "https://img0.baidu.com/it/u=1741172190,3962404342&fm=26&fmt=auto&gp=0.jpg",
-              content: "123",
-              time: "2021-7-12 17:12:46",
-            },
-          ],
-        },
-      ],
+      allGroupArray: [],
+      allGroupMember: [],
+      nowGroupMember: [],
+      nowWs: -1,
+      groupMessage: [],
+      groupSize: 0,
+      wsArray: [],
     };
   },
-  created() {
-    this.nowGroupArray = this.allGroupArray;
-    this.nowChosenGroup = this.nowGroupArray[0];
-  },
   methods: {
+    prepareGroupMessage() {
+      for (var i = 0; i < this.allGroupArray.length; i++) {
+        {
+          var obj = {
+            id: this.allGroupArray[i].id,
+            content: [],
+          };
+          this.groupMessage.push(obj);
+        }
+      }
+    },
+    getAllGroupMember() {
+      for (var i = 0; i < this.allGroupArray.length; i++) {
+        // var that = this;
+        var groupInformation = getGroupInformation(this.allGroupArray[i].id);
+        groupInformation.then((result) => {
+          var groupInfo = result.data;
+          var obj = {
+            groupid: groupInfo.id,
+            member: groupInfo.user_list,
+          };
+          this.allGroupMember.push(obj);
+        });
+      }
+      this.groupSize = this.allGroupArray.length;
+    },
+    getMygroup() {
+      this.allGroupArray = store.state.userGroupList;
+      this.nowGroupArray = this.allGroupArray;
+    },
+    judgeSamePerson() {
+      // if(store.state.isLogin === false)
+      // this.$router.push('/')
+      // var uid = this.$route.params.uid;
+      // if(uid != store.state.uid)
+      // this.$router.push('/' + store.state.uid + '/Chatroom')
+    },
     isTimeDifferenceGreaterThan5Second(index) {
-      if (index === 0) return true;
-      var date1 = new Date(this.nowChosenGroup.contentArray[index].time);
-      var date2 = new Date(this.nowChosenGroup.contentArray[index - 1].time);
-      const timeDifferenceInMilliseconds = date1 - date2;
-      const timeDifferenceInSeconds = timeDifferenceInMilliseconds / 1000;
-      return timeDifferenceInSeconds > 5;
+      return true;
+      // if (index === 0) return true;
+      // var date1 = new Date(this.nowChosenGroup.contentArray[index].time);
+      // var date2 = new Date(this.nowChosenGroup.contentArray[index - 1].time);
+      // const timeDifferenceInMilliseconds = date1 - date2;
+      // const timeDifferenceInSeconds = timeDifferenceInMilliseconds / 1000;
+      // return timeDifferenceInSeconds > 5;
     },
     websocketInit() {
+      for (var i = 0; i < this.allGroupArray.length; i++) {
+        var ws = new WebSocket(
+          "ws://8.130.25.189/ws/chat/team/" + this.allGroupArray[i].id + "/"
+        );
+        this.wsArray.push(ws);
+      }
       var that = this;
-      ws = new WebSocket("ws://8.130.25.189/ws/chat/team/1/");
-      ws.onopen = function () {
-        console.log("websockt已经打开");
-      };
-      ws.onmessage = function (message) {
-        var parsedData = JSON.parse(message.data);
-        var newObj = {
-          name: parsedData.name,
-          content: parsedData.content,
-          time: parsedData.time,
+      for (var i = 0; i < this.allGroupArray.length; i++) {
+        that.wsArray[i].onopen = function () {
+          //服务器连接关闭
+          console.log("websocket i 已开启");
         };
-        that.nowChosenGroup.contentArray.push(newObj);
-      };
-      ws.onclose = function () {
-        //服务器连接关闭
-        console.log("websocket已关闭");
-      };
+        that.wsArray[i].onmessage = function (message) {
+          var parsedData = JSON.parse(message.data);
+          var uid = parsedData.user_id;
+          if (uid) {
+            var tid = parsedData.team_id;
+            var username;
+            var userIcon;
+            var j = 0;
+            if (tid) console.log(tid);
+            var flag = false;
+            var teamNum;
+            for (j = 0; j < that.groupSize; j++) {
+              if (that.allGroupMember[j].groupid === tid) {
+                for (var k = 0; k < that.allGroupMember[j].member.length; k++) {
+                  console.log(that.allGroupMember[j].member[k].id);
+                  if (that.allGroupMember[j].member[k].id === uid) {
+                    console.log("kangjaiqi");
+                    username = that.allGroupMember[j].member[k].username;
+                    userIcon = that.allGroupMember[j].member[k].icon_address;
+                    flag = true;
+                    teamNum = j;
+                    break;
+                  }
+                }
+              }
+              if (flag) break;
+            }
+            console.log(username);
+            console.log(userIcon);
+            var newObj = {
+              name: username,
+              icon: userIcon,
+              content: parsedData.content,
+              time: parsedData.timestamp,
+            };
+            console.log(teamNum);
+            that.groupMessage[j].content.push(newObj);
+            console.log(newObj);
+          }
+        };
+        this.wsArray[i].onclose = function () {
+          //服务器连接关闭
+          console.log("websocket i 已关闭");
+        };
+      }
     },
     sendMessage() {
       const now = new Date();
-      console.log(now)
       const year = now.getFullYear();
       const month = now.getMonth() + 1; // 月份从0开始，所以要加1
       const day = now.getDate();
       const hours = now.getHours();
       const minutes = now.getMinutes();
       const seconds = now.getSeconds();
+      var timestamp1 =
+        year +
+        "-" +
+        month +
+        "-" +
+        day +
+        " " +
+        hours +
+        ":" +
+        minutes +
+        ":" +
+        seconds;
       var newObj = {
-        name: "kangjiaqi",
-        content: this.messageInput,
-        time: `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`,
-        realtime : now
+        type: "chat",
+        data: {
+          user_id: store.state.uid,
+          team_id: this.nowChosenGroup.id,
+          content: this.messageInput,
+          timestamp: timestamp1,
+        },
       };
-      ws.send(JSON.stringify(newObj));
+      this.wsArray[this.nowWs].send(JSON.stringify(newObj));
+      console.log(JSON.stringify(newObj));
       this.messageInput = "";
     },
     scrollToBottom() {
@@ -415,6 +273,17 @@ export default {
       }
     },
     chooseGroup(item, i) {
+      if (this.nowWs != -1) {
+        var leaveObj = {
+          type: "change",
+          change: "leave",
+          user_id: store.state.uid,
+          team_id: this.nowChosenGroup.id,
+        };
+        this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
+        console.log(JSON.stringify(leaveObj));
+      }
+      this.nowWs = i;
       this.nowChosenGroup = item;
       for (var k = 0; k < this.nowGroupArray.length; k++) {
         var ele1 = document.getElementById("groupList" + k);
@@ -424,6 +293,18 @@ export default {
       var ele = document.getElementById("groupList" + i);
       ele.style.background = "#409EFF";
       ele.style.color = "white";
+      for (var i = 0; i < this.allGroupMember.length; i++) {
+        if (item.id === this.allGroupMember[i].groupid)
+          this.nowGroupMember = this.allGroupMember[i].member;
+      }
+      var enterobj = {
+        type: "change",
+        change: "enter",
+        user_id: store.state.uid,
+        team_id: this.nowChosenGroup.id,
+      };
+      this.wsArray[this.nowWs].send(JSON.stringify(enterobj));
+      console.log(JSON.stringify(enterobj));
     },
   },
   watch: {
@@ -438,12 +319,19 @@ export default {
 </script>
 
 <style>
-.nameContainer{
+.userIcon {
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  margin-right: 50px;
+  left: 10px;
+}
+.nameContainer {
   margin-bottom: 5px;
   color: #c6c6c6;
   font-size: 13px;
 }
-.teamGroupTitle{
+.teamGroupTitle {
   text-align: center;
   position: absolute;
   display: flex;
@@ -541,7 +429,7 @@ export default {
   position: relative;
   display: inline-block;
   word-wrap: break-word; /* 允许单词内换行 */
-  max-width: 250px;  
+  max-width: 250px;
 }
 
 .bubble .content:before {
