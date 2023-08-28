@@ -348,7 +348,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .userIcon {
   height: 40px;
   width: 40px;

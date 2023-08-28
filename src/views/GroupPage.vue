@@ -39,7 +39,7 @@
               <div v-for="item in this.currentGroup.projectCount" :key="item" class="project-list">
                 <el-text class="project-name">{{ this.currentGroup.projectList[item-1].name }}</el-text>
                 <el-text class="creator-name">{{ this.currentGroup.projectList[item-1].creator_name }}创建</el-text>
-                <el-button @click="this.Jump('/'+this.$store.state.uid+'/MyProject/'+this.currentGroup.projectList[item-1].id)"><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看项目</el-button>
+                <el-button @click="this.Jump('/'+this.$store.state.uid+'/'+this.currentGroup.id+'/MyProject/'+this.currentGroup.projectList[item-1].id)"><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看项目</el-button>
                 <el-button @click="this.DeleteProject(this.currentGroup.projectList[item-1].id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除项目</el-button>
               </div>
             </el-scrollbar>
@@ -121,7 +121,7 @@
   </el-dialog>
 </template>
 
-<style>
+<style scoped>
 .dialog-form-item{
   width: 500px;
   margin-bottom: 30px;
@@ -386,6 +386,7 @@ export default{
     CreateGroup(){
       this.$refs.createGroupRef.validate((valid) => {
         if(valid){
+          console.log(this.createGroup.name+' '+this.createGroup.introduction);
           var promise1=createGroup(this.createGroup.name,this.createGroup.introduction);
           promise1.then((result)=>{
             if(this.MessageCatch(result)){
@@ -453,7 +454,6 @@ export default{
               store.commit('updateGroupList',result.data);
               this.group.list=result.data;
               this.group.length=result.data.length;
-              console.log(this.group.length);
               if(this.group.length==0){
                 this.currentGroup.id=0;
                 this.currentGroup.avatar='https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png';
@@ -587,9 +587,45 @@ export default{
       }
     },
     SwithcGroup(index){
-      this.group.current=index;
-      this.GetCurrenGroup(this.group.list[index].id);
-      this.$router.push('/'+store.state.uid+'/GroupPage/'+this.group.list[index].id);
+      var promise=getUserGroup();
+      promise.then((result)=>{
+        if(result.code==0){
+          store.commit("updateGroupList",result.data);
+          if(result.data.length==0){
+            this.currentGroup.id=0;
+            this.currentGroup.avatar='https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png';
+            this.currentGroup.name='您还没有任何团队';
+            this.currentGroup.introduction='快去创建或加入一个团队吧';
+            this.currentGroup.personCount=0;
+            this.currentGroup.projectCount=0
+            this.currentGroup.personList=[];
+            this.currentGroup.projectList=[];
+            this.currentGroup.authList=[];
+          }
+          else{
+            for(var i=0;i<result.data.length;i++){
+              if(result.data[i].id==this.group.list[index].id){
+                this.group.current=i;
+                this.currentGroup.id=result.data[i].id;
+                break;
+              }
+              if(this.group.length-i==1){
+                this.group.current=0;
+                this.currentGroup.id=result.data[0].id;
+              }
+            }
+          }
+          this.group.list=result.data;
+          this.group.length=this.group.list.length;
+          if(this.currentGroup.id!=0){
+            this.GetCurrenGroup(this.currentGroup.id);
+          }
+          this.$router.push('/'+store.state.uid+'/GroupPage/'+this.currentGroup.id);
+        }
+        else{
+
+        }
+      })
     },
     Jump(url){
       this.$router.push(url);

@@ -52,3 +52,7 @@ export function getUserInformation(user_id){
 export function getUserGroup(){
     return get('/api/user/get_team/');
 }
+
+export function checkUserInGroup(user_id,team_id){
+	return get('/api/user/check_in_team/?user_id='+user_id+'&team_id='+team_id);
+}
