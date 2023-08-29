@@ -1,7 +1,68 @@
 <template>
+  <div
+    v-if="!isShowAll"
+    style="
+      position: absolute;
+      top: 0;
+      min-width: 1200px;
+      width: 100%;
+      height: 100%;
+      z-index: 9999;
+    "
+  >
+    <div
+      v-loading="!isShowAll"
+      element-loading-text="正在加载..."
+      style="height: 100%; width: 100%"
+    ></div>
+  </div>
+  <el-dialog
+    v-model="dialogVisible"
+    title="Tips"
+    width="30%"
+    :before-close="handleClose"
+  >
+    <span>{{ dialogMessage }}</span>
+  </el-dialog>
   <div class="searchContainer">
     <div class="title">
       {{ nowChosenGroup.name }}
+      <el-button
+        type="primary"
+        class="searchChatButton"
+        @click="getNeighborChaMessage(-1)"
+        style="left: 390px; position: absolute; top: 18px"
+        v-if="this.searchPosition !== -1"
+        >上一条</el-button
+      >
+      <el-input
+        v-model="searchChatInput"
+        placeholder="搜索聊天记录"
+        style="
+          width: 200px;
+          left: 500px;
+          position: absolute;
+          height: 40px;
+          top: 15px;
+        "
+        clearable
+      />
+      <el-button
+        type="primary"
+        class="searchChatButton"
+        @click="searchChatMessage"
+        style="left: 730px; position: absolute; top: 18px"
+        v-if="this.searchPosition === -1"
+        >搜索</el-button
+      >
+      <el-button
+        type="primary"
+        class="searchChatButton"
+        @click="getNeighborChaMessage(1)"
+        style="left: 720px; position: absolute; top: 18px"
+        v-if="this.searchPosition !== -1"
+        >下一条</el-button
+      >
     </div>
     <el-input
       v-model="searchInput"
@@ -14,15 +75,28 @@
     >
   </div>
   <el-scrollbar height="550px" class="GroupList">
-    <p
+    <div
       v-for="(item, i) in nowGroupArray"
       :key="i"
-      @click="chooseGroup(item, i)"
-      class="scrollbar-demo-item"
-      :id="'groupList' + i"
+      style="
+        flex-direction: column;
+        display: flex;
+        align-content: start;
+        width: 220px;
+      "
     >
-      {{ item.name }}
-    </p>
+      <div class="dotDiv" v-if="item.unreadMessage != 0"></div>
+      <p
+        @click="chooseGroup(item, i)"
+        class="scrollbar-demo-item"
+        :id="'groupList' + i"
+      >
+        {{ item.group.name }}
+        <span class="unreadSpan" v-if="item.unreadMessage != 0">
+          [{{ item.unreadMessage }}条]
+        </span>
+      </p>
+    </div>
   </el-scrollbar>
   <div class="textarea" @scroll="loadMore">
     <div
@@ -38,7 +112,10 @@
       </div>
       <div class="bubble left" v-if="item.name !== $store.state.userName">
         <a class="avatar" @click="jumpPersonalPage(item)"
-          ><img :src="item.icon" @click="jumpPersonalPage(item)"
+          ><img
+            :src="item.icon"
+            @click="jumpPersonalPage(item)"
+            style="cursor: pointer"
         /></a>
         <div class="wrap">
           <div class="nameContainer">{{ item.name }}</div>
@@ -49,7 +126,10 @@
       </div>
       <div class="bubble right" v-else>
         <a class="avatar" @click="jumpPersonalPage(item)"
-          ><img :src="item.icon" @click="jumpPersonalPage(item)"
+          ><img
+            :src="item.icon"
+            @click="jumpPersonalPage(item)"
+            style="cursor: pointer"
         /></a>
         <div class="wrap">
           <div class="nameContainer">{{ item.name }}</div>
@@ -61,7 +141,12 @@
     </div>
   </div>
   <el-input v-model="messageInput" placeholder="" class="messageContainer" />
-  <el-button type="primary" plain class="sendButton" @click="sendMessage"
+  <el-button
+    type="primary"
+    plain
+    class="sendButton"
+    @click="sendMessage"
+    @keydown.enter="enter_up()"
     >发送</el-button
   >
   <div class="teamGroupTitle">团队成员</div>
@@ -101,12 +186,21 @@ import store from "@/store";
 import { getGroupInformation } from "../api/group";
 export default {
   mounted() {
+    this.openDB();
     this.judgeSamePerson();
     this.getMygroup();
     this.getAllGroupMember();
-    this.prepareGroupMessage();
-    this.scrollToBottom();
-    this.websocketInit();
+    this.closeWeb();
+    setTimeout(() => {
+      this.prepareGroupMessage();
+      this.scrollToBottom();
+      this.websocketInit();
+      this.websocketOpen();
+      this.websocketOnMessage();
+      this.isShowAll = true;
+    }, 2000);
+    window.addEventListener("beforeunload", (e) => this.beforeunloadHandler(e));
+    window.addEventListener("keydown", this.enter_up);
   },
   data() {
     return {
@@ -123,32 +217,189 @@ export default {
       groupMessage: [],
       groupSize: 0,
       wsArray: [],
+      searchChatInput: "",
+      searchPosition: -1,
+      targetBox: [],
+      dialogMessage: "",
+      dialogVisible: false,
+      showDot: true,
+      messageStorageDb: "",
+      isShowAll: false,
     };
   },
-  beforeRouteUpdate(to, form, next) {
-    next((vm) => {
-      vm.closeWebsocket()
-      console.log("1")
-    });
+  unmounted() {
+    window.removeEventListener("keydown", this.enter_up, false);
   },
-  beforeRouteLeave (to, form, next) {
-    next((vm) => {
-      vm.closeWebsocket()
-    });
+  beforeRouteUpdate(to, form, next) {
+    this.closeWeb();
+    setTimeout(() => {
+      next();
+    }, 50);
+  },
+  beforeRouteLeave(to, form, next) {
+    this.closeWeb();
+    setTimeout(() => {
+      next();
+    }, 50);
+  },
+  onBeforeUnmount() {
+    this.closeWeb();
   },
   methods: {
-    closeWebsocket() {
-      window.addEventListener("beforeunload", () => {
-        for (var i = 0; i < this.wsArray.length; i++) {
-          this.wsArray[i].close();
-          console.log("websocket" + i + "已关闭");
+    websocketOpen() {
+      var that = this;
+      for (let i = 0; i < this.allGroupArray.length; i++) {
+        const group = this.allGroupArray[i];
+        this.wsArray[i].onopen = () => {
+          console.log(i);
+          console.log("websocket " + i + " 已开启");
+          console.log(group);
+          const newObj = {
+            type: "history",
+            user_id: store.state.uid,
+            team_id: that.allGroupArray[i].group.id,
+          };
+          try {
+            this.wsArray[i].send(JSON.stringify(newObj));
+          } catch {
+            alert("网络错误");
+          }
+        };
+      }
+    },
+    addToDB(item) {
+      var request = this.db
+        .transaction(["message"], "readwrite")
+        .objectStore("message")
+        .add({
+          groupid: item.id,
+          userName: item.userName,
+          userIcon: item.userIcon,
+          content: item.content,
+          time: item.time,
+        });
+      var that = this;
+      request.onsuccess = function (event) {
+        console.log("数据写入成功");
+        console.log(that.db);
+      };
+
+      request.onerror = function (event) {
+        console.log("数据写入失败");
+      };
+    },
+    readAll() {},
+    openDB() {
+      var request = window.indexedDB.open("message");
+      request.onupgradeneeded = function (event) {
+        console.log(event);
+        this.db = event.target.result;
+        var objectStore;
+        if (!this.db.objectStoreNames.contains("message")) {
+          objectStore = this.db.createObjectStore("message", {
+            autoIncrement: true,
+          });
+          objectStore.createIndex("groupid", "groupid", { unique: false });
         }
-      });
+      };
+      request.onsuccess = function (event) {
+        this.db = event.target.result;
+        console.log(this.db); // Now 'this.db' will have the correct value
+      }.bind(this); // Bind the function to the correct 'this' context
+    },
+    enter_up(e) {
+      if (e.keyCode == 13) {
+        this.sendMessage();
+      }
+    },
+    async beforeunloadHandler(e) {
+      await this.closeWeb(); // 退出登录接口
+      window.close();
+    },
+    closeWeb() {
+      if (this.nowWs != -1) {
+        var leaveObj = {
+          type: "change",
+          change: "leave",
+          user_id: store.state.uid,
+          team_id: this.nowChosenGroup.id,
+        };
+        try {
+          this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
+        } catch {
+          alert("网络错误");
+        }
+      }
+    },
+    findNowchat() {
+      for (var i = 0; i < this.groupMessage.length; i++) {
+        if (this.groupMessage[i].id == this.nowChosenGroup.id) {
+          return this.groupMessage[i];
+        }
+      }
+    },
+    getNeighborChaMessage(num) {
+      if (this.searchPosition === 0 && num === -1) {
+        this.dialogMessage = "这是第一条";
+        this.dialogVisible = true;
+        return;
+      }
+      if (this.searchPosition === this.targetBox.length - 1 && num === 1) {
+        this.dialogMessage = "这是最后一条";
+        this.dialogVisible = true;
+        return;
+      }
+      this.searchPosition += num;
+      const container = document.querySelector(".textarea");
+      const targetBoxTop = this.targetBox[this.searchPosition].offsetTop;
+      const containerTop = container.offsetTop;
+      const scrollTop = targetBoxTop - containerTop;
+      container.scrollTop = scrollTop;
+    },
+    searchChatMessage() {
+      if (this.searchChatInput == "") {
+        return;
+      }
+      var temp = document.querySelector(
+        "#app > main > div > div.el-scrollbar__wrap.el-scrollbar__wrap--hidden-default > div > div.textarea > div:nth-child(1) > div.bubble.right > div > div.content"
+      );
+      if (temp == null) {
+        return;
+      }
+      var index = 1;
+      while (temp != null) {
+        if (temp.textContent.includes(this.searchChatInput) === true) {
+          this.targetBox.push(
+            document.querySelector(
+              "#app > main > div > div.el-scrollbar__wrap.el-scrollbar__wrap--hidden-default > div > div.textarea > div:nth-child(" +
+                index +
+                ")"
+            )
+          );
+        }
+        index++;
+        temp = document.querySelector(
+          "#app > main > div > div.el-scrollbar__wrap.el-scrollbar__wrap--hidden-default > div > div.textarea > div:nth-child(" +
+            index +
+            ") > div.bubble.right > div > div.content"
+        );
+      }
+      if (this.targetBox.length === 0) {
+        this.dialogMessage = "没有对应消息";
+        this.dialogVisible = true;
+        return;
+      }
+      this.searchPosition = 0;
+      const container = document.querySelector(".textarea");
+      const targetBoxTop = this.targetBox[0].offsetTop;
+      const containerTop = container.offsetTop;
+      const scrollTop = targetBoxTop - containerTop;
+      container.scrollTop = scrollTop;
     },
     jumpPersonalPage(item) {
       var uid;
       for (var i = 0; i < this.allGroupMember.length; i++) {
-        if (this.nowChosenGroup.id === this.allGroupMember[i].groupid) {
+        if (this.nowChosenGroup.id === this.allGroupMember[i].id) {
           for (var j = 0; j < this.allGroupMember[i].member.length; j++) {
             if (this.allGroupMember[i].member[j].username == item.name)
               uid = this.allGroupMember[i].member[j].id;
@@ -159,19 +410,41 @@ export default {
     },
     prepareGroupMessage() {
       for (var i = 0; i < this.allGroupArray.length; i++) {
-        {
-          var obj = {
-            id: this.allGroupArray[i].id,
-            content: [],
-          };
-          this.groupMessage.push(obj);
-        }
+        var obj = {
+          id: this.allGroupArray[i].group.id,
+          content: [],
+        };
+        this.groupMessage.push(obj);
       }
+      var that = this;
+      var objectStore = this.db.transaction("message").objectStore("message");
+      objectStore.openCursor().onsuccess = function (event) {
+        console.log(event.target.result);
+        var cursor = event.target.result;
+        if (cursor) {
+          for (var i = 0; i < that.allGroupArray.length; i++) {
+            if (that.groupMessage[i].id == cursor.value.groupid) {
+              var newObj = {
+                name: cursor.value.userName,
+                icon: cursor.value.userIcon,
+                content: cursor.value.content,
+                time: cursor.value.time,
+              };
+              that.groupMessage[i].content.push(newObj);
+            }
+          }
+          cursor.continue();
+        } else {
+          console.log("没有更多数据了！");
+        }
+      };
     },
     getAllGroupMember() {
       for (var i = 0; i < this.allGroupArray.length; i++) {
         // var that = this;
-        var groupInformation = getGroupInformation(this.allGroupArray[i].id);
+        var groupInformation = getGroupInformation(
+          this.allGroupArray[i].group.id
+        );
         groupInformation.then((result) => {
           var groupInfo = result.data;
           var obj = {
@@ -184,7 +457,13 @@ export default {
       this.groupSize = this.allGroupArray.length;
     },
     getMygroup() {
-      this.allGroupArray = store.state.userGroupList;
+      for (var i = 0; i < store.state.userGroupList.length; i++) {
+        var obj = {
+          group: store.state.userGroupList[i],
+          unreadMessage: 0,
+        };
+        this.allGroupArray.push(obj);
+      }
       this.nowGroupArray = this.allGroupArray;
     },
     judgeSamePerson() {
@@ -204,57 +483,102 @@ export default {
       const timeDifferenceInSeconds = timeDifferenceInMilliseconds / 1000;
       return timeDifferenceInSeconds > 300;
     },
-    websocketInit() {
-      for (var i = 0; i < this.allGroupArray.length; i++) {
-        var ws = new WebSocket(
-          "ws://8.130.25.189/ws/chat/team/" + this.allGroupArray[i].id + "/"
-        );
-        this.wsArray.push(ws);
-      }
+    receiveSingleMessage(parsedData) {
+      console.log(parsedData);
       var that = this;
-      for (var i = 0; i < this.allGroupArray.length; i++) {
-        that.wsArray[i].onopen = function () {
-          //服务器连接关闭
-          console.log("websocket i 已开启");
-        };
-        that.wsArray[i].onmessage = function (message) {
-          var parsedData = JSON.parse(message.data);
-          var uid = parsedData.user_id;
-          if (uid) {
-            var tid = parsedData.team_id;
-            var username;
-            var userIcon;
-            var j = 0;
-            var flag = false;
-
-            for (j = 0; j < that.groupSize; j++) {
-              if (that.allGroupMember[j].groupid == tid) {
-                for (var k = 0; k < that.allGroupMember[j].member.length; k++) {
-                  if (that.allGroupMember[j].member[k].id === uid) {
-                    username = that.allGroupMember[j].member[k].username;
-                    userIcon = that.allGroupMember[j].member[k].icon_address;
-                    flag = true;
-                    break;
-                  }
-                }
-              }
-              if (flag) break;
-            }
-            var newObj = {
-              name: username,
-              icon: userIcon,
-              content: parsedData.content,
-              time: parsedData.timestamp,
-            };
-            for (var m = 0; m < that.groupMessage.length; m++) {
-              if (that.groupMessage[m].id === tid) {
-                that.groupMessage[m].content.push(newObj);
+      var uid = parsedData.user_id;
+      if (uid) {
+        var tid = parsedData.team_id;
+        var username;
+        var userIcon;
+        var j = 0;
+        var flag = false;
+        for (j = 0; j < that.groupSize; j++) {
+          console.log(j);
+          console.log(that.allGroupMember);
+          if (that.allGroupMember[j].groupid == tid) {
+            for (var k = 0; k < that.allGroupMember[j].member.length; k++) {
+              if (that.allGroupMember[j].member[k].id === uid) {
+                username = that.allGroupMember[j].member[k].username;
+                userIcon = that.allGroupMember[j].member[k].icon_address;
+                flag = true;
+                break;
               }
             }
           }
+          if (flag) break;
+        }
+        var newObj = {
+          name: username,
+          icon: userIcon,
+          content: parsedData.content,
+          time: parsedData.timestamp,
         };
-        this.wsArray[i].onclose = function () {
-          //服务器连接关闭
+        for (var m = 0; m < that.groupMessage.length; m++) {
+          if (that.groupMessage[m].id === tid) {
+            that.groupMessage[m].content.push(newObj);
+          }
+        }
+        for (var m = 0; m < that.allGroupArray.length; m++) {
+          if (
+            that.allGroupArray[m].group.id === tid &&
+            that.allGroupArray[m].group.id != this.nowChosenGroup.id
+          ) {
+            that.allGroupArray[m].unreadMessage++;
+          }
+        }
+        var dbObj = {
+          id: tid,
+          userName: username,
+          userIcon: userIcon,
+          content: parsedData.content,
+          time: parsedData.timestamp,
+        };
+        this.addToDB(dbObj);
+      }
+    },
+    websocketInit() {
+      for (var i = 0; i < this.allGroupArray.length; i++) {
+        var ws = new WebSocket(
+          "ws://8.130.25.189/ws/chat/team/" +
+            this.allGroupArray[i].group.id +
+            "/"
+        );
+        this.wsArray.push(ws);
+      }
+    },
+    websocketOnMessage() {
+      var that = this;
+      for (var i = 0; i < this.allGroupArray.length; i++) {
+        that.wsArray[i].onmessage = function (message) {
+          console.log("收到的message", message.data);
+          var parsedData = JSON.parse(message.data);
+          if (Array.isArray(parsedData.data) === true) {
+            var dataArray = parsedData.data;
+            for (var j = 0; j < dataArray.length; j++) {
+              that.receiveSingleMessage(dataArray[j]);
+            }
+          } else that.receiveSingleMessage(parsedData);
+          setTimeout(() => {
+            const scrollableContainer = document.querySelector(".textarea");
+            scrollableContainer.scrollTop = scrollableContainer.scrollHeight;
+          }, 50);
+        };
+        this.wsArray[i].onClose = function () {
+          if (this.nowWs != -1) {
+            var leaveObj = {
+              type: "change",
+              change: "leave",
+              user_id: store.state.uid,
+              team_id: this.nowChosenGroup.id,
+            };
+            try {
+              this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
+            } catch {
+              alert("网络错误");
+            }
+            console.log("关闭页面时已经leave" + leaveObj);
+          }
           console.log("websocket i 已关闭");
         };
       }
@@ -262,6 +586,11 @@ export default {
     sendMessage() {
       if (this.nowWs === -1) {
         this.messageInput = "";
+        return;
+      }
+      if (this.messageInput == "") {
+        this.dialogMessage = "不能发送空白消息";
+        this.dialogVisible = true;
         return;
       }
       const now = new Date();
@@ -292,7 +621,14 @@ export default {
           timestamp: timestamp1,
         },
       };
-      this.wsArray[this.nowWs].send(JSON.stringify(newObj));
+      const scrollableContainer = document.querySelector(".textarea");
+      scrollableContainer.scrollTop = scrollableContainer.scrollHeight;
+      try {
+        this.wsArray[this.nowWs].send(JSON.stringify(newObj));
+      } catch {
+        alert("网络错误");
+      }
+      console.log(JSON.stringify(newObj));
       this.messageInput = "";
     },
     scrollToBottom() {
@@ -311,7 +647,7 @@ export default {
     searchGroup() {
       this.nowGroupArray = [];
       for (var i = 0; i < this.allGroupArray.length; i++) {
-        if (this.allGroupArray[i].name.indexOf(this.searchInput) >= 0) {
+        if (this.allGroupArray[i].group.name.indexOf(this.searchInput) >= 0) {
           this.nowGroupArray.push(this.allGroupArray[i]);
         }
       }
@@ -324,10 +660,16 @@ export default {
           user_id: store.state.uid,
           team_id: this.nowChosenGroup.id,
         };
-        this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
+        try {
+          this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
+        } catch {
+          alert("网络错误");
+        }
+        console.log("已经leave" + leaveObj);
       }
+      item.unreadMessage = 0;
       this.nowWs = i;
-      this.nowChosenGroup = item;
+      this.nowChosenGroup = item.group;
       for (var k = 0; k < this.nowGroupArray.length; k++) {
         var ele1 = document.getElementById("groupList" + k);
         ele1.style.background = "var(--el-color-primary-light-9)";
@@ -337,7 +679,7 @@ export default {
       ele.style.background = "#409EFF";
       ele.style.color = "white";
       for (var i = 0; i < this.allGroupMember.length; i++) {
-        if (item.id === this.allGroupMember[i].groupid)
+        if (item.group.id === this.allGroupMember[i].groupid)
           this.nowGroupMember = this.allGroupMember[i].member;
       }
       var enterobj = {
@@ -346,7 +688,12 @@ export default {
         user_id: store.state.uid,
         team_id: this.nowChosenGroup.id,
       };
-      this.wsArray[this.nowWs].send(JSON.stringify(enterobj));
+      try {
+        this.wsArray[this.nowWs].send(JSON.stringify(enterobj));
+      } catch {
+        alert("网络错误");
+      }
+      console.log("已发送enter", enterobj);
     },
   },
   watch: {
@@ -356,11 +703,38 @@ export default {
         this.nowGroupArray = this.allGroupArray;
       }
     },
+    searchChatInput: function (newVal, oldVal) {
+      if (oldVal != newVal) {
+        this.searchPosition = -1;
+        const scrollableContainer = document.querySelector(".textarea");
+        scrollableContainer.scrollTop = scrollableContainer.scrollHeight;
+        this.searchPosition = -1;
+        this.targetBox = [];
+      }
+    },
   },
 };
 </script>
 
 <style scoped>
+body {
+  margin: 0;
+}
+.unreadSpan {
+  margin-left: 10px;
+  font-size: 10px;
+  color: gray;
+}
+.dotDiv {
+  position: relative;
+  display: flex;
+  left: 195px;
+  top: 20px;
+  height: 10px;
+  width: 10px;
+  background-color: red;
+  border-radius: 50%;
+}
 .userIcon {
   height: 40px;
   width: 40px;

@@ -2,8 +2,6 @@
   <div id="app">
     <ng-form-design ref="formDesign" />
     <ng-form-build ref="formBuild" />
-    <button @click="test1">test1</button>
-    <button @click="test2">test2</button>
   </div>
 </template>
 <script>
