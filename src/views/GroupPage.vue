@@ -28,28 +28,31 @@
         </el-container>
       </el-header>
       <el-container class="third-container">
-        <el-aside width="37%" class="bottom-aside">
+        <el-aside v-if="this.listType" width="100%" class="bottom-aside">
           <el-container class="forth-container">
             <el-header style="display: flex;justify-content: center;align-items: center;">
               <el-text class="project-title">项目列表</el-text>
               <el-button v-if="this.currentGroup.id!=0" type="primary" @click="this.OpenDialog(2)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建项目</el-button>
               <el-button v-if="this.currentGroup.id!=0" type="primary" @click="" style="height: 40px;"><el-icon style="margin-right: 4px;"><DeleteFilled /></el-icon>回收站</el-button>
+              <el-button v-if="this.currentGroup.id!=0" type="primary" @click="this.ChangeListType()" style="height: 40px;"><el-icon style="margin-right: 4px;"><Switch /></el-icon>查看团队成员列表</el-button>
             </el-header>
             <el-scrollbar>
               <div v-for="item in this.currentGroup.projectCount" :key="item" class="project-list">
                 <el-text class="project-name">{{ this.currentGroup.projectList[item-1].name }}</el-text>
-                <el-text class="creator-name">{{ this.currentGroup.projectList[item-1].creator_name }}创建</el-text>
+                <el-text class="creator-name">{{ this.currentGroup.projectList[item-1].creator_name+" " }}创建</el-text>
+                <el-text class="create-time">创建时间：{{ this.currentGroup.projectList[item-1].create_date.substring(0,10)+' '+this.currentGroup.projectList[item-1].create_date.substring(11,18) }}</el-text>
                 <el-button @click="this.Jump('/'+this.$store.state.uid+'/'+this.currentGroup.id+'/MyProject/'+this.currentGroup.projectList[item-1].id)"><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看项目</el-button>
                 <el-button @click="this.DeleteProject(this.currentGroup.projectList[item-1].id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除项目</el-button>
               </div>
             </el-scrollbar>
           </el-container>
         </el-aside>
-        <el-aside width="61%" class="bottom-aside">
+        <el-aside v-else width="100%" class="bottom-aside">
           <el-container class="forth-container">
             <el-header style="display: flex;justify-content: center;align-items: center;">
               <el-text class="groupmember-title">成员列表</el-text>
               <el-button v-if="this.currentGroup.id!=0" type="primary" @click="this.OpenDialog(3)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>邀请新成员</el-button>
+              <el-button v-if="this.currentGroup.id!=0" type="primary" @click="this.ChangeListType()" style="height: 40px;"><el-icon style="margin-right: 4px;"><Switch /></el-icon>查看团队项目列表</el-button>
             </el-header>
             <el-scrollbar>
               <div v-for="item in this.currentGroup.personCount" :key="item"  class="groupmember-list">
@@ -58,7 +61,7 @@
                 <el-text class="groupmember-name">{{ this.currentGroup.personList[item-1].true_name }}</el-text>
                 <el-text class="groupmember-email">{{ this.currentGroup.personList[item-1].email }}</el-text>
                 <el-button @click="this.Jump('/'+this.currentGroup.personList[item-1].id+'/PersonalInfomation')"><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看成员</el-button>
-                <el-button @click="this.ChangeAuth(this.currentGroup.personList[item-1].id,this.currentGroup.personList[item-1].position==='admin'? 1 : 2)"><el-icon style="margin-right: 4px;"><Avatar /></el-icon>{{ this.currentGroup.authList[item-1] }}</el-button>
+                <el-button @click="this.ChangeAuth(this.currentGroup.personList[item-1].id,this.currentGroup.personList[item-1].position==='admin'? 1 : 2)" style="width: 100px;"><el-icon style="margin-right: 4px;"><Avatar /></el-icon>{{ this.currentGroup.authList[item-1] }}</el-button>
                 <el-button @click="this.ChangeAuth(this.currentGroup.personList[item-1].id,3)"><el-icon style="margin-right: 4px;"><CircleClose /></el-icon>移除成员</el-button>
               </div>
             </el-scrollbar>
@@ -211,7 +214,7 @@
   border-bottom: 1px solid #409EFF;
 }
 .groupmember-name{
-  width: 12%;
+  width: 18%;
   margin-left: 20px;
   display: flex;
   text-align: center;
@@ -220,7 +223,7 @@
   color: black;
 }
 .groupmember-email{
-  width: 20%;
+  width: 25%;
   margin-left: 20px;
   display: flex;
   text-align: center;
@@ -250,16 +253,25 @@
   margin-left: 20px;
   display: flex;
   text-align: center;
-  font-size:medium;
+  font-size:1ch;
   font-weight: 500;
   color: black;
 }
 .creator-name{
+  width: 20%;
+  margin-left: 20px;
+  display: flex;
+  text-align: center;
+  font-size:1ch;
+  font-weight: 500;
+  color: black;
+}
+.create-time{
   width: 30%;
   margin-left: 20px;
   display: flex;
   text-align: center;
-  font-size:medium;
+  font-size:1ch;
   font-weight: 500;
   color: black;
 }
@@ -277,6 +289,8 @@ export default{
   data(){
     return{
       uid: store.state.uid,
+      listType: true,
+      sortType: 0,
       createGroup:{
         isOpen: false,
         name: '',
@@ -383,13 +397,16 @@ export default{
     }
   },
   methods:{
+    ChangeListType(){
+      this.listType=!this.listType;
+    },
     CreateGroup(){
       this.$refs.createGroupRef.validate((valid) => {
         if(valid){
           console.log(this.createGroup.name+' '+this.createGroup.introduction);
           var promise1=createGroup(this.createGroup.name,this.createGroup.introduction);
           promise1.then((result)=>{
-            if(this.MessageCatch(result)){
+            if(this.MessageCatch(result,true)){
               var promise2=getUserGroup();
               promise2.then((result) => {
                 if(result.code==0){
@@ -427,7 +444,7 @@ export default{
         if(valid){
           var promise=createProject(this.createProject.name,this.currentGroup.id,this.createProject.introduction);
           promise.then((result)=>{
-            if(this.MessageCatch(result)){
+            if(this.MessageCatch(result,true)){
               this.GetCurrenGroup(this.currentGroup.id);
             }
           });
@@ -439,7 +456,7 @@ export default{
         if(valid){
           var promise=inviteMember(this.currentGroup.id,this.addNewMember.email);
           promise.then((result) => {
-            this.MessageCatch(result);
+            this.MessageCatch(result,true);
           })
         }
       })
@@ -447,7 +464,7 @@ export default{
     DeleteGroup(groupid){
       var promise1=deleteGroup(groupid);
       promise1.then((result) => {
-        if(this.MessageCatch(result)){
+        if(this.MessageCatch(result,true)){
           var promise2=getUserGroup();
           promise2.then((result) => {
             if(result.code==0){
@@ -477,7 +494,7 @@ export default{
     DeleteProject(projectid){
       var promise=deleteProject(projectid);
       promise.then((result) => {
-        if(this.MessageCatch(result)){
+        if(this.MessageCatch(result,true)){
           this.GetCurrenGroup(this.currentGroup.id);
         }
       })
@@ -530,7 +547,7 @@ export default{
           if(ownPosition==='creator'){
             var promise1=changeAuth(userid,this.currentGroup.id,opcode);
             promise1.then((result)=>{
-              if(this.MessageCatch(result)){
+              if(this.MessageCatch(result,true)){
                 this.GetCurrenGroup(this.currentGroup.id);
               }
             })
@@ -547,7 +564,7 @@ export default{
           if(ownPosition==='creator'||ownPosition==='admin'){
             var promise1=changeAuth(userid,this.currentGroup.id,opcode);
             promise1.then((result)=>{
-              if(this.MessageCatch(result)){
+              if(this.MessageCatch(result,true)){
                 this.GetCurrenGroup(this.currentGroup.id);
               }
             })
@@ -564,7 +581,7 @@ export default{
           if(ownPosition==='creator'||(ownPosition==='admin'&&userPosition==='member')){
             var promise1=changeAuth(userid,this.currentGroup.id,opcode);
             promise1.then((result)=>{
-              if(this.MessageCatch){
+              if(this.MessageCatch(result,true)){
                 this.GetCurrenGroup(this.currentGroup.id);
               }
             })
@@ -646,7 +663,17 @@ export default{
         this.addNewMember.isOpen=true;
       }
     },
-    MessageCatch(data){
+    projectSort(list){
+      var newList=[];
+
+    },
+    projectSearch(){
+
+    },
+    Load(groupid){
+      
+    },
+    MessageCatch(data,opcode){
       if(data.code!=0){
         ElMessage({
           message: data.msg,
@@ -655,14 +682,14 @@ export default{
         })
         return false;
       }
-      else{
+      if(opcode==true&&data.code==0){
         ElMessage({
           message: data.msg,
           grouping: true,
           type: 'success',
         })
-        return true;
       }
+      return true;
     },
   },
   mounted(){

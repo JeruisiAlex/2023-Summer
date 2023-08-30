@@ -32,7 +32,7 @@
                 <el-text class="project-name">{{ this.currentProject.graphList[item-1].name }}</el-text>
                 <el-text class="creator-name">{{ this.currentProject.graphList[item-1].creator.name }}创建</el-text>
                 <el-button @click="this.DeleteGraph(this.currentProject.graphList[item-1].graph_id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除页面</el-button>
-                <el-button @click="this.Jump('/'+this.currentGroup.id+'/'+this.currentProject.id+'/'+this.currentProject.graphList[item-1].grahp_id+'/DesignPage')"><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑页面</el-button>
+                <el-button @click="this.Jump('/'+this.currentGroup.id+'/'+this.currentProject.id+'/'+this.currentProject.graphList[item-1].graph_id+'/DesignPage')"><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑页面</el-button>
               </div>
             </el-scrollbar>
           </el-container>
@@ -495,6 +495,19 @@ export default{
           if(this.group.count>0){
             this.LoadProject(this.currentGroup.id,projectid);
           }
+          else{
+            this.currentGroup.id=0;
+            this.currentGroup.projectList=[];
+            this.currentGroup.projectCount=0;
+            this.currentProject.id=0;
+            this.currentProject.graphList=[];
+            this.currentProject.graphCount=0;
+            this.currentProject.textList=[];
+            this.currentProject.textCount=0;
+            this.currentProject.name="您还没有任何项目";
+            this.currentProject.introduction="快去创建一个项目吧";
+            this.Jump('/'+this.uid+'/'+this.currentGroup.id+'/MyProject/'+this.currentProject.id);
+          }
         }
       })
     },
@@ -534,6 +547,15 @@ export default{
                 this.currentProject.textCount=this.currentProject.textList.length;
               }
             })
+          }
+          else{
+            this.currentProject.id=0;
+            this.currentProject.graphList=[];
+            this.currentProject.graphCount=0;
+            this.currentProject.textList=[];
+            this.currentProject.textCount=0;
+            this.currentProject.name="您还没有任何项目";
+            this.currentProject.introduction="快去创建一个项目吧";
           }
           this.Jump('/'+this.uid+'/'+this.currentGroup.id+'/MyProject/'+this.currentProject.id);
         }
