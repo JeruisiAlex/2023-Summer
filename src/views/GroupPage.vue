@@ -284,6 +284,7 @@ import { ElMessage } from 'element-plus';
 import { getUserGroup } from '../api/user.js';
 import { createGroup, deleteGroup, changeAuth, inviteMember, getGroupInformation} from '../api/group.js';
 import { createProject, deleteProject } from '../api/project.js';
+import { watch, ref } from 'vue';
 
 export default{
   data(){
@@ -291,6 +292,7 @@ export default{
       uid: store.state.uid,
       listType: true,
       sortType: 0,
+      searchwords: '',
       createGroup:{
         isOpen: false,
         name: '',
@@ -326,6 +328,7 @@ export default{
         authList: [],
         projectCount: 0,
         projectList: [],
+        projectListBeforeSearch: [],
       },
       createGroupRules:{
         name:[{
@@ -665,7 +668,7 @@ export default{
     },
     projectSort(list){
       var newList=[];
-
+      
     },
     projectSearch(){
 
