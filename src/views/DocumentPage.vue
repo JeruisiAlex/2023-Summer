@@ -3,9 +3,27 @@
         <el-row style=" color: black;">
             <el-col :span="14" style="font-size: large; font-weight: bold; text-overflow: ellipsis;-o-text-overflow: ellipsis; white-space: nowrap; max-width: 100%; display: block;">{{ fileName }}</el-col>
             <el-col :span="10" style="text-align: right;" >
-              <el-button type="warning" @click="atDocument()" size="small">
-                @邀请
-              </el-button>
+              <el-popover
+                :visible="atVisible"
+                placement="bottom"
+                :title="groupName"
+                :width="200"
+                content="this is content, this is content, this is content"
+              >
+                <template #reference>
+                  <el-button type="warning" @click="atDocument()" size="small">
+                    @邀请
+                  </el-button>
+                </template>
+                <el-scrollbar max-height="500px">
+                  <div class="notification-item" 
+                    v-for="(item, index) in this.groupMembersList"
+                    :key="index" :title="item.username" @click="atDocumentPost(item.id)">
+                    {{ item.username }}
+                  </div>
+                </el-scrollbar>
+              </el-popover>
+              
               <el-button type="primary" @click="saveDocument()" size="small">
                 保存<el-icon class="el-icon--right"><Upload /></el-icon>
               </el-button>
@@ -22,7 +40,7 @@
             </el-col>
         </el-row>
     </div>
-    <div id="vditor" name="description" style="z-index: 999;"></div>
+    <div id="vditor" name="description" style="z-index: 999;" tabindex="0" @keydown="keyListener"></div>
     <!-- <el-button @click="setEditArea()">(测试用)改变富文本编辑器内容</el-button>
     <el-button @click="getEditArea()">(测试用)提取富文本编辑器内容</el-button>
     <el-button @click="exportDocument1()">(测试用)使失效</el-button>
@@ -30,11 +48,37 @@
     <span>{{ editorContent }}</span> -->
     <!-- <div>{{ cursorPosition }}</div> -->
 </template>
+
+<style scoped>
+.notification-item {
+  align-items: center;
+  /*justify-content: center;*/
+  height: 30px;
+  line-height: 30px;
+  margin: 5px;
+  /*padding-left: 5px;*/
+  text-align: center;
+  border-radius: 4px;
+  color: black;
+  transition: 0.5s;
+  overflow: hidden;
+  border-bottom: rgba(42, 159, 235, 0.5) 1px solid;
+}
+
+.notification-item:hover {
+  cursor: pointer;
+  background: rgba(236, 245, 255, 1);
+  /* color: rgb(42, 159, 235); */
+  transition: 0.2s;
+}
+</style>
+
 <script>
   import Vditor from "vditor"
   import "vditor/dist/index.css"
   import { getAText, saveText} from '../api/text.js';
   import store from "@/store";
+  import {getGroupInformation} from '../api/group.js';
   let ws;
   let wsd;
 export default {
@@ -51,6 +95,9 @@ export default {
           cursorPosition: {top: 0, left: 0},
           edible: true,
           shareable: true,
+          atVisible: false,
+          groupMembersList: [],
+          groupName: 'Group'
       }
   },
   mounted(){
@@ -145,12 +192,60 @@ export default {
         console.log("文档@用websocket已关闭");
       };
     },
+    keyListener(event) {
+      console.log("key_push");
+      if (event.shiftKey && event.keyCode === 50) {
+        console.log("同时按下 shift 和数字2键");
+        this.atDocument();
+        // 执行你想做的操作
+      }
+      else if (event.ctrlKey && event.key === 's'){
+        event.preventDefault();
+        this.saveDocument();
+        console.log("同时按下 control 和 s 键");
+      }
+      else if (event.keyCode === 27)  {
+        event.preventDefault();
+        this.atVisible = false;
+        console.log("按下 esc 键");
+      }
+    },
     atDocument() {
+      var promise=getGroupInformation(this.group_id);
+      promise.then((result)=>{
+        this.groupMembersList=result.data.user_list;
+        this.groupName=result.data.name;
+        console.log(this.groupMembersList);
+        this.atVisible = !this.atVisible;
+      });
+      // this.groupMembersList=[
+      //       {
+      //           "id": 3,
+      //           "username": "TestKirby",
+      //           "email": "13616991245@163.com",
+      //           "true_name": "Ye Chengxuan",
+      //           "icon_address": "2023summer-se-1316618142.cos.ap-beijing.myqcloud.com/icon/user/3.jpg",
+      //           "position": "creator"
+      //       },
+      //       {
+      //           "id": 4,
+      //           "username": "Jeruisi",
+      //           "email": "1525772623@qq.com",
+      //           "true_name": "Chen Yanzhou",
+      //           "icon_address": "2023summer-se-1316618142.cos.ap-beijing.myqcloud.com/icon/user/default_icon.jpg",
+      //           "position": "admin"
+      //       }
+      //   ];
+      // this.groupName='result.data.name';
+      // console.log(this.groupMembersList);
+      // this.atVisible = !this.atVisible;
+    },
+    atDocumentPost(receiver_id) {
       var newObj = {
         type: "at_jump",
         at_type: "document",
         sender_id: store.state.uid,
-        receiver_id: 4,
+        receiver_id: receiver_id,
         team_id: this.group_id,
         project_id: this.project_id,
         document_id: this.text_id,
@@ -164,6 +259,14 @@ export default {
       var promise=saveText(this.text_id,this.project_id,this.contentEditor.getValue());
       promise.then((result)=>{
         console.log(result);
+      }); 
+    },
+    getGroupMembers() {
+      var promise=getGroupInformation(groupId);
+      promise.then((result)=>{
+        this.groupMembersList=result.data.user_list;
+        this.groupName=result.data.name;
+        console.log(this.groupMembersList);
       });
     },
     sendMessage() {

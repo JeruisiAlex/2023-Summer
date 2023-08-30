@@ -859,6 +859,7 @@ import { ElMessage } from 'element-plus';
 import { ref, watch } from 'vue';
 import store from './store';
 import router from './router';
+import { ElNotification } from 'element-plus';
 
 
 export default {
@@ -1141,6 +1142,22 @@ export default {
               };
               if (parsedData.processed===false){
                 store.commit('addNotificationUnread',newObj);
+                var flagRepeat = false;
+                store.state.notificationRead.some(function (value) {
+                  if (value.id===parsedData.id){
+                    this.flagRepeat = true
+                    return true;
+                  }
+                });
+                if (flagRepeat===false){
+                  // store.commit('addNotificationUnread',newObj);
+                  // ElNotification({
+                  // title: '邀请',
+                  // message: parsedData.content,
+                  // type: 'warning',
+                  // position: 'bottom-right',
+                  // });
+                }
               } else {
                 store.commit('addNotificationReadDirect',newObj);
               }
@@ -1155,8 +1172,24 @@ export default {
                 project_id: parsedData.project_id,
                 document_id: parsedData.document_id,
               };
+              
               if (parsedData.processed===false){
-                store.commit('addNotificationUnread',newObj);
+                var flagRepeat = false;
+                store.state.notificationRead.some(function (value) {
+                  if (value.id===parsedData.id){
+                    this.flagRepeat = true;
+                    return true;
+                  }
+                });
+                  if (flagRepeat===false){
+                    store.commit('addNotificationUnread',newObj);
+                    // ElNotification({
+                    // title: '@你-文档',
+                    // message: parsedData.content,
+                    // type: 'warning',
+                    // position: 'bottom-right',
+                    // });
+                  }
               } else {
                 store.commit('addNotificationReadDirect',newObj);
               }
@@ -1171,7 +1204,22 @@ export default {
                 document_id: parsedData.document_id,
               };
               if (parsedData.processed===false){
-                store.commit('addNotificationUnread',newObj);
+                var flagRepeat = false;
+                store.state.notificationRead.some(function (value) {
+                  if (value.id===parsedData.id){
+                    this.flagRepeat = true;
+                    return true;
+                  }
+                });
+                  if (flagRepeat===false){
+                    store.commit('addNotificationUnread',newObj);
+                    // ElNotification({
+                    // title: '@你-聊天',
+                    // message: parsedData.content,
+                    // type: 'warning',
+                    // position: 'bottom-right',
+                    // });
+                  }
               } else {
                 store.commit('addNotificationReadDirect',newObj);
               }
@@ -1184,7 +1232,22 @@ export default {
                 content: parsedData.content,
               };
               if (parsedData.processed===false){
-                store.commit('addNotificationUnread',newObj);
+                var flagRepeat = false;
+                store.state.notificationRead.some(function (value) {
+                  if (value.id===parsedData.id){
+                    this.flagRepeat = true;
+                    return true;
+                  }
+                });
+                  if (flagRepeat===false){
+                    store.commit('addNotificationUnread',newObj);
+                    // ElNotification({
+                    // title: '通知',
+                    // message: parsedData.content,
+                    // type: 'info',
+                    // position: 'bottom-right',
+                    // });
+                  }
               } else {
                 store.commit('addNotificationReadDirect',newObj);
               }
