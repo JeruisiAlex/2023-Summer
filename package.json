@@ -20,6 +20,7 @@
     "json2html.js": "^1.0.3",
     "ng-form-element": "^2.1.0",
     "ng-form-elementplus": "^2.0.2",
+    "node-json2html": "^2.2.3",
     "vditor": "^3.9.4",
     "vue": "^3.2.13",
     "vue-json-to-html": "^0.1.12",
