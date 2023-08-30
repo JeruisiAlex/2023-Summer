@@ -51,7 +51,7 @@
             <el-row v-if="item.t==='邀请'" class="notification-content" @click="calloutNotification(item,1)">
               {{item.c}}
             </el-row>
-            <el-row v-if="item.t==='@你'" style="margin-top: 1px;" justify="start">
+            <el-row v-if="item.t==='@document' || item.t==='@chat'" style="margin-top: 1px;" justify="start">
               <el-col :span="20" @click="calloutNotification(item,1)" style="text-align: left;">
                 <el-button type="danger" plain>@你</el-button>
               </el-col>
@@ -62,7 +62,7 @@
                 <el-icon @click="addReadNotification(item.id)"><CircleCheckFilled /></el-icon>
               </el-col>
             </el-row>
-            <el-row v-if="item.t==='@你'" class="notification-content" @click="calloutNotification(item,1)">
+            <el-row v-if="item.t==='@document' || item.t==='@chat'" class="notification-content" @click="calloutNotification(item,1)">
               {{item.c}}
             </el-row>
             <el-row v-if="item.t==='普通'" style="margin-top: 1px;" justify="start">
@@ -96,7 +96,7 @@
             <el-row v-if="item.t==='邀请'" class="notification-content" :title="item.c" @click="calloutNotification(item,2)">
               {{item.c}}
             </el-row>
-            <el-row v-if="item.t==='@你'" style="margin-top: 1px;" justify="start">
+            <el-row v-if="item.t==='@document' || item.t==='@chat'" style="margin-top: 1px;" justify="start">
               <el-col :span="22" @click="calloutNotification(item,2)" style="text-align: left;">
                 <el-button type="danger" plain>@你</el-button>
               </el-col>
@@ -104,7 +104,7 @@
                 <el-icon class="delete-message-btn notification-deal" @click="deleteNotification(item.id)"><Delete /></el-icon>
               </el-col>
             </el-row>
-            <el-row v-if="item.t==='@你'" class="notification-content" :title="item.c" @click="calloutNotification(item,2)">
+            <el-row v-if="item.t==='@document' || item.t==='@chat'" class="notification-content" :title="item.c" @click="calloutNotification(item,2)">
               {{item.c}}
             </el-row>
             <el-row v-if="item.t==='普通'" style="margin-top: 1px;" justify="start">
@@ -220,10 +220,13 @@
       <span class="dialog-footer">
         <el-button v-if="localDialogNotification.type==='邀请'" type="danger" @click="centerDialogVisible = false; rejectInvitaion()">拒绝</el-button>
         <el-button v-if="localDialogNotification.type==='邀请'" type="success" @click="centerDialogVisible = false; acceptInvitation()">接受</el-button>
-        <el-button v-if="localDialogNotification.type==='@你'" type="warning" @click="centerDialogVisible = false; jumpToTeamChat()">
+        <el-button v-if="localDialogNotification.type==='@document'" type="warning" @click="centerDialogVisible = false; jumpToTeamDocument()">
           跳转
         </el-button>
-        <el-button v-if="localDialogNotification.type==='@你'" type="primary" @click="centerDialogVisible = false">
+        <el-button v-if="localDialogNotification.type==='@chat'" type="warning" @click="centerDialogVisible = false; jumpToTeamChat()">
+          跳转
+        </el-button>
+        <el-button v-if="localDialogNotification.type==='@document' || localDialogNotification.type==='@chat'" type="primary" @click="centerDialogVisible = false">
           确定
         </el-button>
         <el-button v-if="localDialogNotification.type==='普通'" type="primary" @click="centerDialogVisible = false">
@@ -883,6 +886,9 @@ export default {
             by: "来自我",
             forthing: "为了爱",
             content: "这是一个示例通知",
+            group_id: 0,
+            project_id: 0,
+            item_id: 0,
             from: 1,
         },
 
@@ -990,6 +996,11 @@ export default {
         this.localDialogNotification.by = item.b;
         this.localDialogNotification.forthing = item.f;
         this.localDialogNotification.content = item.c;
+        if (item.t==='@document'){
+          this.localDialogNotification.group_id = item.f;
+          this.localDialogNotification.project_id = item.pid;
+          this.localDialogNotification.item_id = item.did;
+        }
         this.centerDialogVisible = true;
         if (from===1)
           this.addReadNotification(item.id);
@@ -1134,13 +1145,30 @@ export default {
                 store.commit('addNotificationReadDirect',newObj);
               }
               console.log(newObj);
-            } else if (parsedData.type==='at') {
-              var newObj = {
+            } else if(parsedData.type==='at_document'){
+                var newObj = {
                 id: parsedData.id,
-                type: "@你",
+                type: "@document",
                 by: parsedData.sender_id,
                 forthing: parsedData.team_id,
                 content: parsedData.content,
+                project_id: parsedData.project_id,
+                document_id: parsedData.document_id,
+              };
+              if (parsedData.processed===false){
+                store.commit('addNotificationUnread',newObj);
+              } else {
+                store.commit('addNotificationReadDirect',newObj);
+              }
+            } else if (parsedData.type==='at_chat') {
+              var newObj = {
+                id: parsedData.id,
+                type: "@chat",
+                by: parsedData.sender_id,
+                forthing: parsedData.team_id,
+                content: parsedData.content,
+                project_id: parsedData.project_id,
+                document_id: parsedData.document_id,
               };
               if (parsedData.processed===false){
                 store.commit('addNotificationUnread',newObj);
@@ -1190,20 +1218,37 @@ export default {
                       store.commit('addNotificationReadDirect',newObj);
                     }
                     console.log(newObj);
-                  } else if (parsedData.type==='at') {
-                    var newObj = {
-                      id: parsedData.id,
-                      type: "@你",
-                      by: parsedData.sender_id,
-                      forthing: parsedData.team_id,
-                      content: parsedData.content,
-                    };
-                    if (parsedData.processed===false){
-                      store.commit('addNotificationUnread',newObj);
-                    } else {
-                      store.commit('addNotificationReadDirect',newObj);
-                    }
-                  } else if (parsedData.type==='normal') {
+            } else if(parsedData.type==='at_document'){
+              var newObj = {
+                id: parsedData.id,
+                type: "@document",
+                by: parsedData.sender_id,
+                forthing: parsedData.team_id,
+                content: parsedData.content,
+                project_id: parsedData.project_id,
+                document_id: parsedData.document_id,
+              };
+              if (parsedData.processed===false){
+                store.commit('addNotificationUnread',newObj);
+              } else {
+                store.commit('addNotificationReadDirect',newObj);
+              }
+            } else if (parsedData.type==='at_chat') {
+              var newObj = {
+                id: parsedData.id,
+                type: "@chat",
+                by: parsedData.sender_id,
+                forthing: parsedData.team_id,
+                content: parsedData.content,
+                project_id: parsedData.project_id,
+                document_id: parsedData.document_id,
+              };
+              if (parsedData.processed===false){
+                store.commit('addNotificationUnread',newObj);
+              } else {
+                store.commit('addNotificationReadDirect',newObj);
+              }
+            } else if (parsedData.type==='normal') {
                     var newObj = {
                       id: parsedData.id,
                       type: "普通",
@@ -1226,58 +1271,6 @@ export default {
       };
     },
 
-    displayMessage(parsedData) {
-      var isMyMessage = true;
-      console.log(parsedData);
-      if (parsedData.receiver_id && parsedData.receiver_id!=store.state.uid){
-        isMyMessage = false;
-        console.log("not my message!");
-      }
-      if (isMyMessage) {
-        if (parsedData.type==='invite') {
-          var newObj = {
-            id: parsedData.id,
-            type: "邀请",
-            by: parsedData.sender_id,
-            forthing: parsedData.team_id,
-            content: parsedData.content,
-          };
-          if (parsedData.processed===false){
-            store.commit('addNotificationUnread',newObj);
-          } else {
-            store.commit('addNotificationReadDirect',newObj);
-          }
-          console.log(newObj);
-        } else if (parsedData.type==='at') {
-          var newObj = {
-            id: parsedData.id,
-            type: "@你",
-            by: parsedData.sender_id,
-            forthing: parsedData.team_id,
-            content: parsedData.content,
-          };
-          if (parsedData.processed===false){
-            store.commit('addNotificationUnread',newObj);
-          } else {
-            store.commit('addNotificationReadDirect',newObj);
-          }
-        } else if (parsedData.type==='normal') {
-          var newObj = {
-            id: parsedData.id,
-            type: "普通",
-            by: parsedData.sender_id,
-            forthing: "",
-            content: parsedData.content,
-          };
-          if (parsedData.processed===false){
-            store.commit('addNotificationUnread',newObj);
-          } else {
-            store.commit('addNotificationReadDirect',newObj);
-          }
-        }
-      }
-    },
-
     acceptInvitation() {
       var newObj = {
         type: "invite.response",
@@ -1297,6 +1290,9 @@ export default {
         team_id: this.localDialogNotification.forthing
       }
       ws.send(JSON.stringify(newObj));
+    },
+    jumpToTeamDocument() {
+      router.push('/'+this.localDialogNotification.group_id+'/'+this.localDialogNotification.project_id+'/'+this.localDialogNotification.item_id+'/DocumentPage')
     },
     jumpToTeamChat() {
       // 待开发
@@ -1334,7 +1330,7 @@ export default {
         };
         var data2={
           id: i,
-          type: "@你",
+          type: "@chat",
           by: "user"+i.toString(),
           forthing: "团队"+i.toString(),
           content: "user"+i.toString()+"在团队"+"\""+i.toString()+"\""+"中@了你",

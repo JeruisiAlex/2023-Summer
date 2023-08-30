@@ -34,7 +34,9 @@
   import Vditor from "vditor"
   import "vditor/dist/index.css"
   import { getAText, saveText} from '../api/text.js';
+  import store from "@/store";
   let ws;
+  let wsd;
 export default {
   data(){
       return{
@@ -57,7 +59,7 @@ export default {
     this.group_id = parseInt(infos[1]);
     this.project_id = parseInt(infos[2]);
     this.text_id = parseInt(infos[3]);
-    // this.websocketInit();
+    this.websocketInit();
     this.contentEditor = new Vditor("vditor",{
         height:600,
         placeholder: "在这里开始编辑",
@@ -123,26 +125,40 @@ export default {
     },
     websocketInit() {
       var that = this;
-      ws = new WebSocket("ws://8.130.25.189/ws/text/");
+      // ws1 = new WebSocket("ws://8.130.25.189/ws/text/");
+      ws = new WebSocket("ws://8.130.25.189/ws/notification/");
       ws.onopen = function () {
-        console.log("文档websocket已经打开");
+        console.log("文档@用websocket已经打开");
       };
       ws.onmessage = function (message) {
         var parsedData = JSON.parse(message.data);
-        var newObj = {
-          name: parsedData.name,
-          content: parsedData.content,
-          time: parsedData.time,
-        };
-        that.nowChosenGroup.contentArray.push(newObj);
+        console.log(parsedData);
+        // var newObj = {
+        //   name: parsedData.name,
+        //   content: parsedData.content,
+        //   time: parsedData.time,
+        // };
+        // that.nowChosenGroup.contentArray.push(newObj);
       };
       ws.onclose = function () {
         //服务器连接关闭
-        console.log("文档websocket已关闭");
+        console.log("文档@用websocket已关闭");
       };
     },
     atDocument() {
-
+      var newObj = {
+        type: "at_jump",
+        at_type: "document",
+        sender_id: store.state.uid,
+        receiver_id: 4,
+        team_id: this.group_id,
+        project_id: this.project_id,
+        document_id: this.text_id,
+      }
+      console.log(newObj);
+      console.log("发送前");
+      ws.send(JSON.stringify(newObj));
+      console.log("发送后");
     },
     saveDocument() {
       var promise=saveText(this.text_id,this.project_id,this.contentEditor.getValue());

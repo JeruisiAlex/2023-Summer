@@ -51,6 +51,18 @@ export default createStore({
         }
       });
       if (hasMessage=== false){
+        if (data.type==='@document'){
+          state.notificationUnread.unshift({ //对象数组
+            id: data.id,
+            t: data.type,
+            b: data.by,
+            f: data.forthing,
+            c: data.content,
+            pid: data.project_id,
+            did: data.document_id,
+          });
+          return;
+        }
         state.notificationUnread.unshift({ //对象数组
           id: data.id,
           t: data.type,
@@ -69,6 +81,18 @@ export default createStore({
         }
       });
       if (hasMessage === false){
+        if (data.type==='@document'){
+          state.notificationUnread.unshift({ //对象数组
+            id: data.id,
+            t: data.type,
+            b: data.by,
+            f: data.forthing,
+            c: data.content,
+            pid: data.project_id,
+            did: data.document_id,
+          });
+          return;
+        }
         state.notificationRead.unshift({ //对象数组
           id: data.id,
           t: data.type,
