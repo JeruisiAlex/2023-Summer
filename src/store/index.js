@@ -34,6 +34,7 @@ export default createStore({
         }
       }
       var message=JSON.parse(atob(s[1]));
+      console.log(token);
       state.token=token;
       state.uid=message.id;
       state.userName=message.username;

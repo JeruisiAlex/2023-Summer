@@ -32,7 +32,7 @@
           <el-container v-if="this.currentGroup.id!=0" class="forth-container">
             <el-header style="display: flex;justify-content: center;align-items: center;">
               <el-text class="project-title">项目列表</el-text>
-              <el-select style="margin-right: 10px;" v-model="this.sorttype" size="large" placeholder="按时间递增排序" @change="this.ProjectSort(this.currentGroup.personList)">
+              <el-select style="margin-right: 10px;" v-model="this.sorttype" size="large" placeholder="按时间递增排序" @change="this.ProjectSort(this.currentGroup.projectList)">
                 <el-option value="0" label="按时间递增排序"/>
                 <el-option value="1" label="按时间递减排序"/>
                 <el-option value="2" label="按项目名称递增排序"/>
@@ -558,6 +558,7 @@ export default{
         }
         else{
           if(ownPosition==='creator'||(ownPosition==='admin'&&userPosition==='member')){
+            console.log(opcode);
             var promise1=changeAuth(userid,this.currentGroup.id,opcode);
             promise1.then((result)=>{
               if(this.MessageCatch(result,true)){
@@ -581,6 +582,7 @@ export default{
           }
         }
       }
+      this.Load(this.currentGroup.id);
     },
     SwithcGroup(index){
       this.Load(this.group.list[index].id);
@@ -650,6 +652,7 @@ export default{
       var promise1=getRestoreList(this.currentGroup.id);
       promise1.then((result) => {
         if(this.MessageCatch(result, false)){
+          console.log(result);
           this.restore.list=result.data.deleted_projects;
           this.restore.count=this.restore.list.length;
           this.restore.isOpen=true;
@@ -681,6 +684,7 @@ export default{
       })
     },
     ProjectSort(newList){
+      console.log(newList);
       if(this.sorttype==0||this.sorttype===''){
         newList.sort((a,b)=>a.id-b.id);
       }
@@ -723,6 +727,7 @@ export default{
             return -1;
           }});
       }
+      console.log(newList);
       this.currentGroup.projectList=newList;
       this.currentGroup.projectCount=newList.length;
     },
@@ -763,7 +768,6 @@ export default{
           this.group.list=result.data;
           this.group.length=this.group.list.length;
           for(var i=0;i<this.group.length;i++){
-            console.log(this.group.list[i].id);
             if(this.group.list[i].id==groupid){
               this.group.current=i;
               this.currentGroup.id=this.group.list[i].id;
@@ -781,7 +785,6 @@ export default{
               this.currentGroup.id=this.group.list[0].id;
             }
           }
-          console.log(this.currentGroup.id);
           if(this.group.length>0){
             this.GetCurrenGroup(this.currentGroup.id);
             this.Jump('/'+this.uid+'/GroupPage/'+this.currentGroup.id);
@@ -793,7 +796,7 @@ export default{
             this.currentGroup.name='您还没有任何团队';
             this.currentGroup.introduction='快去创建或加入一个团队吧';
             this.currentGroup.personCount=0;
-            this.currentGroup.projectCount=0
+            this.currentGroup.projectCount=0;
             this.currentGroup.personList=[];
             this.currentGroup.projectList=[];
             this.currentGroup.authList=[];
@@ -812,6 +815,7 @@ export default{
         this.currentGroup.personList=result.data.user_list;
         this.currentGroup.personCount=this.currentGroup.personList.length;
         this.currentGroup.projectListBeforeSearch=result.data.project_list;
+        console.log(result);
         this.currentGroup.projectCountBeforeSearch=this.currentGroup.projectListBeforeSearch.length;
         this.currentGroup.authList=[];
         for(var i=0;i<this.currentGroup.personCount;i++){
