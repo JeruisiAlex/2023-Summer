@@ -155,7 +155,7 @@
     </el-col>
     </el-row>
   </el-header>
-  <el-header v-else style="height: 48px; background-color:rgb(42, 159, 235);">
+  <!-- <el-header v-else style="height: 48px; background-color:rgb(42, 159, 235);">
     <el-row :gutter="10" style=" color: white;">
     <el-col :span="1"></el-col>
     <el-col :span="6"><div class="grid-content" style="text-align: left;">Originate Pro</div></el-col>
@@ -163,12 +163,13 @@
     <el-col :span="1"></el-col>
     <el-col :span="1"></el-col>
     </el-row>
-  </el-header>
-  <el-main style="overflow: hidden;">
+  </el-header> -->
+  <el-main v-if="this.$store.state.isLogin" style="overflow: hidden;">
     <el-scrollbar>
     <router-view/>
     </el-scrollbar>
   </el-main>
+  <router-view v-else/>
   <el-drawer
     v-model="drawer"
     title="Originate Pro"
