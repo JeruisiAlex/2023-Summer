@@ -166,7 +166,7 @@
       class="eachMessageContainer"
       v-for="(item, index) in groupMessage[nowWs].content"
       :key="index"
-      v-if="nowWs != -1"
+      v-if="nowWs != -1 && nowWs != -2"
     >
       <div
         class="timeContainer"
@@ -404,12 +404,12 @@
     v-if="groupOrPerson == false"
   >
     <el-input
-      v-model="searchInput"
+      v-model="searchPersonInput"
       placeholder="搜索"
       style="width: 300px; margin-left: 50px"
       clearable
     />
-    <el-button type="primary" class="searchButton" @click="searchGroup"
+    <el-button type="primary" class="searchButton" @click="searchPerson"
       >搜索</el-button
     >
   </div>
@@ -421,10 +421,11 @@
     v-if="groupOrPerson == false"
   >
     <p
-      v-for="(item, index) in nowGroupMember.member"
+      v-for="(item, index) in nowPersonArray.member"
       :key="index"
       class="scrollbar-demo-item"
       style="width: 350px"
+      @click="choosePersonChat(item)"
     >
       <img :src="item.icon_address" class="userIcon" />
       <span>
@@ -438,10 +439,10 @@
 import { ref } from "vue";
 import store from "@/store";
 import { getGroupInformation } from "../api/group";
-import { getUserChatRoom } from "../api/user";
-import { all } from "axios";
+import { getUserChatRoom, getUserInformation } from "../api/user";
 export default {
   mounted() {
+    this.myId = store.state.uid;
     this.openDB();
     this.judgeSamePerson();
     this.getMygroup();
@@ -449,17 +450,22 @@ export default {
     setTimeout(() => {
       this.getAllGroupMember();
       this.prepareGroupMessage();
-      this.scrollToBottom();
       this.websocketInit();
       this.websocketOpen();
       this.websocketOnMessage();
       this.isShowAll = true;
-    }, 2000);
+    }, 4000);
     window.addEventListener("beforeunload", (e) => this.beforeunloadHandler(e));
     window.addEventListener("keydown", this.enter_up);
+    this.scrollToBottom();
   },
   data() {
     return {
+      nowPersonArray: {
+        type: "",
+        member: "",
+      },
+      searchPersonInput: "",
       chooseGroupDialog: false,
       messageInput: "",
       nowChosenGroup: "",
@@ -493,6 +499,9 @@ export default {
       muchSelectModel: false,
       groupOrPerson: false,
       nowPerson: "",
+      personIdWhenBuildNewChat: "",
+      zeroWs: "",
+      myId: "",
     };
   },
   unmounted() {
@@ -514,6 +523,48 @@ export default {
     this.closeWeb();
   },
   methods: {
+    choosePersonChat(item) {
+      if (item.id == this.myId) {
+        this.dialogMessage = "不能给自己发信息哦";
+        this.dialogVisible = true;
+        return 
+      }
+      for (var i = 0; i < this.allGroupArray.length; i++) {
+        console.log(this.allGroupArray[i]);
+        if (
+          this.allGroupArray[i].group.type == "Private" &&
+          this.allGroupArray[i].group.name == item.username
+        ) {
+          console.log(this.allGroupArray[i].group.type);
+          console.log(this.allGroupArray[i].group.name);
+          for (var j = 0; j < this.groupMessage.length; j++) {
+            if (this.groupMessage[j].id == this.allGroupArray[i].group.id) {
+              console.log(this.nowChosenGroup);
+              this.chooseGroup(this.allGroupArray[i], j);
+
+              return;
+            }
+          }
+        }
+      }
+      var leaveObj = {
+        type: "change",
+        change: "leave",
+        user_id: store.state.uid,
+        group_id: this.nowChosenGroup.id,
+      };
+      this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
+      var enterobj = {
+        type: "change",
+        change: "enter",
+        user_id: store.state.uid,
+        group_id: item.id,
+      };
+      this.zeroWs.send(JSON.stringify(enterobj));
+      console.log(enterobj);
+      this.nowWs = -2;
+      this.personIdWhenBuildNewChat = item.id;
+    },
     transferSingleMessage(item, group) {
       var index;
       for (var i = 0; i < this.wsArray.length; i++) {
@@ -555,6 +606,7 @@ export default {
             this.chooseGroupDialog = false;
           } catch {
             this.dialogMessage = "网络错误";
+            this.dialogVisible = true;
           }
         }
       }
@@ -630,6 +682,9 @@ export default {
       this.operateMessage.push(item);
     },
     websocketOpen() {
+      this.zeroWs.onopen = () => {
+        console.log("0号ws已经开启");
+      };
       var that = this;
       for (let i = 0; i < this.allGroupArray.length; i++) {
         const group = this.allGroupArray[i];
@@ -820,6 +875,7 @@ export default {
       };
     },
     getAllGroupMember() {
+      console.log(this.allGroupArray);
       for (var i = 0; i < this.allGroupArray.length; i++) {
         var obj = {
           groupid: this.allGroupArray[i].group.id,
@@ -834,6 +890,7 @@ export default {
       var request = getUserChatRoom();
       var groupTemp;
       request.then((result) => {
+        console.log(result.data);
         groupTemp = result.data;
         for (var i = 0; i < groupTemp.length; i++) {
           var obj = {
@@ -925,12 +982,52 @@ export default {
             "/"
         );
         this.wsArray.push(ws);
+        this.zeroWs = new WebSocket("ws://8.130.25.189/ws/chat/group/0/");
       }
+    },
+    zeroReceiveMessage(parseData) {
+      var that = this;
+      console.log(this.allGroupArray);
+      var person1, person2;
+      var request = getUserInformation(store.state.uid);
+      request.then((result) => {
+        person1 = result.data;
+        request = getUserInformation(this.personIdWhenBuildNewChat);
+        request.then((result) => {
+          person2 = result.data;
+          var name1 =
+            store.state.uid == person1.id ? person2.username : person1.username;
+          var obj = {
+            unreadMessage: 0,
+            group: {
+              id: parseData.group_id,
+              member: [],
+              name: name1,
+              type: "Private",
+            },
+          };
+          obj.group.member.push(person1);
+          obj.group.member.push(person2);
+          that.allGroupArray.push(obj);
+          var obj2 = {
+            id: parseData.group_id,
+            content: [],
+          };
+          obj2.content.push(parseData);
+          that.groupMessage.push(obj2);
+        });
+      });
     },
     websocketOnMessage() {
       var that = this;
+      this.zeroWs.onmessage = function (message) {
+        console.log("0号ws收到", message);
+        var parsedData = JSON.parse(message.data);
+        that.zeroReceiveMessage(parsedData);
+      };
       for (var i = 0; i < this.allGroupArray.length; i++) {
         that.wsArray[i].onmessage = function (message) {
+          console.log(message);
           var parsedData = JSON.parse(message.data);
           if (Array.isArray(parsedData.data) === true) {
             var dataArray = parsedData.data;
@@ -992,6 +1089,20 @@ export default {
         minutes +
         ":" +
         seconds;
+      if (this.nowWs === -2) {
+        var newObj = {
+          type: "chat",
+          data: {
+            user_id: store.state.uid,
+            group_id: this.personIdWhenBuildNewChat,
+            content: this.messageInput,
+            timestamp: timestamp1,
+          },
+        };
+        this.zeroWs.send(JSON.stringify(newObj));
+        this.messageInput = "";
+        return;
+      }
       var newObj = {
         type: "chat",
         data: {
@@ -1003,7 +1114,6 @@ export default {
       };
       const scrollableContainer = document.querySelector(".textarea");
       scrollableContainer.scrollTop = scrollableContainer.scrollHeight;
-
       try {
         this.wsArray[this.nowWs].send(JSON.stringify(newObj));
       } catch {
@@ -1025,6 +1135,22 @@ export default {
       }
     },
     load() {},
+    searchPerson() {
+      console.log(this.nowGroupMember);
+      console.log(this.nowGroupMember);
+      var temp = [];
+      for (var i = 0; i < this.nowGroupMember.member.length; i++) {
+        if (
+          this.nowGroupMember.member[i].username.indexOf(
+            this.searchPersonInput
+          ) >= 0
+        ) {
+          temp.push(this.nowGroupMember.member[i]);
+        }
+      }
+      this.nowPersonArray.member = temp;
+      console.log(this.nowGroupMember);
+    },
     searchGroup() {
       this.nowGroupArray = [];
       for (var i = 0; i < this.allGroupArray.length; i++) {
@@ -1034,6 +1160,9 @@ export default {
       }
     },
     chooseGroup(item, i) {
+      console.log(item);
+      console.log(i);
+      this.scrollToBottom();
       if (this.nowWs != -1) {
         var leaveObj = {
           type: "change",
@@ -1063,6 +1192,8 @@ export default {
       for (var i = 0; i < this.allGroupMember.length; i++) {
         if (item.group.id === this.allGroupMember[i].groupid) {
           this.nowGroupMember = this.allGroupMember[i];
+          this.nowPersonArray.type = this.nowGroupMember.type;
+          this.nowPersonArray.member = this.nowGroupMember.member;
           if (this.nowGroupMember.type == "Team") {
             this.groupOrPerson = false;
           } else {
@@ -1105,6 +1236,11 @@ export default {
         scrollableContainer.scrollTop = scrollableContainer.scrollHeight;
         this.searchPosition = -1;
         this.targetBox = [];
+      }
+    },
+    searchPersonInput: function (newVal, oldVal) {
+      if (oldVal != "" && newVal == "") {
+        this.nowPersonArray = this.nowGroupMember;
       }
     },
   },
