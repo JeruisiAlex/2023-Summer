@@ -1,11 +1,24 @@
 <template>
-    <el-button type="primary" text="true" auto-insert-space="true"  @click="" style="position: absolute; width: 100px;height: 50px;z-index: 999;margin-left: 100px;margin-top: 100px;">快速使用</el-button>
+    <video autoplay="autoplay" loop="" id="video1" src="../assets/backvideo.mp4" muted></video>
+    <el-link type="primary" underline="true" href="./loginandregister" style="position: relative; width: 170px;height: 50px;margin-left: 670px;margin-top: -300px;font-size: xx-large;">
+        快速使用
+        <el-icon size="large" style="margin-left: 10px;margin-top: 5px;"><ArrowRightBold /></el-icon>
+    </el-link>
+    
     <el-container style="height: 1800px;">
-        <el-header height="600px" style="background-color: aqua;">
-            <!-- <video autoplay="autoplay" loop="" id="video1" src="" muted></video> -->
-        </el-header>
-        <el-main height="1200px" style="background-color: brown;">
-
+        <el-main height="1200px">
+            <el-container style="height: 400px;margin-bottom: 10px;">
+                <el-aside width="49%" style="background-color: brown;">1</el-aside>
+                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">1</el-aside>
+            </el-container>
+            <el-container style="height: 400px;margin-bottom: 10px;">
+                <el-aside width="49%" style="background-color: brown;">1</el-aside>
+                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">1</el-aside>
+            </el-container>
+            <el-container style="height: 400px;margin-bottom: 10px;">
+                <el-aside width="49%" style="background-color: brown;">1</el-aside>
+                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">1</el-aside>
+            </el-container>
         </el-main>
     </el-container>
 </template>
