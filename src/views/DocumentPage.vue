@@ -5,14 +5,23 @@
             <el-col :span="10" style="text-align: right;" >
               <el-popover
                 :visible="atVisible"
-                placement="bottom"
+                style="z-index: 999;"
+                placement="top"
                 :title="groupName"
                 :width="200"
+                :popper-options="{
+                    modifiers: [{
+                      name: 'offset',
+                      options: {
+                        offset: [popoverPosition.left, popoverPosition.top]
+                      }
+                    }]
+                    }" 
                 content="this is content, this is content, this is content"
               >
                 <template #reference>
                   <el-button type="warning" @click="atDocument(false)" size="small">
-                    @邀请
+                    <span ref="popover_anchor">@邀请</span>
                   </el-button>
                 </template>
                 <el-scrollbar max-height="500px">
@@ -40,8 +49,8 @@
             </el-col>
         </el-row>
     </div>
-    <div id="vditor" name="description" style="z-index: 999;" @keydown="keyListener" ref="editor"></div>
-    <el-button @click="focusEditor()">123</el-button>
+    <div id="vditor" name="description" style="z-index: 90;" @keydown="keyListener" ref="editor" @mousemove="getMousePosition_popover"></div>
+    <!-- <el-button @click="focusEditor()">123</el-button> -->
     <!-- <input height="250px" ref='editor'/> -->
     <!-- <el-button @click="setEditArea()">(测试用)改变富文本编辑器内容</el-button>
     <el-button @click="getEditArea()">(测试用)提取富文本编辑器内容</el-button>
@@ -81,6 +90,7 @@
   import { getAText, saveText} from '../api/text.js';
   import store from "@/store";
   import {getGroupInformation} from '../api/group.js';
+  import { ElMessage } from 'element-plus';
   let ws;
   let wsd;
 export default {
@@ -95,10 +105,28 @@ export default {
           project_id: 0,
           group_id: 0,
           cursorPosition: {top: 0, left: 0},
+          popoverPosition: {top: 0,left: 0},
           edible: true,
           shareable: true,
           atVisible: false,
-          groupMembersList: [],
+          groupMembersList: [
+            {
+                "id": 3,
+                "username": "TestKirby",
+                "email": "13616991245@163.com",
+                "true_name": "Ye Chengxuan",
+                "icon_address": "2023summer-se-1316618142.cos.ap-beijing.myqcloud.com/icon/user/3.jpg",
+                "position": "creator"
+            },
+            {
+                "id": 4,
+                "username": "Jeruisi",
+                "email": "1525772623@qq.com",
+                "true_name": "Chen Yanzhou",
+                "icon_address": "2023summer-se-1316618142.cos.ap-beijing.myqcloud.com/icon/user/default_icon.jpg",
+                "position": "admin"
+            }
+        ],
           groupName: 'Group',
           at_flag: true,
       }
@@ -138,9 +166,11 @@ export default {
     console.log(infos);
     promise.then((result)=>{
       console.log(result);
-      // this.fileName = result.data.name;
-      // this.contentEditor.setValue(result.data.content);
-      // this.creator = result.data.creator;
+      if(this.MessageCatch(result, true)){
+        this.fileName = result.data.name;
+        this.contentEditor.setValue(result.data.content);
+        this.creator = result.data.creator;
+        }
     });
 
     setInterval(() => {
@@ -150,6 +180,15 @@ export default {
     }, 500)
   },
   methods:{
+    getMousePosition_popover(event) {
+      const popover_positon = this.$refs.popover_anchor;
+      const popover_position_offset = popover_positon.getBoundingClientRect();
+      // this.cursorPosition.top = event.clientY;
+      // this.cursorPosition.left = event.clientX;
+      this.cursorPosition.top = event.clientY - popover_position_offset.top;
+      this.cursorPosition.left = event.clientX - popover_position_offset.left;
+      // console.log(this.cursorPosition);
+    },
     focusEditor() {
       this.contentEditor.focus();
     },
@@ -219,33 +258,19 @@ export default {
     },
     atDocument(mode) {
       this.at_flag = mode;
-      // var promise=getGroupInformation(this.group_id);
-      // promise.then((result)=>{
-      //   this.groupMembersList=result.data.user_list;
-      //   this.groupName=result.data.name;
-      //   console.log(this.groupMembersList);
-      //   this.atVisible = !this.atVisible;
-      // });
-      this.groupMembersList=[
-            {
-                "id": 3,
-                "username": "TestKirby",
-                "email": "13616991245@163.com",
-                "true_name": "Ye Chengxuan",
-                "icon_address": "2023summer-se-1316618142.cos.ap-beijing.myqcloud.com/icon/user/3.jpg",
-                "position": "creator"
-            },
-            {
-                "id": 4,
-                "username": "Jeruisi",
-                "email": "1525772623@qq.com",
-                "true_name": "Chen Yanzhou",
-                "icon_address": "2023summer-se-1316618142.cos.ap-beijing.myqcloud.com/icon/user/default_icon.jpg",
-                "position": "admin"
-            }
-        ];
-      this.groupName='result.data.name';
-      console.log(this.groupMembersList);
+      var promise=getGroupInformation(this.group_id);
+      promise.then((result)=>{
+        if(this.MessageCatch(result, true)){
+          this.groupMembersList=result.data.user_list;
+          this.groupName=result.data.name;
+          console.log(this.groupMembersList);
+          this.popoverPosition.top = this.cursorPosition.top;
+          this.popoverPosition.left = this.cursorPosition.left;
+          this.atVisible = !this.atVisible;
+        }
+      });
+      this.popoverPosition.top = this.cursorPosition.top;
+      this.popoverPosition.left = this.cursorPosition.left;
       this.atVisible = !this.atVisible;
     },
     atDocumentPost(receiver_id,receiver_name) {
@@ -264,15 +289,16 @@ export default {
       console.log("发送后");
       this.atVisible = false;
       if (this.at_flag){
-        this.contentEditor.insertValue(receiver_name);
+        this.contentEditor.insertValue('_'+receiver_name+'_\0\0');
       } else {
-        this.contentEditor.insertValue('@'+receiver_name);
+        this.contentEditor.insertValue('@_'+receiver_name+'_\0\0');
       }
     },
     saveDocument() {
       var promise=saveText(this.text_id,this.project_id,this.contentEditor.getValue());
       promise.then((result)=>{
         console.log(result);
+        this.MessageCatch(result, true);
       }); 
     },
     getGroupMembers() {
@@ -282,6 +308,24 @@ export default {
         this.groupName=result.data.name;
         console.log(this.groupMembersList);
       });
+    },
+    MessageCatch(data,opcode){
+      if(data.code!=0){
+        ElMessage({
+          message: data.msg,
+          grouping: true,
+          type: 'error',
+        })
+        return false;
+      }
+      if(opcode==true&&data.code==0){
+        ElMessage({
+          message: data.msg,
+          grouping: true,
+          type: 'success',
+        })
+      }
+      return true;
     },
     sendMessage() {
       const now = new Date();

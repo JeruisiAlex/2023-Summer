@@ -1124,6 +1124,7 @@ export default {
       };
       ws.onmessage = function (message) {
         var parsedData = JSON.parse(message.data);
+        console.log(parsedData);
         if (parsedData.type){
           var isMyMessage = true;
       console.log("single",parsedData);
