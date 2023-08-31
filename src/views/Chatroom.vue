@@ -17,6 +17,69 @@
     ></div>
   </div>
   <el-dialog
+    v-model="chooseGroupDialog"
+    title="选择聊天"
+    style="width: 300px; border-radius: 20px; box-shadow: 4px 4px 10px #409eff"
+  >
+    <div
+      style="
+        height: 50px;
+        width: 200px;
+        border-bottom-style: solid;
+        border-bottom-color: #dedfe0;
+        border-bottom-width: 1px;
+        margin-left: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      "
+      v-for="(item, index) in allGroupArray"
+      :key="index"
+      @click="transferSingleMessage(operateMessage[0], item)"
+    >
+      <p style="text-align: center">
+        {{ item.group.name }}
+      </p>
+    </div>
+  </el-dialog>
+  <div
+    class="clickRightMenu"
+    v-if="clickRightMenu == true && muchSelectModel == false"
+    :style="{ top: topNum + 'px', left: leftNum + 'px' }"
+  >
+    <el-button
+      type="primary"
+      plain
+      class="messageOptionButton"
+      text
+      style="margin-left: 0px"
+      @click="deleteSingleMessage(operateMessage[0])"
+      >删除</el-button
+    >
+    <el-button
+      type="primary"
+      plain
+      class="messageOptionButton"
+      text
+      style="margin-left: 0px"
+      @click="openMuchSelectModel"
+      >多选</el-button
+    >
+    <el-button
+      type="primary"
+      plain
+      class="messageOptionButton"
+      text
+      style="margin-left: 0px"
+      @click="
+        chooseGroupDialog = true;
+        muchSelectModel = false;
+      "
+      >转发</el-button
+    >
+  </div>
+  <el-dialog
     v-model="dialogVisible"
     title="Tips"
     width="30%"
@@ -24,7 +87,7 @@
   >
     <span>{{ dialogMessage }}</span>
   </el-dialog>
-  <div class="searchContainer">
+  <div class="searchContainer" @mousedown="removeMenu">
     <div class="title">
       {{ nowChosenGroup.name }}
       <el-button
@@ -74,7 +137,7 @@
       >搜索</el-button
     >
   </div>
-  <el-scrollbar height="550px" class="GroupList">
+  <el-scrollbar height="550px" class="GroupList" @mousedown="removeMenu">
     <div
       v-for="(item, i) in nowGroupArray"
       :key="i"
@@ -98,19 +161,32 @@
       </p>
     </div>
   </el-scrollbar>
-  <div class="textarea" @scroll="loadMore">
+  <div class="textarea" @scroll="loadMore" @mousedown="removeMenu">
     <div
       class="eachMessageContainer"
       v-for="(item, index) in groupMessage[nowWs].content"
       :key="index"
       v-if="nowWs != -1"
     >
-      <div class="timeContainer">
-        <div v-if="isTimeDifferenceGreaterThan5Second(index)">
+      <div
+        class="timeContainer"
+        v-if="isTimeDifferenceGreaterThan5Second(index)"
+      >
+        <div>
           {{ item.time }}
         </div>
       </div>
       <div class="bubble left" v-if="item.name !== $store.state.userName">
+        <el-checkbox
+          v-model="muchSelect[index]"
+          class="mt-2"
+          inline-prompt
+          :active-icon="Check"
+          :inactive-icon="Close"
+          style="float: left; margin-right: 15px"
+          v-if="muchSelectModel == true"
+          @change="chooseThisMessage(item, muchSelect[index])"
+        />
         <a class="avatar" @click="jumpPersonalPage(item)"
           ><img
             :src="item.icon"
@@ -119,13 +195,23 @@
         /></a>
         <div class="wrap">
           <div class="nameContainer">{{ item.name }}</div>
-          <div class="content">
+          <div class="content" @contextmenu.prevent="rightClick($event, item)">
             {{ item.content }}
           </div>
         </div>
       </div>
       <div class="bubble right" v-else>
-        <a class="avatar" @click="jumpPersonalPage(item)"
+        <el-checkbox
+          v-model="muchSelect[index]"
+          class="mt-2"
+          inline-prompt
+          :active-icon="Check"
+          :inactive-icon="Close"
+          style="float: right; margin-left: 15px"
+          v-if="muchSelectModel == true"
+          @change="chooseThisMessage(item, muchSelect[index])"
+        />
+        <a class="avatar" @click="jumpPersonalPage(item, item.time)"
           ><img
             :src="item.icon"
             @click="jumpPersonalPage(item)"
@@ -133,24 +219,190 @@
         /></a>
         <div class="wrap">
           <div class="nameContainer">{{ item.name }}</div>
-          <div class="content">
+          <div class="content" @contextmenu.prevent="rightClick($event, item)">
             {{ item.content }}
           </div>
         </div>
       </div>
     </div>
   </div>
-  <el-input v-model="messageInput" placeholder="" class="messageContainer" />
+  <el-input
+    v-model="messageInput"
+    placeholder=""
+    class="messageContainer"
+    @mousedown="removeMenu"
+    v-if="muchSelectModel == false"
+  />
+  <div
+    class="messageContainer"
+    @mousedown="removeMenu"
+    style="background-color: #ecf5ff; display: flex"
+    v-if="muchSelectModel == true"
+  >
+    <div class="selectModelOption">
+      <div
+        style="
+          background-color: white;
+          height: 50px;
+          width: 50px;
+          margin-left: 25px;
+          margin-top: 15px;
+          border-radius: 50%;
+          margin-bottom: 8px;
+          cursor: pointer;
+        "
+        id="icon1"
+        @mouseover="overTochangeIconColor('icon1')"
+        @mouseleave="leaveTochangeIconColor('icon1')"
+        @click="deleteMuchMessage"
+      >
+        <el-icon style="margin-left: 18px; margin-top: 18px"
+          ><Delete
+        /></el-icon>
+      </div>
+      <span
+        style="
+          margin-toptop: 15px;
+          height: 20px;
+          width: 100px;
+          margin-left: 37px;
+          font-size: 10px;
+        "
+        >删除</span
+      >
+    </div>
+    <div class="selectModelOption">
+      <div
+        style="
+          background-color: white;
+          height: 50px;
+          width: 50px;
+          margin-left: 25px;
+          margin-top: 15px;
+          border-radius: 50%;
+          margin-bottom: 8px;
+          cursor: pointer;
+        "
+        id="icon2"
+        @mouseover="overTochangeIconColor('icon2')"
+        @mouseleave="leaveTochangeIconColor('icon2')"
+      >
+        <el-icon style="margin-left: 18px; margin-top: 18px"
+          ><ArrowRight
+        /></el-icon>
+      </div>
+      <span
+        style="
+          margin-toptop: 15px;
+          height: 20px;
+          width: 100px;
+          margin-left: 26px;
+          font-size: 10px;
+        "
+        >逐条转发</span
+      >
+    </div>
+    <div class="selectModelOption">
+      <div
+        style="
+          background-color: white;
+          height: 50px;
+          width: 50px;
+          margin-left: 25px;
+          margin-top: 15px;
+          border-radius: 50%;
+          margin-bottom: 8px;
+          cursor: pointer;
+        "
+        id="icon3"
+        @mouseover="overTochangeIconColor('icon3')"
+        @mouseleave="leaveTochangeIconColor('icon3')"
+      >
+        <el-icon style="margin-left: 18px; margin-top: 18px"
+          ><Expand
+        /></el-icon>
+      </div>
+      <span
+        style="
+          margin-toptop: 15px;
+          height: 20px;
+          width: 100px;
+          margin-left: 26px;
+          font-size: 10px;
+        "
+        >合并转发</span
+      >
+    </div>
+    <div class="selectModelOption">
+      <div
+        style="
+          background-color: white;
+          height: 50px;
+          width: 50px;
+          margin-left: 25px;
+          margin-top: 15px;
+          border-radius: 50%;
+          margin-bottom: 8px;
+          cursor: pointer;
+        "
+        id="icon4"
+        @mouseover="overTochangeIconColor('icon4')"
+        @mouseleave="leaveTochangeIconColor('icon4')"
+        @click="returnNomalModel"
+      >
+        <el-icon style="margin-left: 18px; margin-top: 18px"
+          ><CloseBold
+        /></el-icon>
+      </div>
+      <span
+        style="
+          margin-toptop: 15px;
+          height: 20px;
+          width: 100px;
+          margin-left: 37px;
+          font-size: 10px;
+        "
+        >取消</span
+      >
+    </div>
+  </div>
   <el-button
     type="primary"
     plain
     class="sendButton"
     @click="sendMessage"
     @keydown.enter="enter_up()"
+    v-if="muchSelectModel == false"
     >发送</el-button
   >
-  <div class="teamGroupTitle">团队成员</div>
-  <div class="searchContainer" style="left: 1055px; top: 90px; height: 40px">
+  <div
+    class="teamGroupTitle"
+    @mousedown="removeMenu"
+    v-if="groupOrPerson == false"
+  >
+    团队成员
+  </div>
+  <div class="personalInfoContainer" v-if="this.groupOrPerson == true">
+    <div class="personalIconContainer">
+      <img :src="nowPerson.icon_address" style="border-radius: 50%" />
+    </div>
+    <div class="personDetailInfoContainer">
+      <pre class="eachInfoItem">昵称     {{ nowPerson.username }}</pre>
+      <pre class="eachInfoItem">名字     {{ nowPerson.true_name }}</pre>
+      <pre class="eachInfoItem">电话     {{ nowPerson.phone }}</pre>
+      <pre class="eachInfoItem">邮箱     {{ nowPerson.email }}</pre>
+      <pre class="eachInfoItem">
+性别     {{ nowPerson.gender == "M" ? "男" : "女" }}</pre
+      >
+    </div>
+  </div>
+
+  <div
+    class="searchContainer"
+    style="left: 1055px; top: 90px; height: 40px"
+    @mousedown="removeMenu"
+    v-if="groupOrPerson == false"
+  >
     <el-input
       v-model="searchInput"
       placeholder="搜索"
@@ -165,9 +417,11 @@
     height="470px"
     class="GroupList"
     style="left: 1100px; top: 130px"
+    @mousedown="removeMenu"
+    v-if="groupOrPerson == false"
   >
     <p
-      v-for="(item, index) in nowGroupMember"
+      v-for="(item, index) in nowGroupMember.member"
       :key="index"
       class="scrollbar-demo-item"
       style="width: 350px"
@@ -184,14 +438,16 @@
 import { ref } from "vue";
 import store from "@/store";
 import { getGroupInformation } from "../api/group";
+import { getUserChatRoom } from "../api/user";
+import { all } from "axios";
 export default {
   mounted() {
     this.openDB();
     this.judgeSamePerson();
     this.getMygroup();
-    this.getAllGroupMember();
     this.closeWeb();
     setTimeout(() => {
+      this.getAllGroupMember();
       this.prepareGroupMessage();
       this.scrollToBottom();
       this.websocketInit();
@@ -204,6 +460,7 @@ export default {
   },
   data() {
     return {
+      chooseGroupDialog: false,
       messageInput: "",
       nowChosenGroup: "",
       searchInput: "",
@@ -212,7 +469,10 @@ export default {
       nowGroupArray: [],
       allGroupArray: [],
       allGroupMember: [],
-      nowGroupMember: [],
+      nowGroupMember: {
+        type: "",
+        member: [],
+      },
       nowWs: -1,
       groupMessage: [],
       groupSize: 0,
@@ -225,6 +485,14 @@ export default {
       showDot: true,
       messageStorageDb: "",
       isShowAll: false,
+      clickRightMenu: false,
+      topNum: 0,
+      leftNum: 0,
+      operateMessage: [],
+      muchSelect: [],
+      muchSelectModel: false,
+      groupOrPerson: false,
+      nowPerson: "",
     };
   },
   unmounted() {
@@ -246,23 +514,137 @@ export default {
     this.closeWeb();
   },
   methods: {
+    transferSingleMessage(item, group) {
+      var index;
+      for (var i = 0; i < this.wsArray.length; i++) {
+        const url = this.wsArray[i].url;
+        const match = url.match(/\/group\/(\d+)/);
+        const teamNumber = match[1];
+        if (group.group.id == teamNumber) {
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = now.getMonth() + 1; // 月份从0开始，所以要加1
+          const day = now.getDate();
+          const hours = now.getHours();
+          const minutes = now.getMinutes();
+          const seconds = now.getSeconds();
+          var timestamp1 =
+            year +
+            "-" +
+            month +
+            "-" +
+            day +
+            " " +
+            hours +
+            ":" +
+            minutes +
+            ":" +
+            seconds;
+          var newObj = {
+            type: "chat",
+            data: {
+              user_id: store.state.uid,
+              group_id: teamNumber,
+              content: item.content,
+              timestamp: timestamp1,
+            },
+          };
+          console.log(JSON.stringify(newObj));
+          try {
+            this.wsArray[i].send(JSON.stringify(newObj));
+            this.chooseGroupDialog = false;
+          } catch {
+            this.dialogMessage = "网络错误";
+          }
+        }
+      }
+    },
+    deleteMuchMessage() {
+      for (var i = 0; i < this.operateMessage.length; i++) {
+        this.deleteSingleMessage(this.operateMessage[i]);
+      }
+    },
+    returnNomalModel() {
+      this.operateMessage = [];
+      for (var i = 0; i < this.muchSelect.length; i++) {
+        this.muchSelect[i] = false;
+      }
+      this.muchSelectModel = false;
+    },
+    leaveTochangeIconColor(eleId) {
+      var ele = document.querySelector("#" + eleId);
+      ele.style.backgroundColor = "white";
+    },
+    overTochangeIconColor(eleId) {
+      var ele = document.querySelector("#" + eleId);
+      ele.style.backgroundColor = "#c6e2ff";
+    },
+    chooseThisMessage(item, newVal) {
+      if (newVal == true) this.operateMessage.push(item);
+      else {
+        var temp = this.operateMessage.filter((i) => i.time != item.time);
+        this.operateMessage = temp;
+      }
+    },
+    openMuchSelectModel() {
+      this.muchSelectModel = true;
+      this.operateMessage = [];
+      for (var i = 0; i < this.muchSelect.length; i++) {
+        this.muchSelect[i] = false;
+      }
+    },
+    deleteSingleMessage(item) {
+      this.muchSelectModel = false;
+      for (var i = 0; i < this.groupMessage[this.nowWs].content.length; i++) {
+        var temp = this.groupMessage[this.nowWs].content.filter(
+          (i) => i.time != item.time
+        );
+        this.groupMessage[this.nowWs].content = temp;
+      }
+      var objectStore = this.db
+        .transaction("message", "readwrite")
+        .objectStore("message");
+      objectStore.openCursor().onsuccess = function (event) {
+        var cursor = event.target.result;
+        if (cursor) {
+          if (cursor.value.time == item.time) {
+            cursor.delete();
+          } else {
+            cursor.continue();
+          }
+        } else {
+          console.log("没有更多数据了！");
+        }
+      };
+    },
+    removeMenu() {
+      if (this.muchSelectModel == false) {
+        this.clickRightMenu = false;
+        this.operateMessage = [];
+      }
+    },
+    rightClick(e, item) {
+      this.topNum = e.pageY - 60;
+      this.leftNum = e.pageX - 20;
+      this.clickRightMenu = true;
+      this.operateMessage.push(item);
+    },
     websocketOpen() {
       var that = this;
       for (let i = 0; i < this.allGroupArray.length; i++) {
         const group = this.allGroupArray[i];
         this.wsArray[i].onopen = () => {
-          console.log(i);
           console.log("websocket " + i + " 已开启");
-          console.log(group);
           const newObj = {
             type: "history",
             user_id: store.state.uid,
-            team_id: that.allGroupArray[i].group.id,
+            group_id: that.allGroupArray[i].group.id,
           };
           try {
             this.wsArray[i].send(JSON.stringify(newObj));
           } catch {
-            alert("网络错误");
+            this.dialogMessage = "网络错误";
+            this.dialogVisible = true;
           }
         };
       }
@@ -281,18 +663,15 @@ export default {
       var that = this;
       request.onsuccess = function (event) {
         console.log("数据写入成功");
-        console.log(that.db);
       };
 
       request.onerror = function (event) {
         console.log("数据写入失败");
       };
     },
-    readAll() {},
     openDB() {
       var request = window.indexedDB.open("message");
       request.onupgradeneeded = function (event) {
-        console.log(event);
         this.db = event.target.result;
         var objectStore;
         if (!this.db.objectStoreNames.contains("message")) {
@@ -304,7 +683,6 @@ export default {
       };
       request.onsuccess = function (event) {
         this.db = event.target.result;
-        console.log(this.db); // Now 'this.db' will have the correct value
       }.bind(this); // Bind the function to the correct 'this' context
     },
     enter_up(e) {
@@ -322,12 +700,13 @@ export default {
           type: "change",
           change: "leave",
           user_id: store.state.uid,
-          team_id: this.nowChosenGroup.id,
+          group_id: this.nowChosenGroup.id,
         };
         try {
           this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
         } catch {
-          alert("网络错误");
+          this.dialogMessage = "网络错误";
+          this.dialogVisible = true;
         }
       }
     },
@@ -419,7 +798,6 @@ export default {
       var that = this;
       var objectStore = this.db.transaction("message").objectStore("message");
       objectStore.openCursor().onsuccess = function (event) {
-        console.log(event.target.result);
         var cursor = event.target.result;
         if (cursor) {
           for (var i = 0; i < that.allGroupArray.length; i++) {
@@ -431,6 +809,8 @@ export default {
                 time: cursor.value.time,
               };
               that.groupMessage[i].content.push(newObj);
+              var judge = false;
+              that.muchSelect.push(judge);
             }
           }
           cursor.continue();
@@ -441,37 +821,40 @@ export default {
     },
     getAllGroupMember() {
       for (var i = 0; i < this.allGroupArray.length; i++) {
-        // var that = this;
-        var groupInformation = getGroupInformation(
-          this.allGroupArray[i].group.id
-        );
-        groupInformation.then((result) => {
-          var groupInfo = result.data;
-          var obj = {
-            groupid: groupInfo.id,
-            member: groupInfo.user_list,
-          };
-          this.allGroupMember.push(obj);
-        });
+        var obj = {
+          groupid: this.allGroupArray[i].group.id,
+          member: this.allGroupArray[i].group.member,
+          type: this.allGroupArray[i].group.type,
+        };
+        this.allGroupMember.push(obj);
       }
       this.groupSize = this.allGroupArray.length;
     },
     getMygroup() {
-      for (var i = 0; i < store.state.userGroupList.length; i++) {
-        var obj = {
-          group: store.state.userGroupList[i],
-          unreadMessage: 0,
-        };
-        this.allGroupArray.push(obj);
-      }
-      this.nowGroupArray = this.allGroupArray;
+      var request = getUserChatRoom();
+      var groupTemp;
+      request.then((result) => {
+        groupTemp = result.data;
+        for (var i = 0; i < groupTemp.length; i++) {
+          var obj = {
+            group: {
+              id: groupTemp[i].group_id,
+              name: groupTemp[i].name,
+              member: groupTemp[i].member_info,
+              type: groupTemp[i].type,
+            },
+            unreadMessage: 0,
+          };
+          this.allGroupArray.push(obj);
+        }
+        this.nowGroupArray = this.allGroupArray;
+      });
     },
     judgeSamePerson() {
-      // if(store.state.isLogin === false)
-      // this.$router.push('/')
-      // var uid = this.$route.params.uid;
-      // if(uid != store.state.uid)
-      // this.$router.push('/' + store.state.uid + '/Chatroom')
+      if (store.state.isLogin === false) this.$router.push("/");
+      var uid = this.$route.params.uid;
+      if (uid != store.state.uid)
+        this.$router.push("/" + store.state.uid + "/Chatroom");
     },
     isTimeDifferenceGreaterThan5Second(index) {
       if (index === 0) return true;
@@ -484,18 +867,15 @@ export default {
       return timeDifferenceInSeconds > 300;
     },
     receiveSingleMessage(parsedData) {
-      console.log(parsedData);
       var that = this;
       var uid = parsedData.user_id;
       if (uid) {
-        var tid = parsedData.team_id;
+        var tid = parsedData.group_id;
         var username;
         var userIcon;
         var j = 0;
         var flag = false;
         for (j = 0; j < that.groupSize; j++) {
-          console.log(j);
-          console.log(that.allGroupMember);
           if (that.allGroupMember[j].groupid == tid) {
             for (var k = 0; k < that.allGroupMember[j].member.length; k++) {
               if (that.allGroupMember[j].member[k].id === uid) {
@@ -515,7 +895,7 @@ export default {
           time: parsedData.timestamp,
         };
         for (var m = 0; m < that.groupMessage.length; m++) {
-          if (that.groupMessage[m].id === tid) {
+          if (that.groupMessage[m].id == tid) {
             that.groupMessage[m].content.push(newObj);
           }
         }
@@ -540,7 +920,7 @@ export default {
     websocketInit() {
       for (var i = 0; i < this.allGroupArray.length; i++) {
         var ws = new WebSocket(
-          "ws://8.130.25.189/ws/chat/team/" +
+          "ws://8.130.25.189/ws/chat/group/" +
             this.allGroupArray[i].group.id +
             "/"
         );
@@ -551,7 +931,6 @@ export default {
       var that = this;
       for (var i = 0; i < this.allGroupArray.length; i++) {
         that.wsArray[i].onmessage = function (message) {
-          console.log("收到的message", message.data);
           var parsedData = JSON.parse(message.data);
           if (Array.isArray(parsedData.data) === true) {
             var dataArray = parsedData.data;
@@ -570,19 +949,20 @@ export default {
               type: "change",
               change: "leave",
               user_id: store.state.uid,
-              team_id: this.nowChosenGroup.id,
+              group_id: this.nowChosenGroup.id,
             };
             try {
               this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
             } catch {
-              alert("网络错误");
+              this.dialogMessage = "网络错误";
+              this.dialogVisible = true;
             }
-            console.log("关闭页面时已经leave" + leaveObj);
           }
           console.log("websocket i 已关闭");
         };
       }
     },
+
     sendMessage() {
       if (this.nowWs === -1) {
         this.messageInput = "";
@@ -616,19 +996,20 @@ export default {
         type: "chat",
         data: {
           user_id: store.state.uid,
-          team_id: this.nowChosenGroup.id,
+          group_id: this.nowChosenGroup.id,
           content: this.messageInput,
           timestamp: timestamp1,
         },
       };
       const scrollableContainer = document.querySelector(".textarea");
       scrollableContainer.scrollTop = scrollableContainer.scrollHeight;
+
       try {
         this.wsArray[this.nowWs].send(JSON.stringify(newObj));
       } catch {
-        alert("网络错误");
+        this.dialogMessage = "网络错误";
+        this.dialogVisible = true;
       }
-      console.log(JSON.stringify(newObj));
       this.messageInput = "";
     },
     scrollToBottom() {
@@ -658,12 +1039,13 @@ export default {
           type: "change",
           change: "leave",
           user_id: store.state.uid,
-          team_id: this.nowChosenGroup.id,
+          group_id: this.nowChosenGroup.id,
         };
         try {
           this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
         } catch {
-          alert("网络错误");
+          this.dialogMessage = "网络错误";
+          this.dialogVisible = true;
         }
         console.log("已经leave" + leaveObj);
       }
@@ -679,19 +1061,32 @@ export default {
       ele.style.background = "#409EFF";
       ele.style.color = "white";
       for (var i = 0; i < this.allGroupMember.length; i++) {
-        if (item.group.id === this.allGroupMember[i].groupid)
-          this.nowGroupMember = this.allGroupMember[i].member;
+        if (item.group.id === this.allGroupMember[i].groupid) {
+          this.nowGroupMember = this.allGroupMember[i];
+          if (this.nowGroupMember.type == "Team") {
+            this.groupOrPerson = false;
+          } else {
+            this.groupOrPerson = true;
+            console.log(this.groupOrPerson);
+            for (var j = 0; j < this.nowGroupMember.member.length; j++) {
+              if (this.nowGroupMember.member[j].id != store.state.uid) {
+                this.nowPerson = this.nowGroupMember.member[j];
+              }
+            }
+          }
+        }
       }
       var enterobj = {
         type: "change",
         change: "enter",
         user_id: store.state.uid,
-        team_id: this.nowChosenGroup.id,
+        group_id: this.nowChosenGroup.id,
       };
       try {
         this.wsArray[this.nowWs].send(JSON.stringify(enterobj));
       } catch {
-        alert("网络错误");
+        this.dialogMessage = "网络错误";
+        this.dialogVisible = true;
       }
       console.log("已发送enter", enterobj);
     },
@@ -717,6 +1112,67 @@ export default {
 </script>
 
 <style scoped>
+.eachInfoItem {
+  color: #606266;
+  font-size: 15px;
+  width: 5px;
+  margin-top: 20px;
+  width: 300px;
+  height: 40px;
+}
+.personDetailInfoContainer {
+  align-items: center;
+  align-content: center;
+  border-top-style: solid;
+  border-top-color: #c6e2ff;
+  border-top-width: 2px;
+  position: absolute;
+  display: flex;
+  height: 250px;
+  width: 100px;
+  top: 200px;
+  width: 100%;
+  flex-direction: column;
+}
+.personalInfoContainer {
+  position: absolute;
+  display: flex;
+  height: 500px;
+  top: 70px;
+  width: 380px;
+  left: 1100px;
+  border-radius: 20px;
+  box-shadow: 4px 4px 10px #409eff;
+}
+.personalIconContainer {
+  position: absolute;
+  display: flex;
+  left: 120px;
+  top: 50px;
+  height: 120px;
+  width: 120px;
+  border-radius: 50%;
+}
+.selectModelOption {
+  height: 100px;
+  width: 100px;
+  margin-left: 80px;
+}
+.messageOptionButton {
+  position: relative;
+  display: flex;
+  height: 20px;
+  width: 100px;
+  margin-top: 10px;
+}
+.clickRightMenu {
+  position: absolute;
+  z-index: 9999;
+  height: 100px;
+  width: 100px;
+  border-radius: 5px;
+  background-color: #ecf5ff;
+}
 body {
   margin: 0;
 }
@@ -853,7 +1309,6 @@ body {
   display: inline-block;
   box-sizing: border-box;
   width: 12px;
-  height: 12px;
   border: 1px solid transparent;
   border-radius: 3px;
   position: absolute;
@@ -904,7 +1359,6 @@ body {
 }
 
 .eachMessageContainer {
-  height: 90px;
   width: 100%;
 }
 
@@ -935,9 +1389,7 @@ body {
   height: 380px;
   width: 800px;
   border-radius: 5px;
-  border-color: #79bbff;
-  border-width: 1px;
-  border-style: solid;
+  box-shadow: 4px 4px 10px #409eff;
 }
 
 .searchButton {

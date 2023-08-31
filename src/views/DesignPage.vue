@@ -21,22 +21,21 @@ export default {
       formTemplate: {},
       temp: "",
       showPreview: false,
-      selectBox : ""
+      selectBox: "",
     };
   },
   methods: {
     getPicture() {
       var ele = document.querySelector(".el-dialog__body");
       if (ele) {
-        var that = this
+        var that = this;
         html2canvas(ele)
           .then(function (canvas) {
             const imgUrl = canvas.toDataURL("image/jpeg", 1.0);
             const link = document.createElement("a");
             link.href = imgUrl;
-            var str = that.selectBox.value
+            var str = that.selectBox.value;
             link.download = "exported_image." + str; // Set the download filename
-            console.log(link.download)
             link.click();
           })
           .catch(function (error) {
@@ -62,52 +61,67 @@ export default {
       option2.text = "png";
       selectElement.appendChild(option1);
       selectElement.appendChild(option2);
-      selectElement.classList.add('custom-select');
+      selectElement.classList.add("custom-select");
       return selectElement;
     },
     init() {
+      var eleThingContainer = document.querySelector(
+        ".el-main.center-panel.form-main"
+      );
+      console.log(eleThingContainer.style.width)
+      
+      var eleAsidRight = document.querySelector(
+        "#app > section > main > section > aside.el-aside.properties-panel"
+      )
+      var eleAsidLeft = document.querySelector(
+        "#app > section > main > section > aside.el-aside.item-panel"
+      )
+      eleAsidRight.style = "width : 393px"
+      eleAsidLeft.style = "width : 393px"
       var ele1 = document.querySelector(
         "#app > section > header > div > div > div:nth-child(3) > span > button:nth-child(2)"
       );
       ele1.addEventListener("click", () => {
+        var eleBody = document.querySelector(".el-dialog.design-preview");
+        eleBody.style = "width : 800px";
         this.showPreview = true;
-        var ele;
-        while (ele == null) {
-          ele = document.querySelector(
-            "body > div:nth-child(4) > div > div > header > button"
-          );
-        }
+        // var ele;
+        // while (ele == null) {
+        //   ele = document.querySelector(
+        //     "body > div:nth-child(3) > div > div > header > button"
+        //   );
+        // }
 
-        ele.addEventListener("click", () => {
-          this.showPreview = false;
-        });
-        var dialog = document.querySelector("body > div:nth-child(3) > div");
-        dialog.style.zIndex = "9999";
-        var newElButton = document.createElement("button");
-        newElButton.setAttribute("type", "primary");
-        newElButton.setAttribute("class", "previewButton");
-        newElButton.textContent = "导出图片";
-        newElButton.addEventListener("click", this.getPicture);
-        newElButton.style =
-          "background-color : #409EFF;border : 0;color : white;border-radius : 2px;cursor: pointer;margin-left : 10px;height:24px;font-size:6px";
-        newElButton.addEventListener("mouseover", () => {
-          newElButton.style.backgroundColor = "#79bbff";
-        });
-        newElButton.addEventListener("mouseout", () => {
-          newElButton.style.backgroundColor = "#409EFF";
-        });
-        this.selectBox = this.createSelectBox();
-        var header = document.querySelector(
-          "body > div:nth-child(4) > div > div > footer > span"
-        );
-        header.appendChild(newElButton);
-        header.appendChild(this.selectBox)
-        console.log(header);
+        // ele.addEventListener("click", () => {
+        //   this.showPreview = false;
+        // });
+        // var dialog = document.querySelector("body > div:nth-child(3) > div");
+        // dialog.style.zIndex = "9999";
+        // var newElButton = document.createElement("button");
+        // newElButton.setAttribute("type", "primary");
+        // newElButton.setAttribute("class", "previewButton");
+        // newElButton.textContent = "导出图片";
+        // newElButton.addEventListener("click", this.getPicture);
+        // newElButton.style =
+        //   "background-color : #409EFF;border : 0;color : white;border-radius : 2px;cursor: pointer;margin-left : 10px;height:24px;font-size:6px";
+        // newElButton.addEventListener("mouseover", () => {
+        //   newElButton.style.backgroundColor = "#79bbff";
+        // });
+        // newElButton.addEventListener("mouseout", () => {
+        //   newElButton.style.backgroundColor = "#409EFF";
+        // });
+        // this.selectBox = this.createSelectBox();
+
+        // var header = document.querySelector(
+        //   "body > div:nth-child(3) > div > div > footer > span"
+        // );
+        // header.appendChild(newElButton);
+        // header.appendChild(this.selectBox)
+        // console.log(header);
       });
       var elementToDelete = document.querySelector(
         "#app > section > header > div > div > div:nth-child(1)"
       );
-      console.log(elementToDelete);
       if (elementToDelete) {
         // 删除元素
         elementToDelete.remove();
@@ -122,10 +136,10 @@ export default {
 };
 </script>
 <style>
-.custom-select{
+.custom-select {
   margin-left: 10px;
   height: 24px;
-  background-color: #409EFF;
+  background-color: #409eff;
   color: white;
   border: 0;
   border-radius: 3px;

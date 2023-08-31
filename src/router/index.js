@@ -35,6 +35,11 @@ const routes = [
     path: '/:groupid/:projectid/:documentid/DocumentPage',
     name: 'DocumentPage',
     component: () => import(/* webpackChunkName: "about" */ '../views/DocumentPage.vue')
+  },
+  {
+    path: '/try',
+    name: 'try',
+    component: () => import(/* webpackChunkName: "about" */ '../views/try')
   }
 ]
 
