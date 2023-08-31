@@ -56,3 +56,7 @@ export function getUserGroup(){
 export function checkUserInGroup(user_id,team_id){
 	return get('/api/user/check_in_team/?user_id='+user_id+'&team_id='+team_id);
 }
+
+export function getUserChatRoom(){
+    return get('/api/user/get_group/');
+}

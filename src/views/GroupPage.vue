@@ -784,6 +784,7 @@ export default{
           console.log(this.currentGroup.id);
           if(this.group.length>0){
             this.GetCurrenGroup(this.currentGroup.id);
+            this.Jump('/'+this.uid+'/GroupPage/'+this.currentGroup.id);
           }
           else{
             this.group.current=0
