@@ -21,11 +21,12 @@
         </el-container>
       </el-header>
       <el-container class="third-container">
-        <el-aside width="48%" class="bottom-aside">
+        <el-aside v-if="this.listType" width="100%" class="bottom-aside">
           <el-container class="forth-container">
             <el-header style="display: flex;justify-content: center;align-items: center;">
               <el-text class="project-title">设计原型列表</el-text>
               <el-button type="primary" @click="this.OpenDialog(3)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建页面</el-button>
+              <el-button v-if="this.currentProject.id!=0" type="primary" @click="this.ChangeListType()" style="height: 40px;"><el-icon style="margin-right: 4px;"><Switch /></el-icon>设计原型列表</el-button>
             </el-header>
             <el-scrollbar>
               <div v-for="item in this.currentProject.graphCount" :key="item" class="project-list">
@@ -37,11 +38,12 @@
             </el-scrollbar>
           </el-container>
         </el-aside>
-        <el-aside width="48%" class="bottom-aside">
+        <el-aside v-else width="100%" class="bottom-aside">
           <el-container class="forth-container">
             <el-header style="display: flex;justify-content: center;align-items: center;">
               <el-text class="project-title">文档列表</el-text>
               <el-button type="primary" @click="this.OpenDialog(4)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建文档</el-button>
+              <el-button v-if="this.currentProject.id!=0" type="primary" @click="this.ChangeListType()" style="height: 40px;"><el-icon style="margin-right: 4px;"><Switch /></el-icon>共享文档列表</el-button>
             </el-header>
             <el-scrollbar>
               <div v-for="item in this.currentProject.textCount" :key="item" class="project-list">
@@ -80,9 +82,14 @@
     </el-form>
   </el-dialog>
   <el-dialog v-model="this.createText.isOpen" title="创建在线文档" width="500px">
-    <el-form ref="createTextRef" :model="createText" :rules="createTextRules" label-width="70px">
+    <el-form ref="createTextRef" :model="createText" :rules="createTextRules" label-width="85px">
         <el-form-item prop="name" label="文档名称" class="dialog-form-item">
-          <el-input type="text" v-model="createText.name" placeholder="请输入文档名称" maxlength="20" class="dialog-input" />
+          <el-input type="text" v-model="createText.name" placeholder="请输入文档名称" maxlength="20" class="dialog-input" style="width:385px"/>
+        </el-form-item>
+        <el-form-item prop="floder" label="所属文件夹" class="dialog-form-item">
+          <el-select v-model="this.createText.floder" placeholder="空">
+
+          </el-select>
         </el-form-item>
         <el-form-item >
           <el-button type="primary" @click="this.CreateText()" style="width: 100px;">创建在线文档</el-button>
@@ -239,6 +246,7 @@ import { createText, deleteText } from '../api/text.js';
 export default{
   data(){
     return{
+      listType: true,
       uid: store.state.uid,
       group:{
         current: 0,
@@ -280,6 +288,7 @@ export default{
       createText:{
         isOpen: false,
         name: '',
+        floder: '',
       },
       updateProjectRules:{
         name:[{
@@ -318,6 +327,9 @@ export default{
     }
   },
   methods:{
+    ChangeListType(){
+      this.listType=!this.listType;
+    },
     SwitchGroup(){
 
     },
@@ -453,6 +465,7 @@ export default{
       }
       else{
         this.createText.name='';
+        this.createText.floder='';
         this.createText.isOpen=true;
       }
     },

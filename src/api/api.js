@@ -7,7 +7,7 @@ export function post(url,data){
         axios.post('http://8.130.25.189'+url,data,{headers:{'Authorization': store.state.token}}).then(response=>
             {resolve(response.data)}).catch((error)=>{
                 ElMessage({
-                    message: "网络连接失败",
+                    message: "1网络连接失败",
                     grouping: true,
                     type: 'error',
                 });

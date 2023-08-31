@@ -8,16 +8,28 @@
     <el-container style="height: 1800px;">
         <el-main height="1200px">
             <el-container style="height: 400px;margin-bottom: 10px;">
-                <el-aside width="49%" style="background-color: brown;">1</el-aside>
-                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">1</el-aside>
+                <el-aside width="49%" style="background-color: brown;">
+
+                </el-aside>
+                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">
+
+                </el-aside>
             </el-container>
             <el-container style="height: 400px;margin-bottom: 10px;">
-                <el-aside width="49%" style="background-color: brown;">1</el-aside>
-                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">1</el-aside>
+                <el-aside width="49%" style="background-color: brown;">
+
+                </el-aside>
+                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">
+
+                </el-aside>
             </el-container>
             <el-container style="height: 400px;margin-bottom: 10px;">
-                <el-aside width="49%" style="background-color: brown;">1</el-aside>
-                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">1</el-aside>
+                <el-aside width="49%" style="background-color: brown;">
+
+                </el-aside>
+                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">
+                    
+                </el-aside>
             </el-container>
         </el-main>
     </el-container>

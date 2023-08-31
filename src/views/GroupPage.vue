@@ -56,8 +56,9 @@
                 <el-text class="project-name">{{ this.currentGroup.projectList[item-1].name }}</el-text>
                 <el-text class="creator-name">{{ this.currentGroup.projectList[item-1].creator_name+" " }}创建</el-text>
                 <el-text class="create-time">创建时间：{{ this.currentGroup.projectList[item-1].create_date.substring(0,10)+' '+this.currentGroup.projectList[item-1].create_date.substring(11,19) }}</el-text>
-                <el-button @click="this.Jump('/'+this.$store.state.uid+'/'+this.currentGroup.id+'/MyProject/'+this.currentGroup.projectList[item-1].id)"><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看项目</el-button>
-                <el-button @click="this.DeleteProject(this.currentGroup.projectList[item-1].id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除项目</el-button>
+                <el-button @click="this.Jump('/'+this.$store.state.uid+'/'+this.currentGroup.id+'/MyProject/'+this.currentGroup.projectList[item-1].project_id)"><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看项目</el-button>
+                <el-button @click="this.DeleteProject(this.currentGroup.projectList[item-1].project_id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除项目</el-button>
+                <el-button @click=""><el-icon style="margin-right: 4px;"><Files /></el-icon>复制项目</el-button>
               </div>
             </el-scrollbar>
           </el-container>
@@ -142,7 +143,7 @@
     <el-scrollbar max-height="400px">
       <div v-for="item in this.restore.count" :key="item" class="project-list">
         <el-text class="project-name">{{ this.restore.list[item-1].name }}</el-text>
-        <el-text class="creator-name">{{ this.restore.list[item-1].creator.username }}创建</el-text>
+        <el-text class="creator-name">{{ this.restore.list[item-1].creator_name }}创建</el-text>
         <el-text class="create-time">创建时间：{{ this.restore.list[item-1].create_date.substring(0,10)+' '+this.restore.list[item-1].create_date.substring(11,19) }}</el-text>
         <el-button @click="this.RestoreProject(this.restore.list[item-1].project_id)"><el-icon style="margin-right: 4px;"><Pointer /></el-icon>恢复项目</el-button>
         <el-button @click="this.RemoveProject(this.restore.list[item-1].project_id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>彻底删除</el-button>
@@ -558,7 +559,6 @@ export default{
         }
         else{
           if(ownPosition==='creator'||(ownPosition==='admin'&&userPosition==='member')){
-            console.log(opcode);
             var promise1=changeAuth(userid,this.currentGroup.id,opcode);
             promise1.then((result)=>{
               if(this.MessageCatch(result,true)){
@@ -652,7 +652,6 @@ export default{
       var promise1=getRestoreList(this.currentGroup.id);
       promise1.then((result) => {
         if(this.MessageCatch(result, false)){
-          console.log(result);
           this.restore.list=result.data.deleted_projects;
           this.restore.count=this.restore.list.length;
           this.restore.isOpen=true;
@@ -684,7 +683,6 @@ export default{
       })
     },
     ProjectSort(newList){
-      console.log(newList);
       if(this.sorttype==0||this.sorttype===''){
         newList.sort((a,b)=>a.id-b.id);
       }
@@ -727,7 +725,6 @@ export default{
             return -1;
           }});
       }
-      console.log(newList);
       this.currentGroup.projectList=newList;
       this.currentGroup.projectCount=newList.length;
     },
@@ -815,7 +812,6 @@ export default{
         this.currentGroup.personList=result.data.user_list;
         this.currentGroup.personCount=this.currentGroup.personList.length;
         this.currentGroup.projectListBeforeSearch=result.data.project_list;
-        console.log(result);
         this.currentGroup.projectCountBeforeSearch=this.currentGroup.projectListBeforeSearch.length;
         this.currentGroup.authList=[];
         for(var i=0;i<this.currentGroup.personCount;i++){
@@ -862,7 +858,7 @@ export default{
       this.uid=store.state.uid;
     }
     this.Load(groupid);
-    addEventListener("keydown",this.ProjectSearch());
+    // addEventListener("keydown",);
   }
 }
 </script>
