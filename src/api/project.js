@@ -42,3 +42,7 @@ export function removeProject(project_id){
 export function getProjectInformation(project_id){
 	return get('/api/project/getinfo/?project_id='+project_id);
 }
+
+export function getRestoreList(team_id){
+	return get('/api/project/get_deletelist/?team_id='+team_id);
+}

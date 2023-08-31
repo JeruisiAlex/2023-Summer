@@ -29,18 +29,33 @@
       </el-header>
       <el-container class="third-container">
         <el-aside v-if="this.listType" width="100%" class="bottom-aside">
-          <el-container class="forth-container">
+          <el-container v-if="this.currentGroup.id!=0" class="forth-container">
             <el-header style="display: flex;justify-content: center;align-items: center;">
               <el-text class="project-title">项目列表</el-text>
+              <el-select style="margin-right: 10px;" v-model="this.sorttype" size="large" placeholder="按时间递增排序" @change="this.ProjectSort(this.currentGroup.personList)">
+                <el-option value="0" label="按时间递增排序"/>
+                <el-option value="1" label="按时间递减排序"/>
+                <el-option value="2" label="按项目名称递增排序"/>
+                <el-option value="3" label="按项目名称递减排序"/>
+                <el-option value="4" label="按创建者昵称递增排序"/>
+                <el-option value="5" label="按创建者昵称递减排序"/>
+              </el-select>
+              <el-select v-model="this.searchType" size="large" placeholder="项目名称" @change="this.ProjectSearch()">
+                <el-option value="0" label="项目名称"/>
+                <el-option value="1" label="创建人昵称"/>
+                <el-option value="2" label="项目创建时间"/>
+              </el-select>
+              <el-input v-model="this.searchwords" size="large" style="width: 35%;"></el-input>
+              <el-button type="primary" size="large" style="margin-right: 10px;" @click="this.ProjectSearch()"><el-icon><Search /></el-icon></el-button>
               <el-button v-if="this.currentGroup.id!=0" type="primary" @click="this.OpenDialog(2)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建项目</el-button>
-              <el-button v-if="this.currentGroup.id!=0" type="primary" @click="" style="height: 40px;"><el-icon style="margin-right: 4px;"><DeleteFilled /></el-icon>回收站</el-button>
+              <el-button v-if="this.currentGroup.id!=0" type="primary" @click="this.OpenDialog(4)" style="height: 40px;"><el-icon style="margin-right: 4px;"><DeleteFilled /></el-icon>回收站</el-button>
               <el-button v-if="this.currentGroup.id!=0" type="primary" @click="this.ChangeListType()" style="height: 40px;"><el-icon style="margin-right: 4px;"><Switch /></el-icon>查看团队成员列表</el-button>
             </el-header>
             <el-scrollbar>
               <div v-for="item in this.currentGroup.projectCount" :key="item" class="project-list">
                 <el-text class="project-name">{{ this.currentGroup.projectList[item-1].name }}</el-text>
                 <el-text class="creator-name">{{ this.currentGroup.projectList[item-1].creator_name+" " }}创建</el-text>
-                <el-text class="create-time">创建时间：{{ this.currentGroup.projectList[item-1].create_date.substring(0,10)+' '+this.currentGroup.projectList[item-1].create_date.substring(11,18) }}</el-text>
+                <el-text class="create-time">创建时间：{{ this.currentGroup.projectList[item-1].create_date.substring(0,10)+' '+this.currentGroup.projectList[item-1].create_date.substring(11,19) }}</el-text>
                 <el-button @click="this.Jump('/'+this.$store.state.uid+'/'+this.currentGroup.id+'/MyProject/'+this.currentGroup.projectList[item-1].id)"><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看项目</el-button>
                 <el-button @click="this.DeleteProject(this.currentGroup.projectList[item-1].id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除项目</el-button>
               </div>
@@ -48,7 +63,7 @@
           </el-container>
         </el-aside>
         <el-aside v-else width="100%" class="bottom-aside">
-          <el-container class="forth-container">
+          <el-container v-if="this.currentGroup.id!=0" class="forth-container">
             <el-header style="display: flex;justify-content: center;align-items: center;">
               <el-text class="groupmember-title">成员列表</el-text>
               <el-button v-if="this.currentGroup.id!=0" type="primary" @click="this.OpenDialog(3)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>邀请新成员</el-button>
@@ -92,7 +107,7 @@
           <el-input type="textarea" v-model="updateGroup.introduction" placeholder="请输入团队介绍" maxlength="200" show-word-limit="true" :autosize="{ minRows: 2, maxRows: 6 }" class="dialog-input" />
         </el-form-item>
         <el-form-item prop="avatar" label="团队头像" class="dialog-form-item">
-          <el-input type="file" v-model="updateGroup.avatar" class="dialog-input" />
+          <el-input id="teamavatar" type="file" v-model="updateGroup.avatar" class="dialog-input" />
         </el-form-item>
         <el-form-item >
           <el-button type="primary" @click="this.UpdateGroup()" style="width: 100px;">上传修改内容</el-button>
@@ -121,6 +136,18 @@
           <el-button type="primary" @click="this.AddNewMember()" style="width: 100px;">发送邀请</el-button>
         </el-form-item>
     </el-form>
+  </el-dialog>
+  <el-dialog v-model="this.restore.isOpen" title="回收站" width="1000px" style="height: 550px;">
+    <el-button @click="this.EmptyRestore()" type="primary">清空回收站</el-button>
+    <el-scrollbar max-height="400px">
+      <div v-for="item in this.restore.count" :key="item" class="project-list">
+        <el-text class="project-name">{{ this.restore.list[item-1].name }}</el-text>
+        <el-text class="creator-name">{{ this.restore.list[item-1].creator.username }}创建</el-text>
+        <el-text class="create-time">创建时间：{{ this.restore.list[item-1].create_date.substring(0,10)+' '+this.restore.list[item-1].create_date.substring(11,19) }}</el-text>
+        <el-button @click="this.RestoreProject(this.restore.list[item-1].project_id)"><el-icon style="margin-right: 4px;"><Pointer /></el-icon>恢复项目</el-button>
+        <el-button @click="this.RemoveProject(this.restore.list[item-1].project_id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>彻底删除</el-button>
+      </div>
+    </el-scrollbar>
   </el-dialog>
 </template>
 
@@ -233,7 +260,7 @@
 }
 .project-title{
   align-items: center;
-  width: 90%;
+  width: 40%;
   height: 50px;
   border-radius: 4px;
   font-size:3ch;
@@ -282,17 +309,18 @@
 import store from '@/store';
 import { ElMessage } from 'element-plus';
 import { getUserGroup } from '../api/user.js';
-import { createGroup, deleteGroup, changeAuth, inviteMember, getGroupInformation} from '../api/group.js';
-import { createProject, deleteProject } from '../api/project.js';
-import { watch, ref } from 'vue';
+import { createGroup, deleteGroup, changeAuth, inviteMember, getGroupInformation, updateGroup} from '../api/group.js';
+import { createProject, deleteProject, restoreProject, removeProject, emptyRestore, getRestoreList } from '../api/project.js';
+import { Search } from '@element-plus/icons-vue';
 
 export default{
   data(){
     return{
       uid: store.state.uid,
       listType: true,
-      sortType: 0,
+      sorttype: '',
       searchwords: '',
+      searchType: '',
       createGroup:{
         isOpen: false,
         name: '',
@@ -329,6 +357,12 @@ export default{
         projectCount: 0,
         projectList: [],
         projectListBeforeSearch: [],
+        projectCountBeforeSearch: 0,
+      },
+      restore:{
+        isOpen: false,
+        list: [],
+        count: 0,
       },
       createGroupRules:{
         name:[{
@@ -406,30 +440,10 @@ export default{
     CreateGroup(){
       this.$refs.createGroupRef.validate((valid) => {
         if(valid){
-          console.log(this.createGroup.name+' '+this.createGroup.introduction);
           var promise1=createGroup(this.createGroup.name,this.createGroup.introduction);
           promise1.then((result)=>{
             if(this.MessageCatch(result,true)){
-              var promise2=getUserGroup();
-              promise2.then((result) => {
-                if(result.code==0){
-                  store.commit('updateGroupList',result.data);
-                  this.group.list=result.data;
-                  this.group.length=result.data.length;
-                  if(this.currentGroup.id==0){
-                    this.group.current=0;
-                    this.GetCurrenGroup(this.group.list[0].id);
-                  }
-                  else{
-                    for(var i=0;i<this.group.length;i++){
-                      if(this.group.list[i].id==this.currentGroup.id){
-                        this.group.current=i;
-                        break;
-                      }
-                    }
-                  }
-                }
-              })
+              this.Load(this.currentGroup.id);
             }
           })
         }
@@ -438,7 +452,13 @@ export default{
     UpdateGroup(){
       this.$refs.updateGroupRef.validate((valid) => {
         if(valid){
-          // var promise=up
+          var promise1=updateGroup(this.currentGroup.id, this.updateGroup.name, this.updateGroup.introduction, document.getElementById('teamavatar').files[0]);
+          promise1.then((result) => {
+            if(this.MessageCatch(result, true)){
+              this.Load(this.currentGroup.id);
+              this.updateGroup.isOpen=false;
+            }
+          })
         }
       })
     },
@@ -448,7 +468,7 @@ export default{
           var promise=createProject(this.createProject.name,this.currentGroup.id,this.createProject.introduction);
           promise.then((result)=>{
             if(this.MessageCatch(result,true)){
-              this.GetCurrenGroup(this.currentGroup.id);
+              this.Load(this.currentGroup.id);
             }
           });
         }
@@ -468,29 +488,7 @@ export default{
       var promise1=deleteGroup(groupid);
       promise1.then((result) => {
         if(this.MessageCatch(result,true)){
-          var promise2=getUserGroup();
-          promise2.then((result) => {
-            if(result.code==0){
-              store.commit('updateGroupList',result.data);
-              this.group.list=result.data;
-              this.group.length=result.data.length;
-              if(this.group.length==0){
-                this.currentGroup.id=0;
-                this.currentGroup.avatar='https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png';
-                this.currentGroup.name='您还没有任何团队';
-                this.currentGroup.introduction='快去创建或加入一个团队吧';
-                this.currentGroup.personCount=0;
-                this.currentGroup.projectCount=0
-                this.currentGroup.personList=[];
-                this.currentGroup.projectList=[];
-                this.currentGroup.authList=[];
-              }
-              else{
-                this.group.current=0;
-                this.GetCurrenGroup(this.group.list[0].id);
-              }
-            }
-          })
+          this.Load(this.currentGroup.id);
         }
       })
     },
@@ -498,34 +496,12 @@ export default{
       var promise=deleteProject(projectid);
       promise.then((result) => {
         if(this.MessageCatch(result,true)){
-          this.GetCurrenGroup(this.currentGroup.id);
+          this.Load(this.currentGroup.id);
         }
       })
     },
-    GetCurrenGroup(groupId){
-      var promise=getGroupInformation(groupId);
-      promise.then((result)=>{
-        this.currentGroup.id=groupId;
-        this.currentGroup.name=result.data.name;
-        this.currentGroup.introduction=result.data.introduction;
-        this.currentGroup.avatar=result.data.icon_address;
-        this.currentGroup.personList=result.data.user_list;
-        this.currentGroup.personCount=this.currentGroup.personList.length;
-        this.currentGroup.projectList=result.data.project_list;
-        this.currentGroup.projectCount=this.currentGroup.projectList.length;
-        this.currentGroup.authList=[];
-        for(var i=0;i<this.currentGroup.personCount;i++){
-          if(this.currentGroup.personList[i].position==='creator'){
-            this.currentGroup.authList.push('创建者')
-          }
-          else if(this.currentGroup.personList[i].position==='admin'){
-            this.currentGroup.authList.push('管理员')
-          }
-          else{
-            this.currentGroup.authList.push('成员')
-          }
-        }
-      })
+    CopyProject(){
+
     },
     ChangeAuth(userid,opcode){
       var ownPosition;
@@ -607,45 +583,46 @@ export default{
       }
     },
     SwithcGroup(index){
-      var promise=getUserGroup();
-      promise.then((result)=>{
-        if(result.code==0){
-          store.commit("updateGroupList",result.data);
-          if(result.data.length==0){
-            this.currentGroup.id=0;
-            this.currentGroup.avatar='https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png';
-            this.currentGroup.name='您还没有任何团队';
-            this.currentGroup.introduction='快去创建或加入一个团队吧';
-            this.currentGroup.personCount=0;
-            this.currentGroup.projectCount=0
-            this.currentGroup.personList=[];
-            this.currentGroup.projectList=[];
-            this.currentGroup.authList=[];
-          }
-          else{
-            for(var i=0;i<result.data.length;i++){
-              if(result.data[i].id==this.group.list[index].id){
-                this.group.current=i;
-                this.currentGroup.id=result.data[i].id;
-                break;
-              }
-              if(this.group.length-i==1){
-                this.group.current=0;
-                this.currentGroup.id=result.data[0].id;
-              }
-            }
-          }
-          this.group.list=result.data;
-          this.group.length=this.group.list.length;
-          if(this.currentGroup.id!=0){
-            this.GetCurrenGroup(this.currentGroup.id);
-          }
-          this.$router.push('/'+store.state.uid+'/GroupPage/'+this.currentGroup.id);
-        }
-        else{
+      this.Load(this.group.list[index].id);
+    //   var promise=getUserGroup();
+    //   promise.then((result)=>{
+    //     if(result.code==0){
+    //       store.commit("updateGroupList",result.data);
+    //       if(result.data.length==0){
+    //         this.currentGroup.id=0;
+    //         this.currentGroup.avatar='https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png';
+    //         this.currentGroup.name='您还没有任何团队';
+    //         this.currentGroup.introduction='快去创建或加入一个团队吧';
+    //         this.currentGroup.personCount=0;
+    //         this.currentGroup.projectCount=0
+    //         this.currentGroup.personList=[];
+    //         this.currentGroup.projectList=[];
+    //         this.currentGroup.authList=[];
+    //       }
+    //       else{
+    //         for(var i=0;i<result.data.length;i++){
+    //           if(result.data[i].id==this.group.list[index].id){
+    //             this.group.current=i;
+    //             this.currentGroup.id=result.data[i].id;
+    //             break;
+    //           }
+    //           if(this.group.length-i==1){
+    //             this.group.current=0;
+    //             this.currentGroup.id=result.data[0].id;
+    //           }
+    //         }
+    //       }
+    //       this.group.list=result.data;
+    //       this.group.length=this.group.list.length;
+    //       if(this.currentGroup.id!=0){
+    //         this.GetCurrenGroup(this.currentGroup.id);
+    //       }
+    //       this.$router.push('/'+store.state.uid+'/GroupPage/'+this.currentGroup.id);
+    //     }
+    //     else{
 
-        }
-      })
+    //     }
+    //   })
     },
     Jump(url){
       this.$router.push(url);
@@ -662,19 +639,193 @@ export default{
       else if(index==2){
         this.createProject.isOpen=true;
       }
-      else{
+      else if(index==3){
         this.addNewMember.isOpen=true;
       }
+      else{
+        this.GetRestoreList();
+      }
     },
-    projectSort(list){
+    GetRestoreList(){
+      var promise1=getRestoreList(this.currentGroup.id);
+      promise1.then((result) => {
+        if(this.MessageCatch(result, false)){
+          this.restore.list=result.data.deleted_projects;
+          this.restore.count=this.restore.list.length;
+          this.restore.isOpen=true;
+        }
+      })
+    },
+    EmptyRestore(){
+      var promise1=emptyRestore();
+      promise1.then((result) => {
+        if(this.MessageCatch(result)){
+          this.restore.isOpen=false;
+        }
+      })
+    },
+    RestoreProject(projectid){
+      var promise1=restoreProject(projectid);
+      promise1.then((result) => {
+        if(this.MessageCatch(result, true)){
+          this.GetRestoreList();
+        }
+      })
+    },
+    RemoveProject(projectid){
+      var promise1=removeProject(projectid);
+      promise1.then((result) => {
+        if(this.MessageCatch(result, true)){
+          this.GetRestoreList();
+        }
+      })
+    },
+    ProjectSort(newList){
+      if(this.sorttype==0||this.sorttype===''){
+        newList.sort((a,b)=>a.id-b.id);
+      }
+      else if(this.sorttype==1){
+        newList.sort((a,b)=>b.id-a.id);
+      }
+      else if(this.sorttype==2){
+        newList.sort((a,b)=>{
+          if(a.name>b.name){
+            return 1;
+          }
+          else{
+            return -1;
+          }});
+      }
+      else if(this.sorttype==3){
+        newList.sort((a,b)=>{
+          if(b.name>a.name){
+            return 1;
+          }
+          else{
+            return -1;
+          }});
+      }
+      else if(this.sorttype==4){
+        newList.sort((a,b)=>{
+          if(a.creator_name>b.creator_name){
+            return 1;
+          }
+          else{
+            return -1;
+          }});
+      }
+      else if(this.sorttype==5){
+        newList.sort((a,b)=>{
+          if(b.creator_name>a.creator_name){
+            return 1;
+          }
+          else{
+            return -1;
+          }});
+      }
+      this.currentGroup.projectList=newList;
+      this.currentGroup.projectCount=newList.length;
+    },
+    ProjectSearch(){
       var newList=[];
-      
-    },
-    projectSearch(){
-
+      if(this.searchwords===''){
+        newList=this.currentGroup.projectListBeforeSearch;
+      }
+      else{
+        if(this.searchType==0||this.searchType===''){
+          for(var i=0;i<this.currentGroup.projectCountBeforeSearch;i++){
+            if(this.currentGroup.projectListBeforeSearch[i].name.search(this.searchwords)!=-1){
+              newList.push(this.currentGroup.projectListBeforeSearch[i]);
+            }
+          }
+        }
+        else if(this.searchType==1){
+          for(var i=0;i<this.currentGroup.projectCountBeforeSearch;i++){
+            if(this.currentGroup.projectListBeforeSearch[i].creator_name.search(this.searchwords)!=-1){
+              newList.push(this.currentGroup.projectListBeforeSearch[i]);
+            }
+          }
+        }
+        else if(this.searchType==2){
+          for(var i=0;i<this.currentGroup.projectCountBeforeSearch;i++){
+            if(this.currentGroup.projectListBeforeSearch[i].create_date.search(this.searchwords)!=-1){
+              newList.push(this.currentGroup.projectListBeforeSearch[i]);
+            }
+          }
+        }
+      }
+      this.ProjectSort(newList);
     },
     Load(groupid){
-      
+      var promise1=getUserGroup();
+      promise1.then((result) => {
+        if(this.MessageCatch(result,false)){
+          this.group.list=result.data;
+          this.group.length=this.group.list.length;
+          for(var i=0;i<this.group.length;i++){
+            console.log(this.group.list[i].id);
+            if(this.group.list[i].id==groupid){
+              this.group.current=i;
+              this.currentGroup.id=this.group.list[i].id;
+              break;
+            }
+            if(this.group.length-i==1){
+              if(groupid>0){
+                ElMessage({
+                  message: '您不在该团队中，已重新加载您所在团队',
+                  grouping: true,
+                  type: 'warning',
+                })
+              }
+              this.group.current=0;
+              this.currentGroup.id=this.group.list[0].id;
+            }
+          }
+          console.log(this.currentGroup.id);
+          if(this.group.length>0){
+            this.GetCurrenGroup(this.currentGroup.id);
+          }
+          else{
+            this.group.current=0
+            this.currentGroup.id=0;
+            this.currentGroup.avatar='https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png';
+            this.currentGroup.name='您还没有任何团队';
+            this.currentGroup.introduction='快去创建或加入一个团队吧';
+            this.currentGroup.personCount=0;
+            this.currentGroup.projectCount=0
+            this.currentGroup.personList=[];
+            this.currentGroup.projectList=[];
+            this.currentGroup.authList=[];
+            this.Jump('/'+this.uid+'/GroupPage/'+this.currentGroup.id);
+          }
+        }
+      })
+    },
+    GetCurrenGroup(groupId){
+      var promise=getGroupInformation(groupId);
+      promise.then((result)=>{
+        this.currentGroup.id=groupId;
+        this.currentGroup.name=result.data.name;
+        this.currentGroup.introduction=result.data.introduction;
+        this.currentGroup.avatar=result.data.icon_address;
+        this.currentGroup.personList=result.data.user_list;
+        this.currentGroup.personCount=this.currentGroup.personList.length;
+        this.currentGroup.projectListBeforeSearch=result.data.project_list;
+        this.currentGroup.projectCountBeforeSearch=this.currentGroup.projectListBeforeSearch.length;
+        this.currentGroup.authList=[];
+        for(var i=0;i<this.currentGroup.personCount;i++){
+          if(this.currentGroup.personList[i].position==='creator'){
+            this.currentGroup.authList.push('创建者')
+          }
+          else if(this.currentGroup.personList[i].position==='admin'){
+            this.currentGroup.authList.push('管理员')
+          }
+          else{
+            this.currentGroup.authList.push('成员')
+          }
+        }
+        this.ProjectSearch();
+      })
     },
     MessageCatch(data,opcode){
       if(data.code!=0){
@@ -697,32 +848,16 @@ export default{
   },
   mounted(){
     this.uid=this.$route.params.uid;
-    this.currentGroup.id=this.$route.params.groupid;
+    var groupid=this.$route.params.groupid;
     if(store.state.isLogin==false){
       this.$router.push('/');
     }
     else if(store.state.uid!=this.uid){
-      this.$router.push('/'+store.state.uid+'/GroupPage/'+this.currentGroup.id);
+      this.$router.push('/'+store.state.uid+'/GroupPage/'+groupid);
       this.uid=store.state.uid;
     }
-    this.group.list=store.state.userGroupList;
-    this.group.length=store.state.userGroupList.length;
-    for(var i=0;i<this.group.length;i++){
-      if(this.group.list[i].id==this.currentGroup.id){
-        this,this.group.current=i;
-        break;
-      }
-      if(i==this.group.length-1){
-        if(this.group.length!=0) this.currentGroup.id=this.group.list[0].id;
-        else this.currentGroup.id=0;
-      }
-    }
-    if(this.group.length!=0){
-      this.GetCurrenGroup(this.currentGroup.id);
-    }
-    else{
-      this.currentGroup.id=0;
-    }
+    this.Load(groupid);
+    addEventListener("keydown",this.ProjectSearch());
   }
 }
 </script>
