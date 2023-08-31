@@ -11,14 +11,14 @@
                 content="this is content, this is content, this is content"
               >
                 <template #reference>
-                  <el-button type="warning" @click="atDocument()" size="small">
+                  <el-button type="warning" @click="atDocument(false)" size="small">
                     @邀请
                   </el-button>
                 </template>
                 <el-scrollbar max-height="500px">
                   <div class="notification-item" 
                     v-for="(item, index) in this.groupMembersList"
-                    :key="index" :title="item.username" @click="atDocumentPost(item.id)">
+                    :key="index" :title="item.username" @click="atDocumentPost(item.id,item.username)">
                     {{ item.username }}
                   </div>
                 </el-scrollbar>
@@ -40,7 +40,9 @@
             </el-col>
         </el-row>
     </div>
-    <div id="vditor" name="description" style="z-index: 999;" tabindex="0" @keydown="keyListener"></div>
+    <div id="vditor" name="description" style="z-index: 999;" @keydown="keyListener" ref="editor"></div>
+    <el-button @click="focusEditor()">123</el-button>
+    <!-- <input height="250px" ref='editor'/> -->
     <!-- <el-button @click="setEditArea()">(测试用)改变富文本编辑器内容</el-button>
     <el-button @click="getEditArea()">(测试用)提取富文本编辑器内容</el-button>
     <el-button @click="exportDocument1()">(测试用)使失效</el-button>
@@ -97,7 +99,8 @@ export default {
           shareable: true,
           atVisible: false,
           groupMembersList: [],
-          groupName: 'Group'
+          groupName: 'Group',
+          at_flag: true,
       }
   },
   mounted(){
@@ -125,8 +128,9 @@ export default {
           enable: true
         },
         after:()=>{
-            this.contentEditor.setValue(""),
-            this.contentEditor.setTheme("dark")
+            this.contentEditor.setValue("");
+            this.contentEditor.setTheme("dark");
+            this.contentEditor.focus();
         }
     });
 
@@ -134,9 +138,9 @@ export default {
     console.log(infos);
     promise.then((result)=>{
       console.log(result);
-      this.fileName = result.data.name;
-      this.contentEditor.setValue(result.data.content);
-      this.creator = result.data.creator;
+      // this.fileName = result.data.name;
+      // this.contentEditor.setValue(result.data.content);
+      // this.creator = result.data.creator;
     });
 
     setInterval(() => {
@@ -146,6 +150,9 @@ export default {
     }, 500)
   },
   methods:{
+    focusEditor() {
+      this.contentEditor.focus();
+    },
     setEditArea() {
         this.contentEditor.setValue(this.editorContent);
     },
@@ -196,7 +203,7 @@ export default {
       console.log("key_push");
       if (event.shiftKey && event.keyCode === 50) {
         console.log("同时按下 shift 和数字2键");
-        this.atDocument();
+        this.atDocument(true);
         // 执行你想做的操作
       }
       else if (event.ctrlKey && event.key === 's'){
@@ -210,37 +217,38 @@ export default {
         console.log("按下 esc 键");
       }
     },
-    atDocument() {
-      var promise=getGroupInformation(this.group_id);
-      promise.then((result)=>{
-        this.groupMembersList=result.data.user_list;
-        this.groupName=result.data.name;
-        console.log(this.groupMembersList);
-        this.atVisible = !this.atVisible;
-      });
-      // this.groupMembersList=[
-      //       {
-      //           "id": 3,
-      //           "username": "TestKirby",
-      //           "email": "13616991245@163.com",
-      //           "true_name": "Ye Chengxuan",
-      //           "icon_address": "2023summer-se-1316618142.cos.ap-beijing.myqcloud.com/icon/user/3.jpg",
-      //           "position": "creator"
-      //       },
-      //       {
-      //           "id": 4,
-      //           "username": "Jeruisi",
-      //           "email": "1525772623@qq.com",
-      //           "true_name": "Chen Yanzhou",
-      //           "icon_address": "2023summer-se-1316618142.cos.ap-beijing.myqcloud.com/icon/user/default_icon.jpg",
-      //           "position": "admin"
-      //       }
-      //   ];
-      // this.groupName='result.data.name';
-      // console.log(this.groupMembersList);
-      // this.atVisible = !this.atVisible;
+    atDocument(mode) {
+      this.at_flag = mode;
+      // var promise=getGroupInformation(this.group_id);
+      // promise.then((result)=>{
+      //   this.groupMembersList=result.data.user_list;
+      //   this.groupName=result.data.name;
+      //   console.log(this.groupMembersList);
+      //   this.atVisible = !this.atVisible;
+      // });
+      this.groupMembersList=[
+            {
+                "id": 3,
+                "username": "TestKirby",
+                "email": "13616991245@163.com",
+                "true_name": "Ye Chengxuan",
+                "icon_address": "2023summer-se-1316618142.cos.ap-beijing.myqcloud.com/icon/user/3.jpg",
+                "position": "creator"
+            },
+            {
+                "id": 4,
+                "username": "Jeruisi",
+                "email": "1525772623@qq.com",
+                "true_name": "Chen Yanzhou",
+                "icon_address": "2023summer-se-1316618142.cos.ap-beijing.myqcloud.com/icon/user/default_icon.jpg",
+                "position": "admin"
+            }
+        ];
+      this.groupName='result.data.name';
+      console.log(this.groupMembersList);
+      this.atVisible = !this.atVisible;
     },
-    atDocumentPost(receiver_id) {
+    atDocumentPost(receiver_id,receiver_name) {
       var newObj = {
         type: "at_jump",
         at_type: "document",
@@ -254,6 +262,12 @@ export default {
       console.log("发送前");
       ws.send(JSON.stringify(newObj));
       console.log("发送后");
+      this.atVisible = false;
+      if (this.at_flag){
+        this.contentEditor.insertValue(receiver_name);
+      } else {
+        this.contentEditor.insertValue('@'+receiver_name);
+      }
     },
     saveDocument() {
       var promise=saveText(this.text_id,this.project_id,this.contentEditor.getValue());
