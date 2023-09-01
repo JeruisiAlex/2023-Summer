@@ -47,20 +47,28 @@
               <el-button v-if="this.currentProject.id!=0" type="primary" @click="this.ChangeListType()" style="height: 40px;"><el-icon style="margin-right: 4px;"><Switch /></el-icon>共享文档列表</el-button>
             </el-header>
             <el-scrollbar>
-              <div v-for="item in this.currentProject.flodercount" :key="item" class="project-list">
-                <el-icon v-if="this.currentProject.floderList[item-1].isOpen"><CaretBottom /></el-icon>
-                <el-icon v-else><CaretRight /></el-icon>
-                <el-text class="project-name" style="width: 74%;">{{ this.currentProject.floderList[item-1].name }}</el-text>
-                <el-button v-if="this.currentProject.floderList[item-1].isOpen" @click="this.ChangeFloder(item-1)"><el-icon style="margin-right: 4px;"><Fold /></el-icon>折叠文件夹</el-button>
-                <el-button v-else @click="this.ChangeFloder(item-1)"><el-icon style="margin-right: 4px;"><Expand /></el-icon>展开文件夹</el-button>
-                <el-button @click=""><el-icon style="margin-right: 4px;"><FolderDelete /></el-icon>删除文件夹</el-button>
-              </div>
               <div v-for="item in this.currentProject.textCount" :key="item" class="project-list">
                 <el-text class="project-name">{{ this.currentProject.textList[item-1].name }}</el-text>
                 <el-text class="creator-name">{{ this.currentProject.textList[item-1].creator.username+' ' }}创建</el-text>
                 <el-button @click="this.DeleteText(this.currentProject.textList[item-1].text_id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除文档</el-button>
                 <el-button @click="this.Jump('/'+this.currentGroup.id+'/'+this.currentProject.id+'/'+this.currentProject.textList[item-1].text_id+'/DocumentPage')"><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑文档</el-button>
               </div>
+              <el-container v-for="item in this.currentProject.flodercount" :key="item" style="width: 100%;">
+                <el-header class="floder-list">
+                  <el-icon v-if="this.currentProject.floderList[item-1].isOpen"><CaretBottom /></el-icon>
+                  <el-icon v-else><CaretRight /></el-icon>
+                  <el-text class="project-name" style="width: 75%;">{{ this.currentProject.floderList[item-1].name }}</el-text>
+                  <el-button v-if="this.currentProject.floderList[item-1].isOpen" @click="this.ChangeFloder(item-1)"><el-icon style="margin-right: 4px;"><Fold /></el-icon>折叠文件夹</el-button>
+                  <el-button v-else @click="this.ChangeFloder(item-1)"><el-icon style="margin-right: 4px;"><Expand /></el-icon>展开文件夹</el-button>
+                  <el-button @click=""><el-icon style="margin-right: 4px;"><FolderDelete /></el-icon>删除文件夹</el-button>
+                </el-header>
+                <div v-if="this.currentProject.floderList[item-1].isOpen" v-for="i in this.currentProject.floderList[item-1].count" :key="i" class="project-list">
+                  <el-text class="project-name">{{ this.currentProject.floderList[item-1].textList[i-1].name }}</el-text>
+                  <el-text class="creator-name">{{ this.currentProject.floderList[item-1].textList[i-1].creator.username+' ' }}创建</el-text>
+                  <el-button @click="this.DeleteText(this.currentProject.floderList[item-1].textList[i-1].text_id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除文档</el-button>
+                  <el-button @click="this.Jump('/'+this.currentGroup.id+'/'+this.currentProject.id+'/'+this.currentProject.floderList[item-1].textList[i-1].text_id+'/DocumentPage')"><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑文档</el-button>
+                </div>
+              </el-container>
             </el-scrollbar>
           </el-container>
         </el-aside>
@@ -234,6 +242,12 @@ margin-bottom: 30px;
   border-radius: 4px;
   border-bottom: 1px solid #409EFF;
 }
+.floder-list{
+  display: flex;
+  align-items: center;
+  margin: 5px;
+  border-radius: 4px;
+}
 .project-name{
   width: 38%;
   margin-left: 20px;
@@ -360,10 +374,9 @@ export default{
                     }],
                 floder: [{
                         validator: (rule, value, callback) => {
-                          console.log(value);
                             if (value === '') {
-                                for(var i=0;i<this.currentProject.projectCount;i++){
-                                  if(this.createText.name==this.currentProject.projectList[i].name){
+                                for(var i=0;i<this.currentProject.textCount;i++){
+                                  if(this.createText.name==this.currentProject.textList[i].name){
                                     callback("同一目录下不能有同名文档");
                                   }
                                 }
@@ -379,7 +392,7 @@ export default{
                               }
                             }
                             callback();
-                        }, type: 'string', trigger: 'blur'
+                        }, type: 'string', trigger: 'change'
                     }],
             },
             createFloderRules: {
@@ -571,7 +584,6 @@ export default{
             }
         },
         Jump(url) {
-            console.log(url);
             this.$router.push(url);
         },
         Load(changeGroup, groupid, projectid) {
@@ -653,7 +665,6 @@ export default{
                         var promise2 = getProjectInformation(this.currentProject.id);
                         promise2.then((value) => {
                             if (this.MessageCatch(value, false)) {
-                                console.log(value);
                                 this.currentProject.name = value.data.name;
                                 this.currentProject.introduction = value.data.introduction;
                                 this.currentProject.graphCount = 0;
@@ -680,33 +691,34 @@ export default{
         },
         ProcessText(textlist) {
           console.log(textlist);
-            var count = textlist.length;
-            this.currentProject.textCount = 0;
-            this.currentProject.flodercount = 0;
-            this.currentProject.textList = [];
-            this.currentProject.floderList = [];
-            for(var i=0;i<count;i++){
-              if(textlist[i].text_url.length==1&&textlist[i].text_url[0]=='1'){
-                  this.currentProject.floderList.push({"name" : textlist[i].name,"isOpen" : "false","count" : 0 ,"textList" : []});
-                  this.currentProject.flodercount++;
-                }
-            }
-            for(var i=0; i < count; i++) {
-              if(textlist[i].text_url.length==1&&textlist[i].text_url[0]=='0'){
-                this.currentProject.textList.push(textlist[i]);
-                this.currentProject.textCount++;
+          var count = textlist.length;
+          this.currentProject.textCount = 0;
+          this.currentProject.flodercount = 0;
+          this.currentProject.textList = [];
+          this.currentProject.floderList = [];
+          for(var i=0;i<count;i++){
+            if(textlist[i].text_url.length==1&&textlist[i].text_url[0]=='1'){
+                this.currentProject.floderList.push({"name" : textlist[i].name,"isOpen" : "false","count" : 0 ,"textList" : []});
+                this.currentProject.flodercount++;
               }
-              else if(textlist[i].text_url.length==1){
-                for(var j=0;j<this.currentProject.flodercount;j++){
-                  var flodername=textlist[i].text_url.slice(2);
-                  if(flodername==this.currentProject.floderList[j].name){
-                    this.currentProject.floderList[j].textList.push(textlist[i]);
-                    this.currentProject.floderList[j].count++;
-                    break;
-                  }
+          }
+          for(var i=0; i < count; i++) {
+            if(textlist[i].text_url.length==1&&textlist[i].text_url[0]=='0'){
+              this.currentProject.textList.push(textlist[i]);
+              this.currentProject.textCount++;
+            }
+            else if(textlist[i].text_url[0]=='0'){
+              for(var j=0;j<this.currentProject.flodercount;j++){
+                var flodername=textlist[i].text_url.slice(2);
+                if(flodername==this.currentProject.floderList[j].name){
+                  this.currentProject.floderList[j].textList.push(textlist[i]);
+                  this.currentProject.floderList[j].count++;
+                  break;
                 }
               }
             }
+          }
+          console.log(this.currentProject.floderList);
         },
         MessageCatch(data, opcode) {
             if (data.code != 0) {
