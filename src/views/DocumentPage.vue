@@ -49,6 +49,9 @@
             </el-col>
         </el-row>
     </div>
+    <div id="tiptap_editor">
+      <tiptap />
+    </div>
     <div id="vditor" name="description" style="z-index: 90;" @keydown="keyListener" ref="editor" @mousemove="getMousePosition_popover"></div>
     <!-- <el-button @click="focusEditor()">123</el-button> -->
     <!-- <input height="250px" ref='editor'/> -->
@@ -91,9 +94,15 @@
   import store from "@/store";
   import {getGroupInformation} from '../api/group.js';
   import { ElMessage } from 'element-plus';
+  import Tiptap from '@/components/Tiptap.vue'
   let ws;
   let wsd;
 export default {
+  name: 'DocumentPage',
+  components: {
+    Tiptap
+  },
+
   data(){
       return{
           contentEditor: "",
@@ -269,9 +278,6 @@ export default {
           this.atVisible = !this.atVisible;
         }
       });
-      this.popoverPosition.top = this.cursorPosition.top;
-      this.popoverPosition.left = this.cursorPosition.left;
-      this.atVisible = !this.atVisible;
     },
     atDocumentPost(receiver_id,receiver_name) {
       var newObj = {

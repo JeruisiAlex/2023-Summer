@@ -178,6 +178,8 @@
     <div class="drawer-item" @click="undisplayDrawer(1)">我的团队</div>
     <div class="drawer-item" @click="undisplayDrawer(2)">我的聊天</div>
     <div class="drawer-item" @click="undisplayDrawer(3)">我的项目</div>
+    <div style="cursor: default; background-color: rgba(0,0,0,0); height:40vh"></div>
+    <div class="drawer-item" @click="undisplayDrawer(4)">新手教程</div>
   </el-drawer>
   <el-dialog v-model="this.dialogBool" width="600px">
     <el-form ref="findPasswordRef" :model="findPassword" :rules="findPasswordRules">
@@ -881,6 +883,7 @@ export default {
           content: "",
           ms: [],
         },
+        genshinG: false,
         centerDialogVisible: false,
         localDialogNotification: {
             type: "邀请",
@@ -975,6 +978,8 @@ export default {
           router.push('/'+store.state.uid+'/Chatroom');
         else if (jumpto===3)
           router.push('/'+store.state.uid+'/0/MyProject/0');
+        else if (jumpto===4)
+          this.genshinG = true;
         this.drawer = false;
       },
       displayNotification(type) {
