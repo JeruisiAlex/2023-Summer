@@ -1,10 +1,10 @@
 import { post, get} from './api';
 
-export function createText(name,project_id,content){
+export function createText(name,project_id,text_url){
 	var data=new FormData();
 	data.append("name",name);
     data.append("project_id",project_id);
-	data.append("content",content);
+	data.append("text_url",text_url);
     console.log(data);
 	return post('/api/text/create/',data);
 }
@@ -29,4 +29,8 @@ export function saveText(text_id,project_id,content){
 	data.append("project_id",project_id);
 	data.append("content",content);
 	return post('/api/text/save/',data);
+}
+
+export function getTextHistory(text_id,project_id){
+	return get('/api/text/get_history/?text_id='+text_id+'&project_id='+project_id);
 }

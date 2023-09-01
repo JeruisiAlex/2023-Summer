@@ -265,8 +265,10 @@ export default{
         introduction: '快去创建一个项目吧',
         graphCount: 0,
         textCount: 0,
+        flodercount: 0,
         graphList: [],
         textList: [],
+        floderList: [],
       },
       switchGroup:{
         isOpen: false,
@@ -412,7 +414,7 @@ export default{
           var promise1=checkUserInGroup(this.uid,this.currentGroup.id);
           promise1.then((value) => {
             if(value.code==0){
-              var promise2=createText(this.createText.name, this.currentProject.id, '');
+              var promise2=createText(this.createText.name, this.currentProject.id, '/'+this.createText.floder);
               promise2.then((result) => {
                 if(this.MessageCatch(result, true)){
                   this.Load(false, this.currentGroup.id, this.currentProject.id);
@@ -554,6 +556,8 @@ export default{
                 console.log(value);
                 this.currentProject.name=value.data.name;
                 this.currentProject.introduction=value.data.introduction;
+                this.currentProject.graphCount=0;
+                this.currentProject.textCount=0;
                 this.currentProject.graphList=value.data.graph_list;
                 this.currentProject.textList=value.data.text_list;
                 this.currentProject.graphCount=this.currentProject.graphList.length;
