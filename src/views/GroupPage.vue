@@ -58,7 +58,7 @@
                 <el-text class="create-time">创建时间：{{ this.currentGroup.projectList[item-1].create_date.substring(0,10)+' '+this.currentGroup.projectList[item-1].create_date.substring(11,19) }}</el-text>
                 <el-button @click="this.Jump('/'+this.$store.state.uid+'/'+this.currentGroup.id+'/MyProject/'+this.currentGroup.projectList[item-1].project_id)"><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看项目</el-button>
                 <el-button @click="this.DeleteProject(this.currentGroup.projectList[item-1].project_id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除项目</el-button>
-                <el-button @click=""><el-icon style="margin-right: 4px;"><Files /></el-icon>复制项目</el-button>
+                <el-button @click=""><el-icon style="margin-right: 4px;"><CopyDocument /></el-icon>复制项目</el-button>
               </div>
             </el-scrollbar>
           </el-container>

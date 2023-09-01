@@ -1,11 +1,10 @@
 import { post, get} from './api';
 
-export function createGraph(name,project_id,content,introduction){
+export function createGraph(name,project_id,width){
 	var data=new FormData();
 	data.append("name",name);
 	data.append("project_id",project_id);
-	data.append("content",content);
-	data.append("introduction",introduction);
+	data.append("width",width);
 	return post('/api/graph/create/',data);
 }
 
@@ -24,10 +23,11 @@ export function getAllGraph(project_id){
 	return get('/api/graph/getgraphs/?project_id='+project_id);
 }
 
-export function saveGraph(graph_id,project_id,content){
+export function saveGraph(graph_id,project_id,content,width){
 	var data=new FormData();
 	data.append("graph_id",graph_id);
 	data.append("project_id",project_id);
 	data.append("content",content);
+	data.append("width",width);
 	return post('/api/graph/save/',data);
 }
