@@ -9,26 +9,26 @@
         <el-main height="1200px">
             <el-container style="height: 400px;margin-bottom: 10px;">
                 <el-aside width="49%" style="background-color: brown;">
-
-                </el-aside>
-                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">
-
-                </el-aside>
-            </el-container>
-            <el-container style="height: 400px;margin-bottom: 10px;">
-                <el-aside width="49%" style="background-color: brown;">
-
-                </el-aside>
-                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">
-
-                </el-aside>
-            </el-container>
-            <el-container style="height: 400px;margin-bottom: 10px;">
-                <el-aside width="49%" style="background-color: brown;">
-
-                </el-aside>
-                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">
                     
+                </el-aside>
+                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">
+
+                </el-aside>
+            </el-container>
+            <el-container style="height: 400px;margin-bottom: 10px;">
+                <el-aside width="49%" style="background-color: brown;">
+
+                </el-aside>
+                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">
+
+                </el-aside>
+            </el-container>
+            <el-container style="height: 400px;margin-bottom: 10px;">
+                <el-aside width="49%" style="background-color: brown;">
+
+                </el-aside>
+                <el-aside width="49%" style="background-color: blueviolet;margin-left: 10px;">
+
                 </el-aside>
             </el-container>
         </el-main>

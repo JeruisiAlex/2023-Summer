@@ -25,13 +25,13 @@
           <el-container class="forth-container">
             <el-header style="display: flex;justify-content: center;align-items: center;">
               <el-text class="project-title">设计原型列表</el-text>
-              <el-button type="primary" @click="this.OpenDialog(3)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建页面</el-button>
+              <el-button v-if="this.currentProject.id!=0" type="primary" @click="this.OpenDialog(3)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建页面</el-button>
               <el-button v-if="this.currentProject.id!=0" type="primary" @click="this.ChangeListType()" style="height: 40px;"><el-icon style="margin-right: 4px;"><Switch /></el-icon>设计原型列表</el-button>
             </el-header>
             <el-scrollbar>
               <div v-for="item in this.currentProject.graphCount" :key="item" class="project-list">
                 <el-text class="project-name">{{ this.currentProject.graphList[item-1].name }}</el-text>
-                <el-text class="creator-name">{{ this.currentProject.graphList[item-1].creator.name }}创建</el-text>
+                <el-text class="creator-name">{{ this.currentProject.graphList[item-1].creator.username+' ' }}创建</el-text>
                 <el-button @click="this.DeleteGraph(this.currentProject.graphList[item-1].graph_id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除页面</el-button>
                 <el-button @click="this.Jump('/'+this.currentGroup.id+'/'+this.currentProject.id+'/'+this.currentProject.graphList[item-1].graph_id+'/DesignPage')"><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑页面</el-button>
               </div>
@@ -42,13 +42,13 @@
           <el-container class="forth-container">
             <el-header style="display: flex;justify-content: center;align-items: center;">
               <el-text class="project-title">文档列表</el-text>
-              <el-button type="primary" @click="this.OpenDialog(4)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建文档</el-button>
+              <el-button v-if="this.currentProject.id!=0" type="primary" @click="this.OpenDialog(4)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建文档</el-button>
               <el-button v-if="this.currentProject.id!=0" type="primary" @click="this.ChangeListType()" style="height: 40px;"><el-icon style="margin-right: 4px;"><Switch /></el-icon>共享文档列表</el-button>
             </el-header>
             <el-scrollbar>
               <div v-for="item in this.currentProject.textCount" :key="item" class="project-list">
                 <el-text class="project-name">{{ this.currentProject.textList[item-1].name }}</el-text>
-                <el-text class="creator-name">{{ this.currentProject.textList[item-1].creator.name }}创建</el-text>
+                <el-text class="creator-name">{{ this.currentProject.textList[item-1].creator.username+' ' }}创建</el-text>
                 <el-button @click="this.DeleteText(this.currentProject.textList[item-1].text_id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除文档</el-button>
                 <el-button @click="this.Jump('/'+this.currentGroup.id+'/'+this.currentProject.id+'/'+this.currentProject.textList[item-1].text_id+'/DocumentPage')"><el-icon style="margin-right: 4px;"><Edit /></el-icon>编辑文档</el-button>
               </div>
@@ -215,7 +215,7 @@ margin-bottom: 30px;
   border-bottom: 1px solid #409EFF;
 }
 .project-name{
-  width: 25%;
+  width: 38%;
   margin-left: 20px;
   display: flex;
   text-align: center;
@@ -224,7 +224,7 @@ margin-bottom: 30px;
   color: black;
 }
 .creator-name{
-  width: 30%;
+  width: 38%;
   margin-left: 20px;
   display: flex;
   text-align: center;
@@ -234,7 +234,7 @@ margin-bottom: 30px;
 }
 </style>
 
-<script>
+<script >
 import store from '@/store';
 import { ElMessage } from 'element-plus';
 import { getUserGroup, checkUserInGroup } from '../api/user.js';
@@ -416,7 +416,6 @@ export default{
               promise2.then((result) => {
                 if(this.MessageCatch(result, true)){
                   this.Load(false, this.currentGroup.id, this.currentProject.id);
-                  
                 }
               })
             }
@@ -531,7 +530,7 @@ export default{
           this.currentGroup.projectList=result.data.project_list;
           this.currentGroup.projectCount=this.currentGroup.projectList.length;
           for(var i=0;i<this.currentGroup.projectCount;i++){
-            if(this.currentGroup.projectList[i].id==projectid){
+            if(this.currentGroup.projectList[i].project_id==projectid){
               this.currentProject.id=projectid;
               this.currentGroup.current=i;
               break;
@@ -544,7 +543,7 @@ export default{
                   type: 'warning',
                 })
               }
-              this.currentProject.id=this.currentGroup.projectList[0].id;
+              this.currentProject.id=this.currentGroup.projectList[0].project_id;
               this.currentGroup.current=0;
             }
           }
@@ -552,6 +551,7 @@ export default{
             var promise2=getProjectInformation(this.currentProject.id);
             promise2.then((value) => {
               if(this.MessageCatch(value,false)){
+                console.log(value);
                 this.currentProject.name=value.data.name;
                 this.currentProject.introduction=value.data.introduction;
                 this.currentProject.graphList=value.data.graph_list;
