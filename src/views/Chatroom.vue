@@ -109,7 +109,33 @@
       >转发</el-button
     >
   </div>
-
+  <el-dialog
+    v-model="inviteMemberDialog"
+    title="邀请人员"
+    style="width: 300px; border-radius: 20px; box-shadow: 4px 4px 10px #409eff"
+  >
+    <div
+      style="
+        height: 50px;
+        width: 200px;
+        border-bottom-style: solid;
+        border-bottom-color: #dedfe0;
+        border-bottom-width: 1px;
+        margin-left: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      "
+      v-for="(item, index) in privateChat"
+      :key="index"
+      @click="inviteThisPerson(item)"
+    >
+      <p style="text-align: center">
+        {{ item.username }}
+      </p>
+    </div>
+  </el-dialog>
   <el-dialog
     v-model="isTransferDialogShow"
     title="聊天记录"
@@ -216,6 +242,15 @@
       </p>
     </div>
   </el-scrollbar>
+  <el-dialog v-model="dismissGroupDialogShow" title="解散群聊" width="30%">
+    <span>确定要解散该群聊吗</span>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="dismissGroupDialogShow = false">取消</el-button>
+        <el-button type="danger" @click="dismissGroupChat()"> 确定 </el-button>
+      </span>
+    </template>
+  </el-dialog>
   <el-button type="primary" class="addGroupButton" @click="addGroupModel = true"
     >创建群聊</el-button
   >
@@ -497,6 +532,23 @@
   >
     团队成员
   </div>
+  <el-button
+    type="danger"
+    style="position: absolute; display: flex; left: 1250px; top: 17px"
+    v-if="groupOrPerson == false && groupOrTeam == true"
+    @click="dismissGroupDialogShow = true"
+    >解散群聊</el-button
+  >
+  <el-button
+    type="success"
+    style="position: absolute; display: flex; left: 1350px; top: 17px"
+    v-if="groupOrPerson == false && groupOrTeam == true"
+    @click="
+      inviteMemberDialog = true;
+      getPrivateChat();
+    "
+    >邀请成员</el-button
+  >
   <div class="personalInfoContainer" v-if="this.groupOrPerson == true">
     <div class="personalIconContainer">
       <img :src="nowPerson.icon_address" style="border-radius: 50%" />
@@ -555,7 +607,11 @@ import { ref } from "vue";
 import store from "@/store";
 import { getGroupInformation } from "../api/group";
 import { getUserChatRoom, getUserInformation } from "../api/user";
-import { createChatGroup } from "../api/chat";
+import {
+  createChatGroup,
+  breakupChatGroup,
+  inviteUserIntoChatGroup,
+} from "../api/chat";
 export default {
   mounted() {
     this.myId = store.state.uid;
@@ -623,6 +679,10 @@ export default {
       transferContent: [],
       addGroupModel: false,
       newGroupName: "",
+      groupOrTeam: false, //false : 团队 true :群聊,
+      dismissGroupDialogShow: false,
+      inviteMemberDialog: false,
+      privateChat: [],
     };
   },
   unmounted() {
@@ -644,6 +704,57 @@ export default {
     this.closeWeb();
   },
   methods: {
+    inviteThisPerson(person) {
+      console.log(person)
+      var request = inviteUserIntoChatGroup(person.id, this.nowChosenGroup.id);
+      request.then((result) => {
+        this.isShowAll = false;
+        this.getAllGroupMember();
+        setTimeout(() => {
+          this.isShowAll = true;
+        }, 1000);
+      });
+      this.inviteMemberDialog = false
+      this.privateChat = []
+    },
+    getPrivateChat() {
+      console.log(this.allGroupArray);
+      var obj;
+      for (var i = 0; i < this.allGroupArray.length; i++) {
+        if (this.allGroupArray[i].group.type == "Private") {
+          obj = (this.allGroupArray[i].group.member[0].id == store.state.uid) ? this.allGroupArray[i].group.member[1] : this.allGroupArray[i].group.member[0]
+          this.privateChat.push(obj)
+          console.log(obj)
+        }
+      }
+      console.log(this.privateChat);
+    },
+    dismissGroupChat() {
+      console.log(this.nowChosenGroup);
+      this.dismissGroupDialogShow = false;
+      var request = breakupChatGroup(this.nowChosenGroup.id);
+      request.then((result) => {
+        console.log(this.wsArray);
+        var index;
+        for (var i = 0; i < this.groupMessage.length; i++) {
+          if (this.nowChosenGroup.id == this.groupMessage[i].id) {
+            index = i;
+            break;
+          }
+        }
+        this.wsArray = this.wsArray.filter(function (element, i) {
+          return i !== index;
+        });
+        this.isShowAll = false;
+        this.getMygroup();
+        console.log(this.allGroupArray);
+        setTimeout(() => {
+          this.getAllGroupMember();
+          this.prepareGroupMessage();
+          this.isShowAll = true;
+        }, 4000);
+      });
+    },
     createGroup() {
       if (this.newGroupName == "") {
         console.log("kang");
@@ -663,18 +774,9 @@ export default {
           var ws = new WebSocket(
             "ws://8.130.25.189/ws/chat/group/" + groupid + "/"
           );
+          console.log(ws);
           this.wsArray.push(ws);
-          ws.onmessage = function (message) {
-          var parsedData = JSON.parse(message.data);
-          if (Array.isArray(parsedData.data) === true) {
-            var dataArray = parsedData.data;
-            for (var j = 0; j < dataArray.length; j++) {
-              that.receiveSingleMessage(dataArray[j]);
-            }
-          } else that.receiveSingleMessage(parsedData);
-          const scrollableContainer = document.querySelector(".textarea");
-          scrollableContainer.scrollTop = scrollableContainer.scrollHeight;
-        };
+          this.websocketOnMessage();
           this.isShowAll = true;
         }, 4000);
       });
@@ -1016,15 +1118,22 @@ export default {
       container.scrollTop = scrollTop;
     },
     searchChatMessage() {
-      if (this.searchChatInput == "") {
+      if (this.searchChatInput === "") {
+        alert("K");
         return;
       }
       var temp = document.querySelector(
+        "#app > main > div > div.el-scrollbar__wrap.el-scrollbar__wrap--hidden-default > div > div.textarea > div:nth-child(1) > div.bubble.left > div > div.content"
+      );
+      if(temp == null)
+      temp = document.querySelector(
         "#app > main > div > div.el-scrollbar__wrap.el-scrollbar__wrap--hidden-default > div > div.textarea > div:nth-child(1) > div.bubble.right > div > div.content"
       );
+      console.log(temp);
       if (temp == null) {
         return;
       }
+      console.log(temp);
       var index = 1;
       while (temp != null) {
         if (temp.textContent.includes(this.searchChatInput) === true) {
@@ -1042,6 +1151,13 @@ export default {
             index +
             ") > div.bubble.right > div > div.content"
         );
+        if (temp == null) {
+          temp = document.querySelector(
+            "#app > main > div > div.el-scrollbar__wrap.el-scrollbar__wrap--hidden-default > div > div.textarea > div:nth-child(" +
+              index +
+              ") > div.bubble.left > div > div.content"
+          );
+        }
       }
       if (this.targetBox.length === 0) {
         this.dialogMessage = "没有对应消息";
@@ -1455,6 +1571,7 @@ export default {
             this.nowGroupMember.type == "Group"
           ) {
             this.groupOrPerson = false;
+            this.groupOrTeam = this.nowGroupMember.type == "Group";
           } else {
             this.groupOrPerson = true;
             for (var j = 0; j < this.nowGroupMember.member.length; j++) {

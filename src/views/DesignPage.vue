@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-    <ng-form-design ref="formDesign" />
-    <ng-form-build ref="formBuild" />
+    <ng-form-design ref="formDesign" disabled="true" />
+    <ng-form-build ref="formBuild" disabled=true />
   </div>
 </template>
 <script>
@@ -52,6 +52,7 @@ export default {
           .then(function (canvas) {
             const imgUrl = canvas.toDataURL("image/jpeg", 1.0);
             const link = document.createElement("a");
+            console.log(imgUrl)
             link.href = imgUrl;
             var str = that.selectBox.value;
             link.download = "exported_image." + str; // Set the download filename
@@ -215,13 +216,13 @@ export default {
         this.showPreview = true;
         var ele;
         ele = document.querySelector(
-          "body > div:nth-child(5) > div > div > header > button"
+          "body > div:nth-child(4) > div > div > header > button"
         );
         ele.addEventListener("click", () => {
           this.showPreview = false;
         });
-        var dialog = document.querySelector("body > div:nth-child(5) > div");
-        var temp = document.querySelector("body > div:nth-child(5) > div > div")
+        var dialog = document.querySelector("body > div:nth-child(4) > div");
+        var temp = document.querySelector("body > div:nth-child(4) > div > div")
         temp.style.width = (1440 - that.pageWidth * 2) + "px";
         dialog.style.zIndex = "9999";
         var newElButton = document.createElement("button");
@@ -239,7 +240,7 @@ export default {
         });
         this.selectBox = this.createSelectBox();
         var header = document.querySelector(
-          "body > div:nth-child(5) > div > div > footer > span"
+          "body > div:nth-child(4) > div > div > footer > span"
         );
         header.appendChild(newElButton);
         header.appendChild(this.selectBox);
