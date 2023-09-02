@@ -28,6 +28,9 @@
             <el-header style="display: flex;justify-content: center;align-items: center;">
               <el-text class="project-title">设计原型列表</el-text>
               <el-button v-if="this.currentProject.id!=0" type="primary" @click="this.OpenDialog(3)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建页面</el-button>
+              <el-button v-if="this.currentProject.id!=0&&this.currentProject.isShare==false" type="primary" @click="this.ChangeTextShare(true)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Share /></el-icon>开启分享链接</el-button>
+              <el-button v-if="this.currentProject.id!=0&&this.currentProject.isShare==true" type="primary" @click="this.ChangeTextShare(false)" style="height: 40px;"><el-icon style="margin-right: 4px;"><Share /></el-icon>关闭分享链接</el-button>
+              <el-button v-if="this.currentProject.id!=0&&this.currentProject.isShare==true" type="primary" @click="this.CopyLink()" style="height: 40px;"><el-icon style="margin-right: 4px;"><Link /></el-icon>复制分享链接</el-button>
               <el-button v-if="this.currentProject.id!=0" type="primary" @click="this.ChangeListType()" style="height: 40px;"><el-icon style="margin-right: 4px;"><Switch /></el-icon>设计原型列表</el-button>
             </el-header>
             <el-scrollbar>
@@ -288,7 +291,7 @@ import store from '@/store';
 import { ElMessage } from 'element-plus';
 import { getUserGroup, checkUserInGroup } from '../api/user.js';
 import { getGroupInformation } from '../api/group.js';
-import { getProjectInformation, updateProject } from '../api/project.js';
+import { getProjectInformation, updateProject, changeProjectShare } from '../api/project.js';
 import { createGraph, deleteGraph } from '../api/graph.js';
 import { createText, deleteText } from '../api/text.js';
 
@@ -311,6 +314,7 @@ export default{
             },
             currentProject: {
                 id: 0,
+                isShare: false,
                 name: '您还没有任何项目',
                 introduction: '快去创建一个项目吧',
                 graphCount: 0,
@@ -457,6 +461,24 @@ export default{
         };
     },
     methods: {
+        ChangeTextShare(bool){
+          var promise=changeProjectShare(this.currentProject.id,bool==true ? 1 : 0);
+          promise.then((result) => {
+            if(this.MessageCatch(result,true)){
+              this.CopyLink();
+              this.Load(false, this.currentGroup.id, this.currentProject.id);
+            }
+          })
+        },
+        CopyLink(){
+          navigator.clipboard.writeText('http://8.130.25.189/'+this.currentProject.id+'/DesignShare').then(() => {
+            ElMessage({
+              message: '复制成功',
+              type: 'success',
+              grouping: true,
+            })
+          })
+        },
         ChangeListType() {
             this.listType = !this.listType;
         },
@@ -725,7 +747,7 @@ export default{
                         var promise2 = getProjectInformation(this.currentProject.id);
                         promise2.then((value) => {
                             if (this.MessageCatch(value, false)) {
-                              console.log(value);
+                                this.currentProject.isShare=value.data.is_shared;
                                 this.currentProject.name = value.data.name;
                                 this.currentProject.introduction = value.data.introduction;
                                 this.currentProject.graphCount = 0;
