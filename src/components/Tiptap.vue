@@ -203,7 +203,9 @@
           var promise=getGroupInformation(this.group_id);
           const that = this;
           promise.then((result)=>{
+            console.log(result);
             if(this.MessageCatch(result, true)){
+              store.commit('getDocumentGroupList',result.data.user_list);
               this.room = this.fileName + ' - ID:' + this.text_id;
               result.data.user_list.some(function (value) {
                 if (value.id === store.state.uid) {
