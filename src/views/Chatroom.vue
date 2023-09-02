@@ -17,6 +17,14 @@
     ></div>
   </div>
   <el-dialog
+    v-model="dialogVisible"
+    title="Tips"
+    width="30%"
+    style="z-index: 9999"
+  >
+    <span>{{ dialogMessage }}</span>
+  </el-dialog>
+  <el-dialog
     v-model="chooseGroupDialog"
     title="选择聊天"
     style="width: 300px; border-radius: 20px; box-shadow: 4px 4px 10px #409eff"
@@ -43,6 +51,21 @@
       </p>
     </div>
   </el-dialog>
+
+  <el-dialog v-model="addGroupModel" title="创建群聊">
+    <el-form :model="form">
+      <el-form-item label="群聊名字" :label-width="formLabelWidth">
+        <el-input v-model="newGroupName" autocomplete="off" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="addGroupModel = false">取消</el-button>
+        <el-button type="primary" @click="createGroup"> 确定 </el-button>
+      </span>
+    </template>
+  </el-dialog>
+
   <div
     class="clickRightMenu"
     v-if="clickRightMenu == true && muchSelectModel == false"
@@ -100,10 +123,7 @@
       v-if="nowWs != -1 && nowWs != -2"
     >
       <div class="bubble left" v-if="item.name !== $store.state.userName">
-        <a class="avatar"
-          ><img
-            :src="item.icon"
-        /></a>
+        <a class="avatar"><img :src="item.icon" /></a>
         <div class="wrap">
           <div class="nameContainer">{{ item.name }}</div>
           <div class="content">
@@ -112,10 +132,7 @@
         </div>
       </div>
       <div class="bubble right" v-if="item.name == $store.state.userName">
-        <a class="avatar"
-          ><img
-            :src="item.icon"
-        /></a>
+        <a class="avatar"><img :src="item.icon" /></a>
         <div class="wrap">
           <div class="nameContainer">{{ item.name }}</div>
           <div class="content">
@@ -175,7 +192,7 @@
       >搜索</el-button
     >
   </div>
-  <el-scrollbar height="550px" class="GroupList" @mousedown="removeMenu">
+  <el-scrollbar height="500px" class="GroupList" @mousedown="removeMenu">
     <div
       v-for="(item, i) in nowGroupArray"
       :key="i"
@@ -199,6 +216,9 @@
       </p>
     </div>
   </el-scrollbar>
+  <el-button type="primary" class="addGroupButton" @click="addGroupModel = true"
+    >创建群聊</el-button
+  >
   <div class="textarea" @scroll="loadMore" @mousedown="removeMenu">
     <div
       class="eachMessageContainer"
@@ -253,7 +273,7 @@
             @mouseout="transferContainerOutChangeColor(index)"
             @click="
               isTransferDialogShow = true;
-              jsonForTransferContent(item.content)
+              jsonForTransferContent(item.content);
             "
           >
             来自{{ item.name }}的转发
@@ -299,7 +319,7 @@
             @mouseout="transferContainerOutChangeColor(index)"
             @click="
               isTransferDialogShow = true;
-              jsonForTransferContent(item.content)
+              jsonForTransferContent(item.content);
             "
           >
             来自{{ item.name }}的转发
@@ -535,7 +555,7 @@ import { ref } from "vue";
 import store from "@/store";
 import { getGroupInformation } from "../api/group";
 import { getUserChatRoom, getUserInformation } from "../api/user";
-import { genFileId } from "element-plus";
+import { createChatGroup } from "../api/chat";
 export default {
   mounted() {
     this.myId = store.state.uid;
@@ -601,6 +621,8 @@ export default {
       eachOrTogether: false, //false : each;true : together
       isTransferDialogShow: false,
       transferContent: [],
+      addGroupModel: false,
+      newGroupName: "",
     };
   },
   unmounted() {
@@ -622,10 +644,44 @@ export default {
     this.closeWeb();
   },
   methods: {
-    jsonForTransferContent(content)
-    {
-      for(var i = 0;i < content.length;i++)
-      {
+    createGroup() {
+      if (this.newGroupName == "") {
+        console.log("kang");
+        this.dialogMessage = "群组名字不能为空哦";
+        this.dialogVisible = true;
+        return;
+      }
+      var request = createChatGroup(this.newGroupName);
+      request.then((result) => {
+        var groupid = result.group_id;
+        console.log(result);
+        this.getMygroup();
+        this.isShowAll = false;
+        setTimeout(() => {
+          this.getAllGroupMember();
+          this.prepareGroupMessage();
+          var ws = new WebSocket(
+            "ws://8.130.25.189/ws/chat/group/" + groupid + "/"
+          );
+          this.wsArray.push(ws);
+          ws.onmessage = function (message) {
+          var parsedData = JSON.parse(message.data);
+          if (Array.isArray(parsedData.data) === true) {
+            var dataArray = parsedData.data;
+            for (var j = 0; j < dataArray.length; j++) {
+              that.receiveSingleMessage(dataArray[j]);
+            }
+          } else that.receiveSingleMessage(parsedData);
+          const scrollableContainer = document.querySelector(".textarea");
+          scrollableContainer.scrollTop = scrollableContainer.scrollHeight;
+        };
+          this.isShowAll = true;
+        }, 4000);
+      });
+      this.addGroupModel = false;
+    },
+    jsonForTransferContent(content) {
+      for (var i = 0; i < content.length; i++) {
         this.transferContent.push(JSON.parse(content[i]));
       }
     },
@@ -639,11 +695,11 @@ export default {
     },
     choosePersonChat(item) {
       if (this.nowWs == -2) return;
-      // if (item.id == this.myId) {
-      //   this.dialogMessage = "不能给自己发信息哦";
-      //   this.dialogVisible = true;
-      //   return;
-      // }
+      if (item.id == this.myId) {
+        this.dialogMessage = "不能给自己发信息哦";
+        this.dialogVisible = true;
+        return;
+      }
       for (var i = 0; i < this.allGroupArray.length; i++) {
         if (
           this.allGroupArray[i].group.type == "Private" &&
@@ -1012,6 +1068,7 @@ export default {
       this.$router.push("/" + uid + "/PersonalInfomation");
     },
     prepareGroupMessage() {
+      this.groupMessage = [];
       for (var i = 0; i < this.allGroupArray.length; i++) {
         var obj = {
           id: this.allGroupArray[i].group.id,
@@ -1044,6 +1101,7 @@ export default {
       };
     },
     getAllGroupMember() {
+      this.allGroupMember = [];
       for (var i = 0; i < this.allGroupArray.length; i++) {
         var obj = {
           groupid: this.allGroupArray[i].group.id,
@@ -1055,6 +1113,7 @@ export default {
       this.groupSize = this.allGroupArray.length;
     },
     getMygroup() {
+      this.allGroupArray = [];
       var request = getUserChatRoom();
       var groupTemp;
       request.then((result) => {
@@ -1391,7 +1450,10 @@ export default {
           this.nowGroupMember = this.allGroupMember[i];
           this.nowPersonArray.type = this.nowGroupMember.type;
           this.nowPersonArray.member = this.nowGroupMember.member;
-          if (this.nowGroupMember.type == "Team") {
+          if (
+            this.nowGroupMember.type == "Team" ||
+            this.nowGroupMember.type == "Group"
+          ) {
             this.groupOrPerson = false;
           } else {
             this.groupOrPerson = true;
@@ -1409,12 +1471,9 @@ export default {
         user_id: store.state.uid,
         group_id: this.nowChosenGroup.id,
       };
-      try {
-        this.wsArray[this.nowWs].send(JSON.stringify(enterobj));
-      } catch {
-        this.dialogMessage = "网络错误8";
-        this.dialogVisible = true;
-      }
+      console.log(this.wsArray[this.nowWs]);
+      console.log(enterobj);
+      this.wsArray[this.nowWs].send(JSON.stringify(enterobj));
       console.log("已发送enter", enterobj);
     },
   },
@@ -1441,7 +1500,7 @@ export default {
     },
     isTransferDialogShow: function (newVal, oldVal) {
       if (oldVal == true && newVal == false) {
-        this.transferContent = []
+        this.transferContent = [];
       }
     },
   },
@@ -1449,6 +1508,14 @@ export default {
 </script>
 
 <style scoped>
+.addGroupButton {
+  position: absolute;
+  display: flex;
+  top: 570px;
+  left: 25px;
+  height: 50px;
+  width: 150px;
+}
 .eachInfoItem {
   color: #606266;
   font-size: 15px;

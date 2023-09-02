@@ -215,13 +215,13 @@ export default {
         this.showPreview = true;
         var ele;
         ele = document.querySelector(
-          "body > div:nth-child(4) > div > div > header > button"
+          "body > div:nth-child(5) > div > div > header > button"
         );
         ele.addEventListener("click", () => {
           this.showPreview = false;
         });
-        var dialog = document.querySelector("body > div:nth-child(4) > div");
-        var temp = document.querySelector("body > div:nth-child(4) > div > div")
+        var dialog = document.querySelector("body > div:nth-child(5) > div");
+        var temp = document.querySelector("body > div:nth-child(5) > div > div")
         temp.style.width = (1440 - that.pageWidth * 2) + "px";
         dialog.style.zIndex = "9999";
         var newElButton = document.createElement("button");
@@ -239,7 +239,7 @@ export default {
         });
         this.selectBox = this.createSelectBox();
         var header = document.querySelector(
-          "body > div:nth-child(4) > div > div > footer > span"
+          "body > div:nth-child(5) > div > div > footer > span"
         );
         header.appendChild(newElButton);
         header.appendChild(this.selectBox);
