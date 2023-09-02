@@ -503,7 +503,7 @@ export default{
                     var promise1 = checkUserInGroup(this.uid, this.currentGroup.id);
                     promise1.then((value) => {
                         if (value.code == 0) {
-                            var promise2 = createGraph(this.createGraph.name, this.currentProject.id, '800');
+                            var promise2 = createGraph(this.createGraph.name, this.currentProject.id, '320');
                             promise2.then((result) => {
                                 if (this.MessageCatch(result, true)) {
                                     this.Load(false, this.currentGroup.id, this.currentProject.id);
