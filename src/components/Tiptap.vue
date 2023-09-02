@@ -201,13 +201,14 @@
 
         } else {
           var promise=getGroupInformation(this.group_id);
+          const that = this;
           promise.then((result)=>{
             if(this.MessageCatch(result, true)){
               this.room = this.fileName + ' - ID:' + this.text_id;
               result.data.user_list.some(function (value) {
                 if (value.id === store.state.uid) {
                   if (value.position==='member'){
-                    this.permissionStatus = false;
+                    that.permissionStatus = false;
                   }
                   return true;
                 }
