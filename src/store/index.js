@@ -12,6 +12,7 @@ export default createStore({
     notificationUnread: [],
     notificationRead: [],
     currentGroupList: [],
+    currentDocument: '',
   },
   getters: {
 
@@ -40,6 +41,9 @@ export default createStore({
       state.uid=message.id;
       state.userName=message.username;
       state.isLogin=true;
+    },
+    setCurrentDocument(state,name){
+      state.currentDocument = name;
     },
     updateGroupList(state,groupList){
       state.userGroupList=groupList;

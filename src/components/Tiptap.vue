@@ -3,6 +3,25 @@
         <el-row style=" color: black;">
             <el-col :span="14" style="font-size: large; font-weight: bold; text-overflow: ellipsis;-o-text-overflow: ellipsis; white-space: nowrap; max-width: 100%; display: block;">{{ fileName }}</el-col>
             <el-col :span="10" style="text-align: right;">
+              <el-popover
+                placement="top-start"
+                title="模板"
+                :width="200"
+                trigger="hover"
+                content="this is content, this is content, this is content"
+              >
+              <template #reference>
+                  <el-button v-if="contentEdible" size="small">模板</el-button>
+                </template>
+              <el-scrollbar max-height="500px">
+                <div class="notification-item" @click="changeContent('站会模板')">
+                  站会模板
+                  </div>
+                  <div class="notification-item" @click="changeContent('项目设计')">
+                  项目设计
+                  </div>
+              </el-scrollbar>
+              </el-popover>
               权限设置: 
               <el-switch
                     v-if="permissionStatus"
@@ -13,7 +32,7 @@
                     style="--el-switch-on-color: #2a9feb; --el-switch-off-color: #24292e"
                     @click="changeShare()"
                 />
-                <span v-else>暂无权限</span>
+                <span v-else>暂无权设置</span>
                 <el-switch
                     v-if="is_shared && permissionStatus"
                     v-model="is_write"
@@ -62,13 +81,16 @@
   import { Editor, EditorContent } from '@tiptap/vue-3'
   import * as Y from 'yjs'
   import { getAText, saveText} from '@/api/text.js'
-  import { ElMessage } from 'element-plus'
+  import { ElButton, ElMessage } from 'element-plus'
   
   import { variables } from './variables.js'
   import MenuBar from './MenuBar.vue'
   import Mention from '@tiptap/extension-mention'
   import suggestion from './suggestion.js'
   import store from '@/store'
+  import { getGroupInformation } from '@/api/group'
+  import { changeTextAuthority } from '@/api/text.js'
+
 
   
   const getRandomElement = list => {
@@ -83,9 +105,10 @@
   
   export default {
     components: {
-      EditorContent,
-      MenuBar,
-    },
+    EditorContent,
+    MenuBar,
+    ElButton
+},
   
     data() {
       return {
@@ -104,6 +127,8 @@
         is_write: false,
         is_shared: false,
         permissionStatus: true,
+        permissionCode: 0,
+        contentEdible: true,
       }
     },
   
@@ -113,13 +138,29 @@
       this.group_id = parseInt(infos[1]);
       this.project_id = parseInt(infos[2]);
       this.text_id = parseInt(infos[3]);
-      const ydoc = new Y.Doc()
+      const ydoc = new Y.Doc();
+      
       var promise=getAText(parseInt(infos[3]),parseInt(infos[2]));
       promise.then((result)=>{
-        if(this.MessageCatch(result, true)){
         this.fileName = result.data.name;
-        this.room = this.fileName + ' - ID:' + this.text_id;
-        this.provider = new TiptapCollabProvider({
+        this.is_shared = result.data.is_shared;
+        this.is_write = result.data.is_write;
+        store.commit('setCurrentDocument',result.data.name);
+        if(this.MessageCatch(result, true)){
+          if (!store.state.isLogin){
+          this.permissionStatus = false;
+          this.is_shared = result.data.is_shared;
+          this.is_write = result.data.is_write;
+          if (!result.data.is_shared){
+            this.room = '您无权查看此文档';
+            this.contentEdible = false;
+          } else if(!result.data.is_write){
+            this.contentEdible = false;
+            this.room = this.fileName + ' - ID:' + this.text_id;
+          } else {
+            this.room = this.fileName + ' - ID:' + this.text_id;
+          }
+          this.provider = new TiptapCollabProvider({
           appId: 'x9ll8v9r',
           name: this.room,
           document: ydoc,
@@ -155,20 +196,120 @@
             }),
           ],
           autofocus: 'end',
+        });
+        this.editor.setEditable(this.contentEdible);
+
+        } else {
+          var promise=getGroupInformation(this.group_id);
+          promise.then((result)=>{
+            if(this.MessageCatch(result, true)){
+              this.room = this.fileName + ' - ID:' + this.text_id;
+              result.data.user_list.some(function (value) {
+                if (value.id === store.state.uid) {
+                  if (value.position==='member'){
+                    this.permissionStatus = false;
+                  }
+                  return true;
+                }
+              });
+            } else { //团队外人士，当作游客处理
+              this.permissionStatus = false;
+              if (!this.is_shared){
+                this.room = '您无权查看此文档';
+                this.contentEdible = false;
+              } else if(!this.is_write){
+                this.contentEdible = false;
+                this.room = this.fileName + ' - ID:' + this.text_id;
+              } else {
+              this.room = this.fileName + ' - ID:' + this.text_id;
+              }
+            }
+            this.provider = new TiptapCollabProvider({
+          appId: 'x9ll8v9r',
+          name: this.room,
+          document: ydoc,
         })
+    
+        this.provider.on('status', event => {
+          this.status = event.status
+        })
+    
+        this.editor = new Editor({
+          extensions: [
+            StarterKit.configure({
+              history: false,
+            }),
+            Highlight,
+            TaskList,
+            TaskItem,
+            Collaboration.configure({
+              document: ydoc,
+            }),
+            CollaborationCursor.configure({
+              provider: this.provider,
+              user: this.currentUser,
+            }),
+            CharacterCount.configure({
+              limit: 10000,
+            }),
+            Mention.configure({
+              HTMLAttributes: {
+                class: 'mention',
+              },
+              suggestion,
+            }),
+          ],
+          autofocus: 'end',
+        });
+        this.editor.setEditable(this.contentEdible);
+          });
+        }
         }
       });
-
       // localStorage.setItem('currentUser', JSON.stringify(this.currentUser))
     },
   
     methods: {
 
-      changeShare() {
+      changeContent(content){
+        if (content==='站会模板'){
+          this.editor.commands.setContent('<h3>站会简报</h3><blockquote><p>学号：</p><p>姓名：</p></blockquote><p></p><h4>我昨天完成了什么？</h4><p>xxxx</p><h4>我今天计划做什么？</h4><p>xxxx</p><h4>完成今日目标还存在什么问题？</h4><ul><li><p>xxx</p></li><li><p>xxx</p></li><li><p>xxx</p></li><li><p>……</p></li></ul>');
+        }
+        else if (content==='项目设计'){
+          this.editor.commands.setContent('<h1>项目计划</h1><h2>引言</h2><h3>项目背景</h3><p></p><h3>项目目的</h3><p></p><h3>相关文档<br></h3><p></p><h2>项目概述</h2><h3>资源情况</h3><p></p><h3>人员分工</h3><p></p><h2>项目开发规范</h2><p></p><h2>项目内容</h2><h3>第一部分</h3><p></p><h3>第二部分</h3><p></p><h2>项目成本</h2><p></p><h2>项目开发环境</h2>');
+        }
+      },
 
+      changeShare() {
+        var shared = 0;
+        var write = 0;
+        if (this.is_shared){
+          shared = 1;
+        } else {
+          this.is_write = false;
+        }
+        if (this.is_write)
+            write = 1;
+        var promise=changeTextAuthority(this.text_id,this.project_id,shared,write);
+          promise.then((result)=>{
+            if(this.MessageCatch(result, true)){
+
+            }
+          });
       },
       changeEdit() {
+        var shared = 0;
+        var write = 0;
+        if (this.is_shared)
+          shared = 1;
+        if (this.is_write)
+          write = 1;
+        var promise=changeTextAuthority(this.text_id,this.project_id,shared,write);
+          promise.then((result)=>{
+            if(this.MessageCatch(result, true)){
 
+            }
+          });
       },
 
       MessageCatch(data,opcode){
@@ -236,6 +377,28 @@
   </script>
   
   <style lang="scss">
+
+  .notification-item {
+    align-items: center;
+    /*justify-content: center;*/
+    height: 80px;
+    line-height: 40px;
+    margin: 10px;
+    /*padding-left: 5px;*/
+    text-align: center;
+    border-radius: 4px;
+    color: black;
+    transition: 0.5s;
+    overflow: hidden;
+    border-bottom: rgba(42, 159, 235, 0.5) 1px solid;
+  }
+
+  .notification-item:hover {
+    cursor: pointer;
+    background: rgba(236, 245, 255, 1);
+    /* color: rgb(42, 159, 235); */
+    transition: 0.2s;
+  }
   
   .mention {
   border: 1px solid #000;

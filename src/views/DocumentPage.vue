@@ -1,66 +1,8 @@
 <template>
-    <div style="height: 30px;">
-        <el-row style=" color: black;">
-            <el-col :span="14" style="font-size: large; font-weight: bold; text-overflow: ellipsis;-o-text-overflow: ellipsis; white-space: nowrap; max-width: 100%; display: block;">{{ fileName }}</el-col>
-            <el-col :span="10" style="text-align: right;" >
-              <el-popover
-                :visible="atVisible"
-                style="z-index: 999;"
-                placement="top"
-                :title="groupName"
-                :width="200"
-                :popper-options="{
-                    modifiers: [{
-                      name: 'offset',
-                      options: {
-                        offset: [popoverPosition.left, popoverPosition.top]
-                      }
-                    }]
-                    }" 
-                content="this is content, this is content, this is content"
-              >
-                <template #reference>
-                  <el-button type="warning" @click="atDocument(false)" size="small">
-                    <span ref="popover_anchor">@邀请</span>
-                  </el-button>
-                </template>
-                <el-scrollbar max-height="500px">
-                  <div class="notification-item" 
-                    v-for="(item, index) in this.groupMembersList"
-                    :key="index" :title="item.username" @click="atDocumentPost(item.id,item.username)">
-                    {{ item.username }}
-                  </div>
-                </el-scrollbar>
-              </el-popover>
-              
-              <el-button type="primary" @click="saveDocument()" size="small">
-                保存<el-icon class="el-icon--right"><Upload /></el-icon>
-              </el-button>
-            <!-- </el-col> -->
-            <!-- <el-col :span="4" :offset="0" style="text-align: right; font-size: small;"> -->
-                Mode: <el-switch
-                    v-model="value1"
-                    inline-prompt
-                    active-text="浅色"
-                    inactive-text="暗黑"
-                    style="--el-switch-on-color: #2a9feb; --el-switch-off-color: #24292e"
-                    @click="changeDisplayMode()"
-                />
-            </el-col>
-        </el-row>
-    </div>
     <div id="tiptap_editor">
       <tiptap />
     </div>
-    <div id="vditor" name="description" style="z-index: 90;" @keydown="keyListener" ref="editor" @mousemove="getMousePosition_popover"></div>
-    <!-- <el-button @click="focusEditor()">123</el-button> -->
-    <!-- <input height="250px" ref='editor'/> -->
-    <!-- <el-button @click="setEditArea()">(测试用)改变富文本编辑器内容</el-button>
-    <el-button @click="getEditArea()">(测试用)提取富文本编辑器内容</el-button>
-    <el-button @click="exportDocument1()">(测试用)使失效</el-button>
-    <el-button @click="exportDocument2()">(测试用)使生效</el-button>
-    <span>{{ editorContent }}</span> -->
-    <!-- <div>{{ cursorPosition }}</div> -->
+    <!-- <div id="vditor" name="description" style="z-index: 90;" @keydown="keyListener" ref="editor" @mousemove="getMousePosition_popover"></div> -->
 </template>
 
 <style scoped>
@@ -146,58 +88,7 @@ export default {
     this.group_id = parseInt(infos[1]);
     this.project_id = parseInt(infos[2]);
     this.text_id = parseInt(infos[3]);
-    // this.websocketInit();
-    this.contentEditor = new Vditor("vditor",{
-        height:600,
-        placeholder: "在这里开始编辑",
-        toolbarConfig:{
-            pin:true
-        },
-        preview:{
-          theme:{
-              current: "dark"
-          }
-        },
-        cache:{
-            enable: false
-        },
-        counter:{
-          enable: true
-        },
-        after:()=>{
-            this.contentEditor.setValue("");
-            this.contentEditor.setTheme("dark");
-            this.contentEditor.focus();
-        }
-    });
 
-    var promise=getAText(parseInt(infos[3]),parseInt(infos[2]));
-    console.log(infos);
-    promise.then((result)=>{
-      console.log(result);
-      if(this.MessageCatch(result, true)){
-        this.fileName = result.data.name;
-        this.contentEditor.setValue(result.data.content);
-        this.creator = result.data.creator;
-      }
-
-      var promise2=getGroupInformation(this.group_id);
-      promise2.then((result)=>{
-        if(this.MessageCatch(result, true)){
-          this.groupMembersList=result.data.user_list;
-          this.groupName=result.data.name;
-          console.log(this.groupMembersList);
-          store.commit('getDocumentGroupList',result.data.user_list);
-        }
-      });
-
-    });
-
-    setInterval(() => {
-      this.editorContent = this.contentEditor.getValue();
-
-      // this.cursorPosition = this.contentEditor.getCursorPosition();
-    }, 500)
   },
   methods:{
     getMousePosition_popover(event) {

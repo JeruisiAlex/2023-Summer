@@ -8,7 +8,11 @@
   </template>
   
   <script>
-  import MenuItem from './MenuItem.vue'
+  import MenuItem from './MenuItem.vue';
+  import store from '@/store';
+  import { exportWord } from 'mhtml-to-word';
+  import { saveAs } from 'file-saver';
+  import htmlDocx from 'html-docx-js/dist/html-docx';
   
   export default {
     components: {
@@ -144,9 +148,71 @@
             title: 'Redo',
             action: () => this.editor.chain().focus().redo().run(),
           },
+          {
+            type: 'divider',
+          },
+          {
+            icon: 'html5-line',
+            title: '下载html',
+            action: () => {
+              this.downloadHTML();
+            }
+          },
+          {
+            icon: 'file-pdf-2-line',
+            title: '下载pdf',
+            action: () => {
+              this.downloadPDF();
+            }
+          },
+          {
+            icon: 'file-word-line',
+            title: '下载docx',
+            action: () => {
+              this.downloadDOC();
+            }
+          },
         ],
       }
     },
+    methods: {
+        downloadHTML(){
+          var html = this.editor.getHTML();
+          // 生成html字符串
+          // 创建一个a标签
+          var a = document.createElement("a");
+          // 创建一个包含blob对象的url
+          var url = window.URL.createObjectURL(
+              new Blob([html], {
+                  type: "",
+              })
+          );
+          a.href = url;
+          a.download = store.state.currentDocument+'.html';
+          a.click();
+          window.URL.revokeObjectURL(url);
+        },
+        downloadPDF() {
+          var htmlString = this.editor.getHTML();
+          var iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          document.body.appendChild(iframe);
+          var doc = iframe.contentWindow.document;
+          doc.body.innerHTML=htmlString
+          var win = iframe.contentWindow;
+          win.print();
+          document.body.removeChild(iframe)
+        },
+        downloadDOC() {
+          // 把当前 vue 所展示的页面对应的 html 转换成一个字符串，这里用到了上面的三个函数，所以，如果是写在外面的话要引用进来
+          let html  = this.editor.getHTML();
+          const converted = htmlDocx.asBlob(html);
+          // 使用我们刚刚准备好的html模板并创建Blob对象
+          // let blob = new Blob([html],{type:"application/msword;charset=utf-8"});
+          // 调用FileSaver.saveAs导出下载word
+          saveAs(converted, store.state.currentDocument+".docx");
+        }
+    }
   }
   </script>
   
