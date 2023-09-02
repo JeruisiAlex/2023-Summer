@@ -44,8 +44,15 @@ export function copyProject(project_id,name){
 	var data=new FormData();
 	data.append("project_id",project_id);
 	data.append("name",name);
-	console.log(project_id+ ' '+ name);
 	return post('/api/project/copy/',data);
+}
+
+export function changeProjectShare(project_id,is_shared){
+	var data=new FormData();
+	data.append("project_id",project_id);
+	data.append("is_shared",is_shared);
+	console.log(project_id+' '+is_shared);
+	return post('/api/project/change_role/',data);
 }
 
 export function getProjectInformation(project_id){

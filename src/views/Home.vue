@@ -1,12 +1,12 @@
 <template>
-    <video autoplay="autoplay" loop="" id="video1" src="../assets/backvideo.mp4" muted></video>
-    <el-link :underline="true" href="./loginandregister" style="position: relative; width: 450px;height: 50px;margin-left: 530px;margin-top: -600px;font-size: 7ch;color: white;">
+    <video autoplay="autoplay" loop="" id="video1" src="../assets/back.mp4" muted style="width: 1500px;"></video>
+    <el-link :underline="true" href="./loginandregister" style="position: relative; width: 450px;height: 50px;margin-left: 530px;margin-top: -1200px;font-size: 7ch;color: white;">
         Originate Pro
     </el-link>
-    <el-link :underline="true" href="./loginandregister" style="position: relative; width: 450px;height: 50px;margin-left: 530px;margin-top: -450px;font-size: x-large;color: white;">
+    <el-link :underline="true" href="./loginandregister" style="position: relative; width: 450px;height: 50px;margin-left: 530px;margin-top: -980px;font-size: x-large;color: white;">
         一个高效的团队协作办公网站
     </el-link>
-    <el-link :underline="true" href="./loginandregister" style="position: relative; width: 170px;height: 50px;margin-left: 670px;margin-top: -300px;font-size: xx-large;color: white;">
+    <el-link :underline="true" href="./loginandregister" style="position: relative; width: 170px;height: 50px;margin-left: 670px;margin-top: -900px;font-size: xx-large;color: white;">
         快速使用
         <el-icon size="large" style="margin-left: 10px;margin-top: 5px;"><ArrowRightBold /></el-icon>
     </el-link>

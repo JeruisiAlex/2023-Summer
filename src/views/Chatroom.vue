@@ -51,7 +51,6 @@
       </p>
     </div>
   </el-dialog>
-
   <el-dialog v-model="addGroupModel" title="创建群聊">
     <el-form :model="form">
       <el-form-item label="群聊名字" :label-width="formLabelWidth">
@@ -254,122 +253,162 @@
   <el-button type="primary" class="addGroupButton" @click="addGroupModel = true"
     >创建群聊</el-button
   >
-  <div class="textarea" @scroll="loadMore" @mousedown="removeMenu">
-    <div
-      class="eachMessageContainer"
-      v-for="(item, index) in groupMessage[nowWs].content"
-      :key="index"
-      v-if="nowWs != -1 && nowWs != -2"
-    >
+  <el-popover
+    :visible="atVisible"
+    style="z-index: 999"
+    placement="top"
+    width="200"
+    title="123"
+    :popper-options="{
+      modifiers: [
+        {
+          name: 'offset',
+          options: {
+            offset: [popoverPosition.left, popoverPosition.top],
+          },
+        },
+      ],
+    }"
+    content="this is content, this is content, this is content"
+  >
+    <template #reference>
       <div
-        class="timeContainer"
-        v-if="isTimeDifferenceGreaterThan5Second(index)"
+        class="textarea"
+        @scroll="loadMore"
+        @mousedown="removeMenu"
+        ref="messageInput"
       >
-        <div>
-          {{ item.time }}
+        <div
+          class="eachMessageContainer"
+          v-for="(item, index) in groupMessage[nowWs].content"
+          :key="index"
+          v-if="nowWs != -1 && nowWs != -2"
+        >
+          <div
+            class="timeContainer"
+            v-if="isTimeDifferenceGreaterThan5Second(index)"
+          >
+            <div>
+              {{ item.time }}
+            </div>
+          </div>
+          <div class="bubble left" v-if="item.name !== $store.state.userName">
+            <el-checkbox
+              v-model="muchSelect[index]"
+              class="mt-2"
+              inline-prompt
+              :active-icon="Check"
+              :inactive-icon="Close"
+              style="float: left; margin-right: 15px"
+              v-if="muchSelectModel == true"
+              @change="chooseThisMessage(item, muchSelect[index])"
+            />
+            <a class="avatar" @click="jumpPersonalPage(item)"
+              ><img
+                :src="item.icon"
+                @click="jumpPersonalPage(item)"
+                style="cursor: pointer"
+            /></a>
+            <div class="wrap">
+              <div class="nameContainer">{{ item.name }}</div>
+              <div
+                class="content"
+                @contextmenu.prevent="rightClick($event, item)"
+                v-if="Array.isArray(item.content) == false"
+              >
+                {{ item.content }}
+              </div>
+              <div
+                class="content"
+                v-else
+                style="
+                  box-shadow: 4px 4px 10px #a0cfff;
+                  background-color: #c6e2ff;
+                  cursor: pointer;
+                "
+                :id="'transferContainer' + index"
+                @mouseover="transferContainerOverChangeColor(index)"
+                @mouseout="transferContainerOutChangeColor(index)"
+                @click="
+                  isTransferDialogShow = true;
+                  jsonForTransferContent(item.content);
+                "
+              >
+                来自{{ item.name }}的转发
+              </div>
+            </div>
+          </div>
+          <div class="bubble right" v-if="item.name === $store.state.userName">
+            <el-checkbox
+              v-model="muchSelect[index]"
+              class="mt-2"
+              inline-prompt
+              :active-icon="Check"
+              :inactive-icon="Close"
+              style="float: right; margin-left: 15px"
+              v-if="muchSelectModel == true"
+              @change="chooseThisMessage(item, muchSelect[index])"
+            />
+            <a class="avatar" @click="jumpPersonalPage(item)"
+              ><img
+                :src="item.icon"
+                @click="jumpPersonalPage(item)"
+                style="cursor: pointer"
+            /></a>
+            <div class="wrap">
+              <div class="nameContainer">{{ item.name }}</div>
+              <div
+                class="content"
+                @contextmenu.prevent="rightClick($event, item)"
+                v-if="Array.isArray(item.content) == false"
+              >
+                {{ item.content }}
+              </div>
+              <div
+                class="content"
+                v-else
+                style="
+                  box-shadow: 4px 4px 10px #a0cfff;
+                  background-color: #c6e2ff;
+                  cursor: pointer;
+                "
+                :id="'transferContainer' + index"
+                @mouseover="transferContainerOverChangeColor(index)"
+                @mouseout="transferContainerOutChangeColor(index)"
+                @click="
+                  isTransferDialogShow = true;
+                  jsonForTransferContent(item.content);
+                "
+              >
+                来自{{ item.name }}的转发
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="bubble left" v-if="item.name !== $store.state.userName">
-        <el-checkbox
-          v-model="muchSelect[index]"
-          class="mt-2"
-          inline-prompt
-          :active-icon="Check"
-          :inactive-icon="Close"
-          style="float: left; margin-right: 15px"
-          v-if="muchSelectModel == true"
-          @change="chooseThisMessage(item, muchSelect[index])"
-        />
-        <a class="avatar" @click="jumpPersonalPage(item)"
-          ><img
-            :src="item.icon"
-            @click="jumpPersonalPage(item)"
-            style="cursor: pointer"
-        /></a>
-        <div class="wrap">
-          <div class="nameContainer">{{ item.name }}</div>
-          <div
-            class="content"
-            @contextmenu.prevent="rightClick($event, item)"
-            v-if="Array.isArray(item.content) == false"
-          >
-            {{ item.content }}
-          </div>
-          <div
-            class="content"
-            v-else
-            style="
-              box-shadow: 4px 4px 10px #a0cfff;
-              background-color: #c6e2ff;
-              cursor: pointer;
-            "
-            :id="'transferContainer' + index"
-            @mouseover="transferContainerOverChangeColor(index)"
-            @mouseout="transferContainerOutChangeColor(index)"
-            @click="
-              isTransferDialogShow = true;
-              jsonForTransferContent(item.content);
-            "
-          >
-            来自{{ item.name }}的转发
-          </div>
-        </div>
+    </template>
+    <el-scrollbar max-height="500px">
+      <div
+        class="notification-item"
+        v-for="(item, index) in this.nowChosenGroup.member"
+        :key="index"
+        :title="item.username"
+        @click="atDocument(item.username)"
+      >
+        {{ item.username }}
       </div>
-      <div class="bubble right" v-if="item.name === $store.state.userName">
-        <el-checkbox
-          v-model="muchSelect[index]"
-          class="mt-2"
-          inline-prompt
-          :active-icon="Check"
-          :inactive-icon="Close"
-          style="float: right; margin-left: 15px"
-          v-if="muchSelectModel == true"
-          @change="chooseThisMessage(item, muchSelect[index])"
-        />
-        <a class="avatar" @click="jumpPersonalPage(item)"
-          ><img
-            :src="item.icon"
-            @click="jumpPersonalPage(item)"
-            style="cursor: pointer"
-        /></a>
-        <div class="wrap">
-          <div class="nameContainer">{{ item.name }}</div>
-          <div
-            class="content"
-            @contextmenu.prevent="rightClick($event, item)"
-            v-if="Array.isArray(item.content) == false"
-          >
-            {{ item.content }}
-          </div>
-          <div
-            class="content"
-            v-else
-            style="
-              box-shadow: 4px 4px 10px #a0cfff;
-              background-color: #c6e2ff;
-              cursor: pointer;
-            "
-            :id="'transferContainer' + index"
-            @mouseover="transferContainerOverChangeColor(index)"
-            @mouseout="transferContainerOutChangeColor(index)"
-            @click="
-              isTransferDialogShow = true;
-              jsonForTransferContent(item.content);
-            "
-          >
-            来自{{ item.name }}的转发
-          </div>
-        </div>
-      </div>
-    </div>
+    </el-scrollbar>
+  </el-popover>
+  <div @mousemove="getMousePosition_popover">
+    <el-input
+      v-model="messageInput"
+      placeholder=""
+      class="messageContainer"
+      @mousedown="removeMenu"
+      v-if="muchSelectModel == false"
+      @keydown="keyListener"
+    />
   </div>
-  <el-input
-    v-model="messageInput"
-    placeholder=""
-    class="messageContainer"
-    @mousedown="removeMenu"
-    v-if="muchSelectModel == false"
-  />
 
   <div
     class="messageContainer"
@@ -683,6 +722,16 @@ export default {
       dismissGroupDialogShow: false,
       inviteMemberDialog: false,
       privateChat: [],
+      cursorPosition: {
+        top: 0,
+        left: 0,
+      },
+      popoverPosition: {
+        top: -400,
+        left: 0,
+      },
+      atVisible: false,
+      notificationWs : "",
     };
   },
   unmounted() {
@@ -690,41 +739,77 @@ export default {
   },
   beforeRouteUpdate(to, form, next) {
     this.closeWeb();
+    console.log("已关闭")
     setTimeout(() => {
       next();
-    }, 50);
+    }, 500);
   },
   beforeRouteLeave(to, form, next) {
     this.closeWeb();
+    console.log("已改变")
     setTimeout(() => {
       next();
-    }, 50);
+    }, 500);
   },
   onBeforeUnmount() {
     this.closeWeb();
   },
   methods: {
+    atDocument(name) {
+      console.log(this.popoverPosition.top);
+      console.log(this.popoverPosition.left);
+      this.atVisible = false;
+      this.messageInput = this.messageInput + name;
+    },
+    keyListener(event) {
+      console.log("key_push");
+      console.log(this.nowChosenGroup);
+      console.log(this.atVisible);
+      if (event.shiftKey && event.keyCode == 50) {
+        console.log("同时按下 shift 和数字2键");
+        this.atVisible = true;
+      } else if (event.keyCode == 27) {
+        event.preventDefault();
+        this.atVisible = false;
+        console.log("按下 esc 键");
+      }
+    },
+    getMousePosition_popover(event) {
+      const popover_positon = this.$refs.messageInput;
+      const popover_position_offset = popover_positon.getBoundingClientRect(); // this.cursorPosition.top = event.clientY; // this.cursorPosition.left = event.clientX;
+      this.cursorPosition.top = event.clientY - popover_position_offset.top;
+      this.cursorPosition.left = event.clientX - popover_position_offset.left; // console.log(this.cursorPosition);
+    },
     inviteThisPerson(person) {
-      console.log(person)
+      console.log(person);
       var request = inviteUserIntoChatGroup(person.id, this.nowChosenGroup.id);
       request.then((result) => {
+        console.log(result);
+        if (result.code == 1008) {
+          this.dialogMessage = "你不是本群创建者，无权更改本群信息";
+          this.dialogVisible = true;
+          return;
+        }
         this.isShowAll = false;
         this.getAllGroupMember();
         setTimeout(() => {
           this.isShowAll = true;
         }, 1000);
       });
-      this.inviteMemberDialog = false
-      this.privateChat = []
+      this.inviteMemberDialog = false;
+      this.privateChat = [];
     },
     getPrivateChat() {
       console.log(this.allGroupArray);
       var obj;
       for (var i = 0; i < this.allGroupArray.length; i++) {
         if (this.allGroupArray[i].group.type == "Private") {
-          obj = (this.allGroupArray[i].group.member[0].id == store.state.uid) ? this.allGroupArray[i].group.member[1] : this.allGroupArray[i].group.member[0]
-          this.privateChat.push(obj)
-          console.log(obj)
+          obj =
+            this.allGroupArray[i].group.member[0].id == store.state.uid
+              ? this.allGroupArray[i].group.member[1]
+              : this.allGroupArray[i].group.member[0];
+          this.privateChat.push(obj);
+          console.log(obj);
         }
       }
       console.log(this.privateChat);
@@ -734,6 +819,12 @@ export default {
       this.dismissGroupDialogShow = false;
       var request = breakupChatGroup(this.nowChosenGroup.id);
       request.then((result) => {
+        console.log(result);
+        if (result.code == 1006) {
+          this.dialogMessage = "你不是本群创建者，无权更改本群信息";
+          this.dialogVisible = true;
+          return;
+        }
         console.log(this.wsArray);
         var index;
         for (var i = 0; i < this.groupMessage.length; i++) {
@@ -1009,6 +1100,9 @@ export default {
       this.operateMessage.push(item);
     },
     websocketOpen() {
+      this.notificationWs.onopen = () =>{
+        console.log("notificationws已经开启")
+      }
       this.zeroWs.onopen = () => {
         console.log("0号ws已经开启");
       };
@@ -1086,6 +1180,7 @@ export default {
         };
         try {
           this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
+          console.log(JSON.stringify(leaveObj))
         } catch {
           this.dialogMessage = "网络错误3";
           this.dialogVisible = true;
@@ -1114,8 +1209,6 @@ export default {
       const container = document.querySelector(".textarea");
       const targetBoxTop = this.targetBox[this.searchPosition].offsetTop;
       const containerTop = container.offsetTop;
-      const scrollTop = targetBoxTop - containerTop;
-      container.scrollTop = scrollTop;
     },
     searchChatMessage() {
       if (this.searchChatInput === "") {
@@ -1125,10 +1218,10 @@ export default {
       var temp = document.querySelector(
         "#app > main > div > div.el-scrollbar__wrap.el-scrollbar__wrap--hidden-default > div > div.textarea > div:nth-child(1) > div.bubble.left > div > div.content"
       );
-      if(temp == null)
-      temp = document.querySelector(
-        "#app > main > div > div.el-scrollbar__wrap.el-scrollbar__wrap--hidden-default > div > div.textarea > div:nth-child(1) > div.bubble.right > div > div.content"
-      );
+      if (temp == null)
+        temp = document.querySelector(
+          "#app > main > div > div.el-scrollbar__wrap.el-scrollbar__wrap--hidden-default > div > div.textarea > div:nth-child(1) > div.bubble.right > div > div.content"
+        );
       console.log(temp);
       if (temp == null) {
         return;
@@ -1168,8 +1261,6 @@ export default {
       const container = document.querySelector(".textarea");
       const targetBoxTop = this.targetBox[0].offsetTop;
       const containerTop = container.offsetTop;
-      const scrollTop = targetBoxTop - containerTop;
-      container.scrollTop = scrollTop;
     },
     jumpPersonalPage(item) {
       var uid;
@@ -1331,6 +1422,7 @@ export default {
         );
         this.wsArray.push(ws);
         this.zeroWs = new WebSocket("ws://8.130.25.189/ws/chat/group/0/");
+        this.notificationWs = new WebSocket("ws://8.130.25.189/ws/notification/")
       }
     },
     zeroReceiveMessage(parseData) {
@@ -1409,8 +1501,6 @@ export default {
               that.receiveSingleMessage(dataArray[j]);
             }
           } else that.receiveSingleMessage(parsedData);
-          const scrollableContainer = document.querySelector(".textarea");
-          scrollableContainer.scrollTop = scrollableContainer.scrollHeight;
         };
         this.wsArray[i].onClose = function () {
           if (this.nowWs != -1) {
@@ -1431,8 +1521,29 @@ export default {
         };
       }
     },
-
+    judgeMemberName()
+    {
+      console.log(this.nowChosenGroup)
+      for(var i = 0;i < this.nowChosenGroup.member.length;i++)
+      {
+        var str = "@" + this.nowChosenGroup.member[i].username
+        console.log(str)
+        if(this.messageInput.includes(str))
+        {
+          var obj = {
+            type : "at_jump",
+            at_type : "chat",
+            sender_id: store.state.uid,
+            user_id : this.nowChosenGroup.member[i].id,
+            group_id : this.nowChosenGroup.id
+          }
+          this.notificationWs.send(JSON.stringify(obj))
+          return;
+        }
+      }
+    },
     sendMessage() {
+      this.judgeMemberName()
       if (this.nowWs === -1) {
         this.messageInput = "";
         return;
@@ -1484,8 +1595,6 @@ export default {
           timestamp: timestamp1,
         },
       };
-      const scrollableContainer = document.querySelector(".textarea");
-      scrollableContainer.scrollTop = scrollableContainer.scrollHeight;
       try {
         this.wsArray[this.nowWs].send(JSON.stringify(newObj));
       } catch {
@@ -1625,6 +1734,27 @@ export default {
 </script>
 
 <style scoped>
+.notification-item {
+  align-items: center;
+  /*justify-content: center;*/
+  height: 30px;
+  line-height: 30px;
+  margin: 5px;
+  /*padding-left: 5px;*/
+  text-align: center;
+  border-radius: 4px;
+  color: black;
+  transition: 0.5s;
+  overflow: hidden;
+  border-bottom: rgba(42, 159, 235, 0.5) 1px solid;
+}
+
+.notification-item:hover {
+  cursor: pointer;
+  background: rgba(236, 245, 255, 1);
+  /* color: rgb(42, 159, 235); */
+  transition: 0.2s;
+}
 .addGroupButton {
   position: absolute;
   display: flex;

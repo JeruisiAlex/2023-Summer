@@ -45,6 +45,11 @@ const routes = [
     path: '/try',
     name: 'try',
     component: () => import(/* webpackChunkName: "about" */ '../views/try')
+  },
+  {
+    path: '/:projectid/DesignShare',
+    name: 'DesignShare',
+    component: () => import(/* webpackChunkName: "about" */ '../views/Share')
   }
 ]
 
