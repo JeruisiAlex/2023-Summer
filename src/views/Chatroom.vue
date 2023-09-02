@@ -36,7 +36,7 @@
       "
       v-for="(item, index) in allGroupArray"
       :key="index"
-      @click="transferSingleMessage(operateMessage[0], item)"
+      @click="transferManyMessageOneAfterOne(item)"
     >
       <p style="text-align: center">
         {{ item.group.name }}
@@ -54,7 +54,10 @@
       class="messageOptionButton"
       text
       style="margin-left: 0px"
-      @click="deleteSingleMessage(operateMessage[0])"
+      @click="
+        deleteSingleMessage(operateMessage[0]);
+        clickRightMenu = false;
+      "
       >删除</el-button
     >
     <el-button
@@ -63,7 +66,10 @@
       class="messageOptionButton"
       text
       style="margin-left: 0px"
-      @click="openMuchSelectModel"
+      @click="
+        openMuchSelectModel();
+        clickRightMenu = false;
+      "
       >多选</el-button
     >
     <el-button
@@ -75,17 +81,49 @@
       @click="
         chooseGroupDialog = true;
         muchSelectModel = false;
+        clickRightMenu = false;
       "
       >转发</el-button
     >
   </div>
+
   <el-dialog
-    v-model="dialogVisible"
-    title="Tips"
+    v-model="isTransferDialogShow"
+    title="聊天记录"
     width="30%"
     :before-close="handleClose"
   >
-    <span>{{ dialogMessage }}</span>
+    <div
+      class="eachMessageContainer"
+      v-for="(item, index) in transferContent"
+      :key="index"
+      v-if="nowWs != -1 && nowWs != -2"
+    >
+      <div class="bubble left" v-if="item.name !== $store.state.userName">
+        <a class="avatar"
+          ><img
+            :src="item.icon"
+        /></a>
+        <div class="wrap">
+          <div class="nameContainer">{{ item.name }}</div>
+          <div class="content">
+            {{ item.content }}
+          </div>
+        </div>
+      </div>
+      <div class="bubble right" v-if="item.name == $store.state.userName">
+        <a class="avatar"
+          ><img
+            :src="item.icon"
+        /></a>
+        <div class="wrap">
+          <div class="nameContainer">{{ item.name }}</div>
+          <div class="content">
+            {{ item.content }}
+          </div>
+        </div>
+      </div>
+    </div>
   </el-dialog>
   <div class="searchContainer" @mousedown="removeMenu">
     <div class="title">
@@ -195,12 +233,34 @@
         /></a>
         <div class="wrap">
           <div class="nameContainer">{{ item.name }}</div>
-          <div class="content" @contextmenu.prevent="rightClick($event, item)">
+          <div
+            class="content"
+            @contextmenu.prevent="rightClick($event, item)"
+            v-if="Array.isArray(item.content) == false"
+          >
             {{ item.content }}
+          </div>
+          <div
+            class="content"
+            v-else
+            style="
+              box-shadow: 4px 4px 10px #a0cfff;
+              background-color: #c6e2ff;
+              cursor: pointer;
+            "
+            :id="'transferContainer' + index"
+            @mouseover="transferContainerOverChangeColor(index)"
+            @mouseout="transferContainerOutChangeColor(index)"
+            @click="
+              isTransferDialogShow = true;
+              jsonForTransferContent(item.content)
+            "
+          >
+            来自{{ item.name }}的转发
           </div>
         </div>
       </div>
-      <div class="bubble right" v-else>
+      <div class="bubble right" v-if="item.name === $store.state.userName">
         <el-checkbox
           v-model="muchSelect[index]"
           class="mt-2"
@@ -211,7 +271,7 @@
           v-if="muchSelectModel == true"
           @change="chooseThisMessage(item, muchSelect[index])"
         />
-        <a class="avatar" @click="jumpPersonalPage(item, item.time)"
+        <a class="avatar" @click="jumpPersonalPage(item)"
           ><img
             :src="item.icon"
             @click="jumpPersonalPage(item)"
@@ -219,8 +279,30 @@
         /></a>
         <div class="wrap">
           <div class="nameContainer">{{ item.name }}</div>
-          <div class="content" @contextmenu.prevent="rightClick($event, item)">
+          <div
+            class="content"
+            @contextmenu.prevent="rightClick($event, item)"
+            v-if="Array.isArray(item.content) == false"
+          >
             {{ item.content }}
+          </div>
+          <div
+            class="content"
+            v-else
+            style="
+              box-shadow: 4px 4px 10px #a0cfff;
+              background-color: #c6e2ff;
+              cursor: pointer;
+            "
+            :id="'transferContainer' + index"
+            @mouseover="transferContainerOverChangeColor(index)"
+            @mouseout="transferContainerOutChangeColor(index)"
+            @click="
+              isTransferDialogShow = true;
+              jsonForTransferContent(item.content)
+            "
+          >
+            来自{{ item.name }}的转发
           </div>
         </div>
       </div>
@@ -233,6 +315,7 @@
     @mousedown="removeMenu"
     v-if="muchSelectModel == false"
   />
+
   <div
     class="messageContainer"
     @mousedown="removeMenu"
@@ -286,6 +369,12 @@
         id="icon2"
         @mouseover="overTochangeIconColor('icon2')"
         @mouseleave="leaveTochangeIconColor('icon2')"
+        @click="
+          chooseGroupDialog = true;
+          muchSelectModel = false;
+          clickRightMenu = false;
+          eachOrTogether = false;
+        "
       >
         <el-icon style="margin-left: 18px; margin-top: 18px"
           ><ArrowRight
@@ -317,6 +406,12 @@
         id="icon3"
         @mouseover="overTochangeIconColor('icon3')"
         @mouseleave="leaveTochangeIconColor('icon3')"
+        @click="
+          chooseGroupDialog = true;
+          muchSelectModel = false;
+          clickRightMenu = false;
+          eachOrTogether = true;
+        "
       >
         <el-icon style="margin-left: 18px; margin-top: 18px"
           ><Expand
@@ -440,6 +535,7 @@ import { ref } from "vue";
 import store from "@/store";
 import { getGroupInformation } from "../api/group";
 import { getUserChatRoom, getUserInformation } from "../api/user";
+import { genFileId } from "element-plus";
 export default {
   mounted() {
     this.myId = store.state.uid;
@@ -502,6 +598,9 @@ export default {
       personIdWhenBuildNewChat: "",
       zeroWs: "",
       myId: "",
+      eachOrTogether: false, //false : each;true : together
+      isTransferDialogShow: false,
+      transferContent: [],
     };
   },
   unmounted() {
@@ -523,25 +622,36 @@ export default {
     this.closeWeb();
   },
   methods: {
-    choosePersonChat(item) {
-      if (item.id == this.myId) {
-        this.dialogMessage = "不能给自己发信息哦";
-        this.dialogVisible = true;
-        return 
+    jsonForTransferContent(content)
+    {
+      for(var i = 0;i < content.length;i++)
+      {
+        this.transferContent.push(JSON.parse(content[i]));
       }
+    },
+    transferContainerOverChangeColor(index) {
+      var ele = document.querySelector("#transferContainer" + index);
+      ele.style.backgroundColor = "#a0cfff";
+    },
+    transferContainerOutChangeColor(index) {
+      var ele = document.querySelector("#transferContainer" + index);
+      ele.style.backgroundColor = "#c6e2ff";
+    },
+    choosePersonChat(item) {
+      if (this.nowWs == -2) return;
+      // if (item.id == this.myId) {
+      //   this.dialogMessage = "不能给自己发信息哦";
+      //   this.dialogVisible = true;
+      //   return;
+      // }
       for (var i = 0; i < this.allGroupArray.length; i++) {
-        console.log(this.allGroupArray[i]);
         if (
           this.allGroupArray[i].group.type == "Private" &&
           this.allGroupArray[i].group.name == item.username
         ) {
-          console.log(this.allGroupArray[i].group.type);
-          console.log(this.allGroupArray[i].group.name);
           for (var j = 0; j < this.groupMessage.length; j++) {
             if (this.groupMessage[j].id == this.allGroupArray[i].group.id) {
-              console.log(this.nowChosenGroup);
               this.chooseGroup(this.allGroupArray[i], j);
-
               return;
             }
           }
@@ -561,9 +671,67 @@ export default {
         group_id: item.id,
       };
       this.zeroWs.send(JSON.stringify(enterobj));
-      console.log(enterobj);
       this.nowWs = -2;
       this.personIdWhenBuildNewChat = item.id;
+    },
+    transferManyMessageOneAfterOne(group) {
+      if (this.eachOrTogether == false) {
+        for (var i = 0; i < this.operateMessage.length; i++) {
+          this.transferSingleMessage(this.operateMessage[i], group);
+        }
+      } else {
+        var me;
+        console.log(group);
+        for (var i = 0; i < this.nowGroupMember.member.length; i++) {
+          if (store.state.uid == this.nowGroupMember.member[i].id)
+            me = this.nowGroupMember.member[i];
+        }
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1; // 月份从0开始，所以要加1
+        const day = now.getDate();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const seconds = now.getSeconds();
+        var timestamp1 =
+          year +
+          "-" +
+          month +
+          "-" +
+          day +
+          " " +
+          hours +
+          ":" +
+          minutes +
+          ":" +
+          seconds;
+        var newObj = {
+          type: "chat",
+          data: {
+            user_id: store.state.uid,
+            group_id: group.group.id,
+            content: [],
+            timestamp: timestamp1,
+          },
+        };
+        for (var i = 0; i < this.operateMessage.length; i++) {
+          var temp = JSON.stringify(this.operateMessage[i]);
+          newObj.data.content.push(temp);
+        }
+        var index;
+        for (var i = 0; i < this.groupMessage.length; i++) {
+          if (this.groupMessage[i].id == group.group.id) {
+            index = i;
+            break;
+          }
+        }
+        try {
+          this.wsArray[index].send(JSON.stringify(newObj));
+        } catch {
+          this.dialogMessage = "网络错误9";
+        }
+      }
+      this.returnNomalModel();
     },
     transferSingleMessage(item, group) {
       var index;
@@ -605,7 +773,7 @@ export default {
             this.wsArray[i].send(JSON.stringify(newObj));
             this.chooseGroupDialog = false;
           } catch {
-            this.dialogMessage = "网络错误";
+            this.dialogMessage = "网络错误1";
             this.dialogVisible = true;
           }
         }
@@ -622,6 +790,7 @@ export default {
         this.muchSelect[i] = false;
       }
       this.muchSelectModel = false;
+      this.chooseGroupDialog = false;
     },
     leaveTochangeIconColor(eleId) {
       var ele = document.querySelector("#" + eleId);
@@ -698,7 +867,7 @@ export default {
           try {
             this.wsArray[i].send(JSON.stringify(newObj));
           } catch {
-            this.dialogMessage = "网络错误";
+            this.dialogMessage = "网络错误2";
             this.dialogVisible = true;
           }
         };
@@ -760,7 +929,7 @@ export default {
         try {
           this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
         } catch {
-          this.dialogMessage = "网络错误";
+          this.dialogMessage = "网络错误3";
           this.dialogVisible = true;
         }
       }
@@ -833,7 +1002,7 @@ export default {
     jumpPersonalPage(item) {
       var uid;
       for (var i = 0; i < this.allGroupMember.length; i++) {
-        if (this.nowChosenGroup.id === this.allGroupMember[i].id) {
+        if (this.nowChosenGroup.id === this.allGroupMember[i].groupid) {
           for (var j = 0; j < this.allGroupMember[i].member.length; j++) {
             if (this.allGroupMember[i].member[j].username == item.name)
               uid = this.allGroupMember[i].member[j].id;
@@ -875,7 +1044,6 @@ export default {
       };
     },
     getAllGroupMember() {
-      console.log(this.allGroupArray);
       for (var i = 0; i < this.allGroupArray.length; i++) {
         var obj = {
           groupid: this.allGroupArray[i].group.id,
@@ -890,7 +1058,6 @@ export default {
       var request = getUserChatRoom();
       var groupTemp;
       request.then((result) => {
-        console.log(result.data);
         groupTemp = result.data;
         for (var i = 0; i < groupTemp.length; i++) {
           var obj = {
@@ -923,6 +1090,11 @@ export default {
       const timeDifferenceInSeconds = timeDifferenceInMilliseconds / 1000;
       return timeDifferenceInSeconds > 300;
     },
+    // judgeIsTransferTogether(parsedData)
+    // {
+    //   var judgeThing = parsedData.content;
+    //   return Array.isArray(judgeTing)
+    // },
     receiveSingleMessage(parsedData) {
       var that = this;
       var uid = parsedData.user_id;
@@ -951,6 +1123,7 @@ export default {
           content: parsedData.content,
           time: parsedData.timestamp,
         };
+        console.log("这条消息未读");
         for (var m = 0; m < that.groupMessage.length; m++) {
           if (that.groupMessage[m].id == tid) {
             that.groupMessage[m].content.push(newObj);
@@ -987,47 +1160,73 @@ export default {
     },
     zeroReceiveMessage(parseData) {
       var that = this;
-      console.log(this.allGroupArray);
       var person1, person2;
       var request = getUserInformation(store.state.uid);
       request.then((result) => {
         person1 = result.data;
-        request = getUserInformation(this.personIdWhenBuildNewChat);
-        request.then((result) => {
-          person2 = result.data;
-          var name1 =
-            store.state.uid == person1.id ? person2.username : person1.username;
-          var obj = {
-            unreadMessage: 0,
-            group: {
-              id: parseData.group_id,
-              member: [],
+        var request1;
+        if (that.personIdWhenBuildNewChat)
+          request1 = getUserInformation(that.personIdWhenBuildNewChat);
+        else request1 = getUserInformation(parseData.user_id);
+        request1.then((result2) => {
+          setTimeout(() => {
+            person2 = result2.data;
+            var name1 =
+              store.state.uid == person1.id
+                ? person2.username
+                : person1.username;
+            var obj = {
+              unreadMessage: 0,
+              group: {
+                id: parseData.group_id,
+                member: [],
+                name: name1,
+                type: "Private",
+              },
+            };
+            obj.group.member.push(person1);
+            obj.group.member.push(person2);
+            that.allGroupArray.push(obj);
+            var newObj = {
+              content: parseData.content,
+              icon:
+                store.state.uid == person1.id
+                  ? person2.icon_address
+                  : person1.icon_address,
               name: name1,
+              time: parseData.timestamp,
+            };
+            var obj2 = {
+              id: parseData.group_id,
+              content: [],
+            };
+            var memObj = {
+              groupid: parseData.group_id,
+              member: [],
               type: "Private",
-            },
-          };
-          obj.group.member.push(person1);
-          obj.group.member.push(person2);
-          that.allGroupArray.push(obj);
-          var obj2 = {
-            id: parseData.group_id,
-            content: [],
-          };
-          obj2.content.push(parseData);
-          that.groupMessage.push(obj2);
+            };
+            memObj.member.push(person1);
+            memObj.member.push(person2);
+            that.allGroupMember.push(memObj);
+            obj2.content.push(newObj);
+            that.groupMessage.push(obj2);
+            var newWs = new WebSocket(
+              "ws://8.130.25.189/ws/chat/group/" + parseData.group_id + "/"
+            );
+            that.wsArray.push(newWs);
+            var num = that.wsArray.length - 1;
+          }, 500);
         });
       });
     },
     websocketOnMessage() {
       var that = this;
       this.zeroWs.onmessage = function (message) {
-        console.log("0号ws收到", message);
         var parsedData = JSON.parse(message.data);
         that.zeroReceiveMessage(parsedData);
       };
       for (var i = 0; i < this.allGroupArray.length; i++) {
         that.wsArray[i].onmessage = function (message) {
-          console.log(message);
           var parsedData = JSON.parse(message.data);
           if (Array.isArray(parsedData.data) === true) {
             var dataArray = parsedData.data;
@@ -1035,10 +1234,8 @@ export default {
               that.receiveSingleMessage(dataArray[j]);
             }
           } else that.receiveSingleMessage(parsedData);
-          setTimeout(() => {
-            const scrollableContainer = document.querySelector(".textarea");
-            scrollableContainer.scrollTop = scrollableContainer.scrollHeight;
-          }, 50);
+          const scrollableContainer = document.querySelector(".textarea");
+          scrollableContainer.scrollTop = scrollableContainer.scrollHeight;
         };
         this.wsArray[i].onClose = function () {
           if (this.nowWs != -1) {
@@ -1051,7 +1248,7 @@ export default {
             try {
               this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
             } catch {
-              this.dialogMessage = "网络错误";
+              this.dialogMessage = "网络错误4";
               this.dialogVisible = true;
             }
           }
@@ -1117,7 +1314,7 @@ export default {
       try {
         this.wsArray[this.nowWs].send(JSON.stringify(newObj));
       } catch {
-        this.dialogMessage = "网络错误";
+        this.dialogMessage = "网络错误5";
         this.dialogVisible = true;
       }
       this.messageInput = "";
@@ -1136,8 +1333,6 @@ export default {
     },
     load() {},
     searchPerson() {
-      console.log(this.nowGroupMember);
-      console.log(this.nowGroupMember);
       var temp = [];
       for (var i = 0; i < this.nowGroupMember.member.length; i++) {
         if (
@@ -1149,7 +1344,6 @@ export default {
         }
       }
       this.nowPersonArray.member = temp;
-      console.log(this.nowGroupMember);
     },
     searchGroup() {
       this.nowGroupArray = [];
@@ -1160,20 +1354,23 @@ export default {
       }
     },
     chooseGroup(item, i) {
-      console.log(item);
-      console.log(i);
       this.scrollToBottom();
       if (this.nowWs != -1) {
         var leaveObj = {
           type: "change",
           change: "leave",
           user_id: store.state.uid,
-          group_id: this.nowChosenGroup.id,
+          group_id:
+            this.nowWs == -2
+              ? this.personIdWhenBuildNewChat
+              : this.nowChosenGroup.id,
         };
         try {
-          this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
+          if (this.nowWs != -2)
+            this.wsArray[this.nowWs].send(JSON.stringify(leaveObj));
+          else this.zeroWs.send(JSON.stringify(leaveObj));
         } catch {
-          this.dialogMessage = "网络错误";
+          this.dialogMessage = "网络错误7";
           this.dialogVisible = true;
         }
         console.log("已经leave" + leaveObj);
@@ -1198,7 +1395,6 @@ export default {
             this.groupOrPerson = false;
           } else {
             this.groupOrPerson = true;
-            console.log(this.groupOrPerson);
             for (var j = 0; j < this.nowGroupMember.member.length; j++) {
               if (this.nowGroupMember.member[j].id != store.state.uid) {
                 this.nowPerson = this.nowGroupMember.member[j];
@@ -1216,7 +1412,7 @@ export default {
       try {
         this.wsArray[this.nowWs].send(JSON.stringify(enterobj));
       } catch {
-        this.dialogMessage = "网络错误";
+        this.dialogMessage = "网络错误8";
         this.dialogVisible = true;
       }
       console.log("已发送enter", enterobj);
@@ -1241,6 +1437,11 @@ export default {
     searchPersonInput: function (newVal, oldVal) {
       if (oldVal != "" && newVal == "") {
         this.nowPersonArray = this.nowGroupMember;
+      }
+    },
+    isTransferDialogShow: function (newVal, oldVal) {
+      if (oldVal == true && newVal == false) {
+        this.transferContent = []
       }
     },
   },
