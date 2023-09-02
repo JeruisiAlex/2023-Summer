@@ -1,4 +1,10 @@
 <template>
+  <el-dialog v-model="this.openGuide" title="如何查看新手指引" width="900px" top="10vh" style="height: 500px;">
+    <el-carousel height="500px">
+      <el-carousel-item><el-image :src="require('../assets/guide1.png')" fit="fill"/></el-carousel-item>
+      <el-carousel-item><el-image :src="require('../assets/guide2.png')" fit="fill"/></el-carousel-item>
+    </el-carousel>
+  </el-dialog>
   <el-dialog v-model="this.dialogBool" width="600px">
     <el-form ref="findPasswordRef" :model="findPassword" :rules="findPasswordRules">
         <h2 class="title">找回密码</h2>
@@ -583,6 +589,7 @@ import { userRister, userLogin, sendVCode, findPassword, getUserGroup } from '..
 export default{
   data() {
     return {
+      openGuide: false,
       codeBool: false,
       codeString: '获取验证码',
       loginLoading: false,
@@ -748,7 +755,9 @@ export default{
             if (valid) {
               var promise=userRister(this.signUpForm.name, this.signUpForm.password, this.signUpForm.confirmPassword, this.signUpForm.email, this.signUpForm.code);
               promise.then((result)=>{
-                this.MessageCatch(result);
+                if(this.MessageCatch(result)){
+                  this.openGuide=true;
+                }
               })
             }
           })
