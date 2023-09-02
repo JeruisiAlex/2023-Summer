@@ -18,3 +18,13 @@ export function breakupChatGroup(group_id){
 	data.append("group_id",group_id);
 	return post('/api/chat/break_up/',data);
 }
+
+export function exitChatGroup(group_id){
+	var data=new FormData();
+	data.append("group_id",group_id);
+	return post('/api/chat/exit/',data);
+}
+
+export function getChatGroupHistory(group_id){
+	return get('/api/chat/history/?group_id='+group_id);
+}

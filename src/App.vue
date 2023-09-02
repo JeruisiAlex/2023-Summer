@@ -1,4 +1,23 @@
 <template style="margin: 0; padding: 0; background-color: black">
+  <el-dialog v-model="this.genshinG" width="900px" style="height: 600px;" title="新手指引" top="10vh">
+    <el-container style="display: flex;height: 510px;margin-top: -20px;">
+      <el-aside width="25%" style="height: 510px;">
+        <el-scrollbar max-height="500px">
+          <el-button type="primary" v-for="item in this.guideContent.count" :key="item" :plain="item-1!=this.guideContent.current" class="guide-list" @click="this.GuideSwitch(item-1)">{{ this.guideContent.list[item-1].name }}</el-button>
+        </el-scrollbar>
+      </el-aside>
+      <el-divider direction="vertical" style="height: 510px;"/>
+      <el-aside width="75%" style="height: 510px;">
+        <el-carousel autoplay="false" trigger="click" height="500px">
+          <el-carousel-item v-for="i in this.guideContent.list[this.guideContent.current].count" :key="item">
+            <div style="align-items: center;height: 500px;">
+              <img fit="fill" :src="this.guideContent.list[this.guideContent.current].url[i-1]" style="width: 630px;height: 500px;"/>
+            </div>
+          </el-carousel-item>
+        </el-carousel>
+      </el-aside>
+    </el-container>
+  </el-dialog>
   <el-header v-if="this.$store.state.isLogin" style="height: 48px; background-color:rgb(42, 159, 235);">
     <el-row :gutter="10" style=" color: white;">
     <el-col :span="1" @click="displayDrawer">
@@ -409,6 +428,15 @@ nav a.router-link-exact-active {
 @import url('./views/css/fontawesome-all.min.css');
 </style>
 <style  scoped>
+.guide-list {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80%;
+  height: 40px;
+  margin: 10px;
+  text-align: center;
+}
 .el-button.is-round {
   border-radius: 49px;
 }
@@ -895,7 +923,37 @@ export default {
             item_id: 0,
             from: 1,
         },
-
+        guideContent:{"count" : 7,
+          "current" : 0, 
+          "list" : [{
+            "name": "侧边栏",
+            "count": 2,
+            "url": [require('./assets/aside1.png'),require('./assets/aside2.png')],
+          },{
+            "name": "消息中心与账户",
+            "count": 2,
+            "url": [],
+          },{
+            "name": "聊天室",
+            "count": 2,
+          },{
+            "name": "团队管理",
+            "count": 2,
+            "url": [],
+          },{
+            "name": "项目管理",
+            "count": 2,
+            "url": [],
+          },{
+            "name": "设计页面原型",
+            "count": 2,
+            "url": [],
+          },{
+            "name": "在线文档",
+            "count": 2,
+            "url": [],
+          },]
+        },
         codeBool: false,
         codeString: '获取验证码',
         dialogBool: false,
@@ -968,6 +1026,9 @@ export default {
     },
 
     methods: {
+      GuideSwitch(index){
+        this.guideContent.current=index;
+      },
       displayDrawer() {
         this.drawer = true;
       },

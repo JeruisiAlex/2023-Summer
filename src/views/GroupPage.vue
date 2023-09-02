@@ -58,7 +58,7 @@
                 <el-text class="create-time">创建时间：{{ this.currentGroup.projectList[item-1].create_date.substring(0,10)+' '+this.currentGroup.projectList[item-1].create_date.substring(11,19) }}</el-text>
                 <el-button @click="this.Jump('/'+this.$store.state.uid+'/'+this.currentGroup.id+'/MyProject/'+this.currentGroup.projectList[item-1].project_id)"><el-icon style="margin-right: 4px;"><Pointer /></el-icon>查看项目</el-button>
                 <el-button @click="this.DeleteProject(this.currentGroup.projectList[item-1].project_id)"><el-icon style="margin-right: 4px;"><Delete /></el-icon>删除项目</el-button>
-                <el-button @click=""><el-icon style="margin-right: 4px;"><CopyDocument /></el-icon>复制项目</el-button>
+                <el-button @click="this.CopyProject(item-1)"><el-icon style="margin-right: 4px;"><CopyDocument /></el-icon>复制项目</el-button>
               </div>
             </el-scrollbar>
           </el-container>
@@ -277,7 +277,7 @@
   border-bottom: 1px solid #409EFF;
 }
 .project-name{
-  width: 20%;
+  width: 18%;
   margin-left: 20px;
   display: flex;
   text-align: center;
@@ -286,7 +286,7 @@
   color: black;
 }
 .creator-name{
-  width: 20%;
+  width: 18%;
   margin-left: 20px;
   display: flex;
   text-align: center;
@@ -295,7 +295,7 @@
   color: black;
 }
 .create-time{
-  width: 30%;
+  width: 25%;
   margin-left: 20px;
   display: flex;
   text-align: center;
@@ -311,7 +311,7 @@ import store from '@/store';
 import { ElMessage } from 'element-plus';
 import { getUserGroup } from '../api/user.js';
 import { createGroup, deleteGroup, changeAuth, inviteMember, getGroupInformation, updateGroup} from '../api/group.js';
-import { createProject, deleteProject, restoreProject, removeProject, emptyRestore, getRestoreList } from '../api/project.js';
+import { createProject, deleteProject, restoreProject, removeProject, emptyRestore, getRestoreList, copyProject } from '../api/project.js';
 import { Search } from '@element-plus/icons-vue';
 
 export default{
@@ -413,6 +413,11 @@ export default{
             if(value === ''){
               callback("请输入项目名称");
             }
+            for(var i=0;i<this.currentGroup.projectCount;i++){
+              if(value==this.currentGroup.projectList[i].name){
+                callback("同一个团队项目名称唯一");
+              }
+            }
             callback()
           }, type: 'string', trigger: 'blur'}],
         introduction:[{
@@ -501,8 +506,24 @@ export default{
         }
       })
     },
-    CopyProject(){
-
+    CopyProject(index){
+      var newname=this.currentGroup.projectList[index].name+'副本';
+      var tmpname=newname;
+      for(var i=0,j=1;i<this.currentGroup.projectCount;i++){
+        console.log(this.currentGroup.projectList[i].name+' '+tmpname);
+        if(this.currentGroup.projectList[i].name==tmpname){
+          tmpname=newname+j;
+          j++;
+          i=0;
+        }
+      }
+      newname=tmpname;
+      var promise=copyProject(this.currentGroup.projectList[index].project_id, newname);
+      promise.then((result) => {
+        if(this.MessageCatch(result,true)){
+          this.Load(this.currentGroup.id);
+        }
+      })
     },
     ChangeAuth(userid,opcode){
       var ownPosition;
@@ -659,9 +680,9 @@ export default{
       })
     },
     EmptyRestore(){
-      var promise1=emptyRestore();
+      var promise1=emptyRestore(this.currentGroup.id);
       promise1.then((result) => {
-        if(this.MessageCatch(result)){
+        if(this.MessageCatch(result,true)){
           this.restore.isOpen=false;
         }
       })

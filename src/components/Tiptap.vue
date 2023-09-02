@@ -60,7 +60,7 @@
         provider: null,
         editor: null,
         status: 'connecting',
-        room: getRandomRoom(),
+        room: 'test1',
       }
     },
   
@@ -68,7 +68,7 @@
       const ydoc = new Y.Doc()
   
       this.provider = new TiptapCollabProvider({
-        appId: '7j9y6m10',
+        appId: 'x9ll8v9r',
         name: this.room,
         document: ydoc,
       })

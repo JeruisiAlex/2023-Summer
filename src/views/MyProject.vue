@@ -3,9 +3,11 @@
     <el-aside width="16%" class="left-aside">
       <el-scrollbar height="800px" max-height="640px">
         <el-text class="scrollbar-title">项目列表</el-text>
-        <el-button type="primary" @click="" ><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建项目</el-button>
-        <el-button type="primary" @click="" ><el-icon style="margin-right: 4px;"><Switch /></el-icon>切换团队</el-button>
-        <el-button type="primary" v-for="item in this.currentGroup.projectCount" :key="item" :plain="item-1!=this.currentGroup.current" @click="this.SwitchProject(this.currentGroup.projectList[item-1].id)" class="scrollbar-item">{{ this.currentGroup.projectList[item-1].name }}</el-button>
+        <el-button type="primary" @click="this.OpenDialog(1)" style="margin-bottom: 10px;width: 220px;"><el-icon style="margin-right: 4px;"><Plus /></el-icon>新建项目</el-button>
+        <el-select v-model="this.group.index" placeholder="选择团队" @change="this.SwitchGroup()">
+          <el-option v-for="item in this.group.count" :key="item" :value="item-1" :label="this.group.list[item-1].name"></el-option>
+        </el-select>
+        <el-button type="primary" v-for="item in this.currentGroup.projectCount" :key="item" :plain="item-1!=this.currentGroup.current" @click="this.SwitchProject(this.currentGroup.projectList[item-1].project_id)" class="scrollbar-item">{{ this.currentGroup.projectList[item-1].name }}</el-button>
       </el-scrollbar>
     </el-aside>
     <el-container class="second-container">
@@ -60,7 +62,7 @@
                   <el-text class="project-name" style="width: 75%;">{{ this.currentProject.floderList[item-1].name }}</el-text>
                   <el-button v-if="this.currentProject.floderList[item-1].isOpen" @click="this.ChangeFloder(item-1)"><el-icon style="margin-right: 4px;"><Fold /></el-icon>折叠文件夹</el-button>
                   <el-button v-else @click="this.ChangeFloder(item-1)"><el-icon style="margin-right: 4px;"><Expand /></el-icon>展开文件夹</el-button>
-                  <el-button @click=""><el-icon style="margin-right: 4px;"><FolderDelete /></el-icon>删除文件夹</el-button>
+                  <el-button @click="this.DeleteFloder(item-1)"><el-icon style="margin-right: 4px;"><FolderDelete /></el-icon>删除文件夹</el-button>
                 </el-header>
                 <div v-if="this.currentProject.floderList[item-1].isOpen" v-for="i in this.currentProject.floderList[item-1].count" :key="i" class="project-list">
                   <el-text class="project-name">{{ this.currentProject.floderList[item-1].textList[i-1].name }}</el-text>
@@ -75,6 +77,19 @@
       </el-container>
     </el-container>
   </el-container>
+  <el-dialog v-model="this.createProject.isOpen" title="创建新项目" width="500px">
+    <el-form ref="createProjectRef" :model="createProject" :rules="createProjectRules" label-width="70px">
+        <el-form-item prop="name" label="项目名称" class="dialog-form-item">
+          <el-input type="text" v-model="createProject.name" placeholder="请输入项目名称" maxlength="20" class="dialog-input" />
+        </el-form-item>
+        <el-form-item prop="introduction" label="项目简介" class="dialog-form-item">
+          <el-input type="textarea" v-model="createProject.introduction" placeholder="请输入项目介绍" maxlength="200" show-word-limit="true" :autosize="{ minRows: 2, maxRows: 6 }" class="dialog-input" />
+        </el-form-item>
+        <el-form-item >
+          <el-button type="primary" @click="this.CreateProject()" style="width: 100px;">创建新项目</el-button>
+        </el-form-item>
+    </el-form>
+  </el-dialog>
   <el-dialog v-model="this.updateProject.isOpen" title="编辑项目信息" width="500px">
     <el-form ref="updateProjectRef" :model="updateProject" :rules="updateProjectRules" label-width="70px">
         <el-form-item prop="name" label="项目名称" class="dialog-form-item">
@@ -283,6 +298,7 @@ export default{
             listType: true,
             uid: store.state.uid,
             group: {
+                index: 0,
                 current: 0,
                 list: [],
                 count: 0,
@@ -330,11 +346,39 @@ export default{
               isOpen: false,
               name: '',
             },
+            createProjectRules: {
+                name: [{
+                        validator: (rule, value, callback) => {
+                            if (value === '') {
+                                callback("请输入项目名称");
+                            }
+                            for(var i=0;i<this.currentGroup.projectCount;i++){
+                              if(value==this.currentGroup.projectList[i].name){
+                                callback("同一个团队项目名称唯一");
+                              }
+                            }
+                            callback();
+                        }, type: 'string', trigger: 'blur'
+                    }],
+                introduction: [{
+                        validator: (rule, value, callback) => {
+                            if (value === '') {
+                                callback("请输入项目简介");
+                            }
+                            callback();
+                        }, type: 'string', trigger: 'blur'
+                    }],
+            },
             updateProjectRules: {
                 name: [{
                         validator: (rule, value, callback) => {
                             if (value === '') {
                                 callback("请输入项目名称");
+                            }
+                            for(var i=0;i<this.currentGroup.projectCount;i++){
+                              if(value==this.currentGroup.projectList[i].name&&i!=this.currentGroup.current){
+                                callback("同一个团队项目名称唯一");
+                              }
                             }
                             callback();
                         }, type: 'string', trigger: 'blur'
@@ -417,15 +461,16 @@ export default{
             this.listType = !this.listType;
         },
         SwitchGroup() {
+          this.Load(true, this.group.list[this.group.index].id, 0);
         },
         SwitchProject(projectid) {
             var promise = checkUserInGroup(this.uid, this.currentGroup.id);
             promise.then((result) => {
                 if (result.code == 0) {
-                    this.Load(true, this.currentGroup.id, projectid);
+                    this.Load(false, this.currentGroup.id, projectid);
                 }
                 else {
-                    this.Load(true, this.currentGroup.id, projectid);
+                    this.Load(false, this.currentGroup.id, projectid);
                 }
             });
         },
@@ -477,7 +522,6 @@ export default{
             var promise1 = checkUserInGroup(this.uid, this.currentGroup.id);
             promise1.then((value) => {
                 if (value.code == 0) {
-                    console.log(graphid);
                     var promise2 = deleteGraph(graphid, this.currentProject.id);
                     promise2.then((result) => {
                         if (this.MessageCatch(result, true)) {
@@ -536,7 +580,6 @@ export default{
             var promise1 = checkUserInGroup(this.uid, this.currentGroup.id);
             promise1.then((value) => {
                 if (value.code == 0) {
-                    console.log(textid);
                     var promise2 = deleteText(textid);
                     promise2.then((result) => {
                         if (this.MessageCatch(result, true)) {
@@ -550,7 +593,23 @@ export default{
             });
         },
         DeleteFloder(index){
-
+          var newlist=[];
+          for(var i=0;i<this.currentProject.flodercount;i++){
+            if(i!=index){
+              newlist.push(this.currentProject.floderList[i]);
+            }
+          }
+          var dFloder=this.currentProject.floderList[index];
+          this.currentProject.flodercount--;
+          this.currentProject.floderList=newlist;
+          var promise;
+          for(var i=0;i<dFloder.count;i++){
+            promise=deleteText(dFloder.textList[i].text_id);
+          }
+          promise=deleteText(dFloder.id);
+          promise.then((result) => {
+            this.MessageCatch(result,true);
+          })
         },
         ChangeFloder(index){
           this.currentProject.floderList[index].isOpen=!this.currentProject.floderList[index].isOpen;
@@ -604,6 +663,7 @@ export default{
                         if (this.group.list[i].id == groupid) {
                             this.currentGroup.id = groupid;
                             this.group.current = i;
+                            this.group.index = i;
                             break;
                         }
                         if (this.group.count - i == 1) {
@@ -690,7 +750,6 @@ export default{
             });
         },
         ProcessText(textlist) {
-          console.log(textlist);
           var count = textlist.length;
           this.currentProject.textCount = 0;
           this.currentProject.flodercount = 0;
@@ -698,7 +757,7 @@ export default{
           this.currentProject.floderList = [];
           for(var i=0;i<count;i++){
             if(textlist[i].text_url.length==1&&textlist[i].text_url[0]=='1'){
-                this.currentProject.floderList.push({"name" : textlist[i].name,"isOpen" : "false","count" : 0 ,"textList" : []});
+                this.currentProject.floderList.push({"id" : textlist[i].text_id,"name" : textlist[i].name,"isOpen" : "false","count" : 0 ,"textList" : []});
                 this.currentProject.flodercount++;
               }
           }
@@ -718,7 +777,6 @@ export default{
               }
             }
           }
-          console.log(this.currentProject.floderList);
         },
         MessageCatch(data, opcode) {
             if (data.code != 0) {
