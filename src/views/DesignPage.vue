@@ -280,10 +280,6 @@ export default {
       ele1.addEventListener("click", () => {
         this.showPreview = true;
         var ele;
-<<<<<<< HEAD
-        ele = document.querySelector(
-          "body > div:nth-child(4) > div > div > header > button"
-=======
         var temp = document.querySelector("body > div:nth-child(4)")
         var charTemp;
         if(temp)
@@ -292,16 +288,11 @@ export default {
         charTemp = "body > div:nth-child(5)"
         ele = document.querySelector(charTemp + 
           "> div > div > header > button"
->>>>>>> e7a9e878bc97935aa324bfb821bb86705cf57d91
         );
         ele.addEventListener("click", () => {
           this.showPreview = false;
         });
-<<<<<<< HEAD
-        var dialog = document.querySelector("body > div:nth-child(4) > div");
-=======
         var dialog = document.querySelector(charTemp+" > div");
->>>>>>> e7a9e878bc97935aa324bfb821bb86705cf57d91
         var temp = document.querySelector("body > div:nth-child(4) > div > div")
         temp.style.width = (1440 - that.pageWidth * 2) + "px";
         dialog.style.zIndex = "9999";
@@ -320,11 +311,7 @@ export default {
         });
         this.selectBox = this.createSelectBox();
         var header = document.querySelector(
-<<<<<<< HEAD
-          "body > div:nth-child(4) > div > div > footer > span"
-=======
           charTemp+" > div > div > footer > span"
->>>>>>> e7a9e878bc97935aa324bfb821bb86705cf57d91
         );
         header.appendChild(newElButton);
         header.appendChild(this.selectBox);
