@@ -1,17 +1,17 @@
 <template style="margin: 0; padding: 0; background-color: black">
-  <el-dialog v-model="this.genshinG" width="900px" style="height: 600px;" title="新手指引" top="10vh">
+  <el-dialog v-model="this.genshinG" width="1200px" style="height: 600px;" title="新手指引" top="10vh">
     <el-container style="display: flex;height: 510px;margin-top: -20px;">
-      <el-aside width="25%" style="height: 510px;">
+      <el-aside width="18%" style="height: 510px;">
         <el-scrollbar max-height="500px">
           <el-button type="primary" v-for="item in this.guideContent.count" :key="item" :plain="item-1!=this.guideContent.current" class="guide-list" @click="this.GuideSwitch(item-1)">{{ this.guideContent.list[item-1].name }}</el-button>
         </el-scrollbar>
       </el-aside>
       <el-divider direction="vertical" style="height: 510px;"/>
-      <el-aside width="75%" style="height: 510px;">
+      <el-aside width="82%" style="height: 510px;">
         <el-carousel autoplay="false" trigger="click" height="500px">
           <el-carousel-item v-for="i in this.guideContent.list[this.guideContent.current].count" :key="item">
             <div style="align-items: center;height: 500px;">
-              <img fit="fill" :src="this.guideContent.list[this.guideContent.current].url[i-1]" style="width: 630px;height: 500px;"/>
+              <el-image fit="fill" :src="this.guideContent.list[this.guideContent.current].url[i-1]" style="width: 930px;height: 500px;"/>
             </div>
           </el-carousel-item>
         </el-carousel>
@@ -932,19 +932,20 @@ export default {
             "url": [require('./assets/aside1.png'),require('./assets/aside2.png')],
           },{
             "name": "消息中心与账户",
-            "count": 2,
-            "url": [],
+            "count": 3,
+            "url": [require('./assets/message1.png'),require('./assets/message2.png'),require('./assets/message3.png')],
           },{
             "name": "聊天室",
-            "count": 2,
+            "count": 3,
+            "url": [require('./assets/chat1.png'),require('./assets/chat2.png'),require('./assets/chat3.png')],
           },{
             "name": "团队管理",
-            "count": 2,
-            "url": [],
+            "count": 3,
+            "url": [require('./assets/group1.png'),require('./assets/group2.png'),require('./assets/group3.png')],
           },{
             "name": "项目管理",
-            "count": 2,
-            "url": [],
+            "count": 3,
+            "url": [require('./assets/project1.png'),require('./assets/project2.png'),require('./assets/project3.png')],
           },{
             "name": "设计页面原型",
             "count": 2,
@@ -1281,10 +1282,8 @@ export default {
                 id: parsedData.id,
                 type: "@chat",
                 by: parsedData.sender_id,
-                forthing: parsedData.team_id,
+                forthing: parsedData.group_id,
                 content: parsedData.content,
-                project_id: parsedData.project_id,
-                document_id: parsedData.document_id,
               };
               if (parsedData.processed===false){
                 var flagRepeat = false;
@@ -1397,10 +1396,8 @@ export default {
                 id: parsedData.id,
                 type: "@chat",
                 by: parsedData.sender_id,
-                forthing: parsedData.team_id,
+                forthing: parsedData.group_id,
                 content: parsedData.content,
-                project_id: parsedData.project_id,
-                document_id: parsedData.document_id,
               };
               if (parsedData.processed===false){
                 store.commit('addNotificationUnread',newObj);
