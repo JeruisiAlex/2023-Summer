@@ -23,15 +23,12 @@ export function getAllGraph(project_id){
 	return get('/api/graph/getgraphs/?project_id='+project_id);
 }
 
-export function saveGraph(graph_id,project_id,content,width){
+export function saveGraph(graph_id,project_id,content,width,document){
 	var data=new FormData();
 	data.append("graph_id",graph_id);
 	data.append("project_id",project_id);
 	data.append("content",content);
 	data.append("width",width);
-	console.log(graph_id);
-	console.log(project_id);
-	console.log(content);
-	console.log(width);
+	data.append("document",document);
 	return post('/api/graph/save/',data);
 }
