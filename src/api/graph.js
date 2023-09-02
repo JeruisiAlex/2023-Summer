@@ -29,5 +29,9 @@ export function saveGraph(graph_id,project_id,content,width){
 	data.append("project_id",project_id);
 	data.append("content",content);
 	data.append("width",width);
+	console.log(graph_id);
+	console.log(project_id);
+	console.log(content);
+	console.log(width);
 	return post('/api/graph/save/',data);
 }
