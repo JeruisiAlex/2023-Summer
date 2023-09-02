@@ -1281,10 +1281,8 @@ export default {
                 id: parsedData.id,
                 type: "@chat",
                 by: parsedData.sender_id,
-                forthing: parsedData.team_id,
+                forthing: parsedData.group_id,
                 content: parsedData.content,
-                project_id: parsedData.project_id,
-                document_id: parsedData.document_id,
               };
               if (parsedData.processed===false){
                 var flagRepeat = false;
@@ -1397,10 +1395,8 @@ export default {
                 id: parsedData.id,
                 type: "@chat",
                 by: parsedData.sender_id,
-                forthing: parsedData.team_id,
+                forthing: parsedData.group_id,
                 content: parsedData.content,
-                project_id: parsedData.project_id,
-                document_id: parsedData.document_id,
               };
               if (parsedData.processed===false){
                 store.commit('addNotificationUnread',newObj);
