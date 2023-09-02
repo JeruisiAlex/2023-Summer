@@ -28,8 +28,9 @@ export function restoreProject(project_id){
 	return post('/api/project/restore/',data);
 }
 
-export function emptyRestore(){
+export function emptyRestore(team_id){
 	var data=new FormData();
+	data.append("team_id",team_id);
 	return post('/api/project/empty/',data);
 }
 
@@ -37,6 +38,14 @@ export function removeProject(project_id){
 	var data=new FormData();
 	data.append("project_id",project_id);
 	return post('/api/project/remove/',data);
+}
+
+export function copyProject(project_id,name){
+	var data=new FormData();
+	data.append("project_id",project_id);
+	data.append("name",name);
+	console.log(project_id+ ' '+ name);
+	return post('/api/project/copy/',data);
 }
 
 export function getProjectInformation(project_id){
