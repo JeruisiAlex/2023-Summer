@@ -146,7 +146,7 @@ export default {
     this.group_id = parseInt(infos[1]);
     this.project_id = parseInt(infos[2]);
     this.text_id = parseInt(infos[3]);
-    this.websocketInit();
+    // this.websocketInit();
     this.contentEditor = new Vditor("vditor",{
         height:600,
         placeholder: "在这里开始编辑",
@@ -179,7 +179,18 @@ export default {
         this.fileName = result.data.name;
         this.contentEditor.setValue(result.data.content);
         this.creator = result.data.creator;
+      }
+
+      var promise2=getGroupInformation(this.group_id);
+      promise2.then((result)=>{
+        if(this.MessageCatch(result, true)){
+          this.groupMembersList=result.data.user_list;
+          this.groupName=result.data.name;
+          console.log(this.groupMembersList);
+          store.commit('getDocumentGroupList',result.data.user_list);
         }
+      });
+
     });
 
     setInterval(() => {

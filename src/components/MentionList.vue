@@ -8,7 +8,7 @@
           :key="index"
           @click="selectItem(index)"
         >
-          {{ item }}
+          {{ item.username }}
         </button>
       </template>
       <div class="item" v-else>
@@ -18,6 +18,8 @@
   </template>
   
   <script>
+    import store from "@/store";
+    let ws;
   export default {
     props: {
       items: {
@@ -30,10 +32,36 @@
         required: true,
       },
     },
+
+    mounted() {
+      console.log('in mention list');
+      var that = this;
+      // ws1 = new WebSocket("ws://8.130.25.189/ws/text/");
+      ws = new WebSocket("ws://8.130.25.189/ws/notification/");
+      ws.onopen = function () {
+        console.log("文档@用websocket已经打开");
+      };
+      ws.onmessage = function (message) {
+        var parsedData = JSON.parse(message.data);
+        console.log(parsedData);
+      };
+      ws.onclose = function () {
+        //服务器连接关闭
+        console.log("文档@用websocket已关闭");
+      };
+      var url = this.$route.path;
+      var infos = url.split('/');
+      this.group_id = parseInt(infos[1]);
+      this.project_id = parseInt(infos[2]);
+      this.text_id = parseInt(infos[3]);
+    },
   
     data() {
       return {
         selectedIndex: 0,
+        team_id: 0,
+        project_id: 0,
+        text_id: 0,
       }
     },
   
@@ -79,7 +107,20 @@
         const item = this.items[index]
   
         if (item) {
-          this.command({ id: item })
+          var newObj = {
+            type: "at_jump",
+            at_type: "document",
+            sender_id: store.state.uid,
+            receiver_id: item.id,
+            team_id: this.group_id,
+            project_id: this.project_id,
+            document_id: this.text_id,
+          }
+          console.log(newObj);
+          console.log("发送前");
+          ws.send(JSON.stringify(newObj));
+          console.log("发送后");
+          this.command({ id: item.username })
         }
       },
     },

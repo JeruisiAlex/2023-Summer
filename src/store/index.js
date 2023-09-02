@@ -11,6 +11,7 @@ export default createStore({
     hasMessage: false,
     notificationUnread: [],
     notificationRead: [],
+    currentGroupList: [],
   },
   getters: {
 
@@ -42,6 +43,9 @@ export default createStore({
     },
     updateGroupList(state,groupList){
       state.userGroupList=groupList;
+    },
+    getDocumentGroupList(state,list){
+      state.currentGroupList = list;
     },
     addNotificationUnread(state,data) {
       var hasMessage = false;

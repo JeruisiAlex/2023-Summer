@@ -2,7 +2,29 @@
       <div style="height: 30px;">
         <el-row style=" color: black;">
             <el-col :span="14" style="font-size: large; font-weight: bold; text-overflow: ellipsis;-o-text-overflow: ellipsis; white-space: nowrap; max-width: 100%; display: block;">{{ fileName }}</el-col>
-        </el-row>
+            <el-col :span="10" style="text-align: right;">
+              权限设置: 
+              <el-switch
+                    v-if="permissionStatus"
+                    v-model="is_shared"
+                    inline-prompt
+                    active-text="已分享"
+                    inactive-text="未分享"
+                    style="--el-switch-on-color: #2a9feb; --el-switch-off-color: #24292e"
+                    @click="changeShare()"
+                />
+                <span v-else>暂无权限</span>
+                <el-switch
+                    v-if="is_shared && permissionStatus"
+                    v-model="is_write"
+                    inline-prompt
+                    active-text="允许游客编辑"
+                    inactive-text="禁止游客编辑"
+                    style="--el-switch-on-color: #2a9feb; --el-switch-off-color: #24292e"
+                    @click="changeEdit()"
+                />
+            </el-col>
+          </el-row>
     </div>
     <div class="editor" v-if="editor">
       <menu-bar class="editor__header" :editor="editor" />
@@ -46,7 +68,7 @@
   import MenuBar from './MenuBar.vue'
   import Mention from '@tiptap/extension-mention'
   import suggestion from './suggestion.js'
-import store from '@/store'
+  import store from '@/store'
 
   
   const getRandomElement = list => {
@@ -79,8 +101,9 @@ import store from '@/store'
         project_id: 0,
         text_id: 0,
         fileName: '文档获取中...',
-        edible: true,
-        shareable: true,
+        is_write: false,
+        is_shared: false,
+        permissionStatus: true,
       }
     },
   
@@ -135,10 +158,19 @@ import store from '@/store'
         })
         }
       });
+
       // localStorage.setItem('currentUser', JSON.stringify(this.currentUser))
     },
   
     methods: {
+
+      changeShare() {
+
+      },
+      changeEdit() {
+
+      },
+
       MessageCatch(data,opcode){
       if(data.code!=0){
         ElMessage({

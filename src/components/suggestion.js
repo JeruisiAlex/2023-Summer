@@ -3,17 +3,15 @@ import tippy from 'tippy.js'
 
 import MentionList from './MentionList.vue'
 import {getGroupInformation} from '@/api/group.js';
+import store from "@/store";
 
 export default {
+  
+  groupList : ['Stevex','Jeruisi','McDonald'],
+
   items: ({ query }) => {
-    var list=['Jeruisi','Stevex','McDonald'];
-    var promise=getGroupInformation(groupId);
-    promise.then((result)=>{
-      this.groupMembersList=result.data.user_list;
-      this.groupName=result.data.name;
-      console.log(this.groupMembersList);
-    });
-    return list.filter(item => item.toLowerCase().startsWith(query.toLowerCase())).slice(0, 5)
+    var list=store.state.currentGroupList;
+    return list.filter(item => item.username.toLowerCase().startsWith(query.toLowerCase())).slice(0, 5)
   },
 
   render: () => {
