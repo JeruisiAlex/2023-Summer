@@ -1435,6 +1435,7 @@ export default {
         var newObj = {
         type: "invite.response",
         response: "TRUE",
+        group_type: 'team',
         sender_id: store.state.uid,
         receiver_id: this.localDialogNotification.by,
         team_id: this.localDialogNotification.forthing
@@ -1444,6 +1445,7 @@ export default {
         var newObj = {
         type: "invite.response",
         response: "TRUE",
+        group_type: 'group',
         sender_id: store.state.uid,
         receiver_id: this.localDialogNotification.by,
         group_id: this.localDialogNotification.forthing
@@ -1455,7 +1457,8 @@ export default {
       if (this.localDialogNotification.group_type==='team'){
         var newObj = {
         type: "invite.response",
-        response: "TRUE",
+        response: "FALSE",
+        group_type: 'team',
         sender_id: store.state.uid,
         receiver_id: this.localDialogNotification.by,
         team_id: this.localDialogNotification.forthing
@@ -1464,7 +1467,8 @@ export default {
       } else {
         var newObj = {
         type: "invite.response",
-        response: "TRUE",
+        response: "FALSE",
+        group_type: 'group',
         sender_id: store.state.uid,
         receiver_id: this.localDialogNotification.by,
         group_id: this.localDialogNotification.forthing
