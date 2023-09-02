@@ -4,12 +4,16 @@
     <ng-form-build ref="formBuild" />
   </div>
 </template>
+
 <script>
 import NgFormElementPlus from "ng-form-elementplus";
 import "ng-form-elementplus/lib/style.css";
 import ConvertJsonToTable from "../components/json-to-table";
 import html2canvas from "html2canvas";
 import store from "@/store";
+import { saveGraph, getAGraph } from "../api/graph";
+import { ElMessage } from "element-plus";
+
 export default {
   components: {
     // 注册插件提供的组件，如果需要的话
@@ -30,19 +34,67 @@ export default {
       inputWidthBox: "",
       mutipleIcon: "",
       commitButton: "",
+
+      graphid: '',
+      projectid: '',
+      currentGraph: {
+        content: '',
+      },
+      graphFile: '',
     };
   },
   methods: {
+    base64ToFile(base64, fileName) {
+      let arr = base64.split(",");
+      let mime = arr[0].match(/:(.\*?);/)[1];
+      console.log(mime);
+      let bstr = atob(arr[1]);
+      let n = bstr.length;
+      let u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new File([u8arr], fileName, { type: mime });
+    },
     saveJson() {
-      var projectId = this.$route.params.projectid;
-      var designId = this.$route.params.designid;
-      var JSONChar = this.$refs.formDesign.getModel();
-      console.log(JSONChar);
-      var passObj = {
-        content: JSON.stringify(JSONChar),
-        graph_id: designId,
-        project_id: projectId,
-      };
+      console.log(this.pageWidth);
+      var promise=saveGraph(this.graphid, this.projectid, JSON.stringify(this.$refs.formDesign.getModel()), this.pageWidth);
+      promise.then((result) => {
+        this.MessageCatch(result, true);
+      })
+    },
+    GetAGraph(){
+      var promise=getAGraph(this.graphid,this.projectid);
+      promise.then((result) => {
+        if(this.MessageCatch(result,false)){
+          this.pageWidth=result.data.width;
+          if(result.data.content===''){
+
+          }
+          else{
+            this.currentGraph.content=JSON.parse(result.data.content);
+            this.$refs.formDesign.initModel(this.currentGraph.content);
+          }
+        }
+      })
+    },
+    MessageCatch(data,opcode){
+      if(data.code!=0){
+        ElMessage({
+          message: data.msg,
+          grouping: true,
+          type: 'error',
+        })
+        return false;
+      }
+      if(opcode==true&&data.code==0){
+        ElMessage({
+          message: data.msg,
+          grouping: true,
+          type: 'success',
+        })
+      }
+      return true;
     },
     getPicture() {
       var ele = document.querySelector(".el-dialog__body");
@@ -50,9 +102,21 @@ export default {
         var that = this;
         html2canvas(ele)
           .then(function (canvas) {
+
             const imgUrl = canvas.toDataURL("image/jpeg", 1.0);
             const link = document.createElement("a");
             link.href = imgUrl;
+            console.log(imgUrl);
+
+            let arr = imgUrl.split(",");
+            let bstr = atob(arr[1]);
+            let n = bstr.length;
+            let u8arr = new Uint8Array(n);
+            while (n--) {
+              u8arr[n] = bstr.charCodeAt(n);
+            }
+            that.graphFile =new File([u8arr], "text", { type:"image/jpg" });
+
             var str = that.selectBox.value;
             link.download = "exported_image." + str; // Set the download filename
             link.click();
@@ -151,6 +215,7 @@ export default {
       return selectElement;
     },
     init() {
+      this.GetAGraph();
       var elementToDelete = document.querySelector(
         "#app > section > header > div > div > div:nth-child(1)"
       );
@@ -214,14 +279,20 @@ export default {
       ele1.addEventListener("click", () => {
         this.showPreview = true;
         var ele;
-        ele = document.querySelector(
-          "body > div:nth-child(5) > div > div > header > button"
+        var temp = document.querySelector("body > div:nth-child(4)")
+        var charTemp;
+        if(temp)
+        charTemp = "body > div:nth-child(4)"
+        else
+        charTemp = "body > div:nth-child(5)"
+        ele = document.querySelector(charTemp + 
+          "> div > div > header > button"
         );
         ele.addEventListener("click", () => {
           this.showPreview = false;
         });
-        var dialog = document.querySelector("body > div:nth-child(5) > div");
-        var temp = document.querySelector("body > div:nth-child(5) > div > div")
+        var dialog = document.querySelector(charTemp+" > div");
+        var temp = document.querySelector("body > div:nth-child(4) > div > div")
         temp.style.width = (1440 - that.pageWidth * 2) + "px";
         dialog.style.zIndex = "9999";
         var newElButton = document.createElement("button");
@@ -239,21 +310,23 @@ export default {
         });
         this.selectBox = this.createSelectBox();
         var header = document.querySelector(
-          "body > div:nth-child(5) > div > div > footer > span"
+          charTemp+" > div > div > footer > span"
         );
         header.appendChild(newElButton);
         header.appendChild(this.selectBox);
-        console.log(header);
       });
     },
   },
   mounted() {
+    this.projectid=this.$route.params.projectid;
+    this.graphid=this.$route.params.designid;
     if(store.state.isLogin == false)
     this.$router.push("/")
     this.init();
   },
 };
 </script>
+
 <style>
 .commitButton {
   cursor: pointer;

@@ -1,83 +1,35 @@
 <template>
-  <div
-    style="background: red; width: 20px"
-    @contextmenu.prevent="rightClick($event)"
-  >
-    点击
-  </div>
-  <div
-    class="clickRightMenu"
-    v-if="clickRightMenu == true"
-    :style="{ top: topNum + 'px', left: leftNum + 'px' }"
-  >
-    <el-button
-      type="primary"
-      plain
-      class="messageOptionButton"
-      text
-      style="margin-left: 0px"
-      >Primary</el-button
-    >
-    <el-button
-      type="primary"
-      plain
-      class="messageOptionButton"
-      text
-      style="margin-left: 0px"
-      >Primary</el-button
-    >
-    <el-button
-      type="primary"
-      plain
-      class="messageOptionButton"
-      text
-      style="margin-left: 0px"
-      >Primary</el-button
-    >
-    <el-button
-      type="primary"
-      plain
-      class="messageOptionButton"
-      text
-      style="margin-left: 0px"
-      >Primary</el-button
-    >
+  <el-dialog v-for="item in this.dialog.count" v-model="this.dialog.list[item-1].isOpen">
+    <el-text>{{ this.dialog.list[item-1].name }}</el-text>
+    <el-button type="primary" @click="this.Test()">test</el-button>
+  </el-dialog>
+  <div id="app">
+    <ng-form-design :imp="false" :basic-item="false" :personal-item="false" :layout-item="false" ref="formDesign" />
+    <ng-form-build :disabled="false" ef="formBuild" />
   </div>
 </template>
 
 <script>
-export default {
-  data() {
-    return {
-      clickRightMenu: false,
-      topNum: 0,
-      leftNum: 0,
-    };
+export default{
+  data(){
+    return{
+      dialog:{
+        count: 1,
+        list: [{
+          "name" : "1",
+          "isOpen" : true,
+        }]
+      },
+    }
+  }, 
+  methods:{
+    Test(){
+      this.dialog.list.push({"name" : "2","isOpen" : true});
+      this.dialog.count++;
+    }
   },
-  methods: {
-    rightClick(e) {
-      this.clickRightMenu = true;
-      this.topNumber = e.pageY;
-      this.leftNumber = e.pageX;
-    },
+  mounted(){
+    
   },
-};
+}
 </script>
-<style>
-.messageOptionButton {
-  position: relative;
-  display: flex;
-  height: 20px;
-  width: 100px;
-  margin-top: 10px;
-}
-.clickRightMenu {
-  position: absolute;
-  z-index: 9999;
-
-  height: 130px;
-  width: 100px;
-  border-radius: 5px;
-  background-color: #ecf5ff;
-}
-</style>
