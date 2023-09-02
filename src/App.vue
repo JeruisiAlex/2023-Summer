@@ -922,6 +922,7 @@ export default {
             project_id: 0,
             item_id: 0,
             from: 1,
+            group_type:'team',
         },
         guideContent:{"count" : 7,
           "current" : 0, 
@@ -1068,6 +1069,8 @@ export default {
           this.localDialogNotification.project_id = item.pid;
           this.localDialogNotification.item_id = item.did;
         }
+        if (item.t==='邀请')
+          this.localDialogNotification.group_type = item.group_type;
         this.centerDialogVisible = true;
         if (from===1)
           this.addReadNotification(item.id);
@@ -1200,13 +1203,26 @@ export default {
           }
           if (isMyMessage) {
             if (parsedData.type==='invite') {
-              var newObj = {
+              var newObj;
+              if (parsedData.group_type==='team'){
+                newObj = {
                 id: parsedData.id,
                 type: "邀请",
                 by: parsedData.sender_id,
                 forthing: parsedData.team_id,
                 content: parsedData.content,
-              };
+                group_type:'team',
+              }
+              } else {
+                newObj = {
+                id: parsedData.id,
+                type: "邀请",
+                by: parsedData.sender_id,
+                forthing: parsedData.group_id,
+                content: parsedData.content,
+                group_type:'group',
+                }
+              }
               if (parsedData.processed===false){
                 store.commit('addNotificationUnread',newObj);
                 var flagRepeat = false;
@@ -1335,13 +1351,26 @@ export default {
                 }
                 if (isMyMessage) {
                   if (parsedData.type==='invite') {
-                    var newObj = {
+                    var newObj;
+                    if (parsedData.group_type==='team'){
+                      newObj = {
                       id: parsedData.id,
                       type: "邀请",
                       by: parsedData.sender_id,
                       forthing: parsedData.team_id,
                       content: parsedData.content,
-                    };
+                      group_type:'team',
+                    }
+                    } else {
+                      newObj = {
+                      id: parsedData.id,
+                      type: "邀请",
+                      by: parsedData.sender_id,
+                      forthing: parsedData.group_id,
+                      content: parsedData.content,
+                      group_type:'group',
+                      }
+                    }
                     if (parsedData.processed===false){
                       store.commit('addNotificationUnread',newObj);
                     } else {
@@ -1402,7 +1431,8 @@ export default {
     },
 
     acceptInvitation() {
-      var newObj = {
+      if (this.localDialogNotification.group_type==='team'){
+        var newObj = {
         type: "invite.response",
         response: "TRUE",
         sender_id: store.state.uid,
@@ -1410,16 +1440,37 @@ export default {
         team_id: this.localDialogNotification.forthing
       }
       ws.send(JSON.stringify(newObj));
+      } else {
+        var newObj = {
+        type: "invite.response",
+        response: "TRUE",
+        sender_id: store.state.uid,
+        receiver_id: this.localDialogNotification.by,
+        group_id: this.localDialogNotification.forthing
+      }
+      ws.send(JSON.stringify(newObj));
+      }
     },
     rejectInvitaion() {
-      var newObj = {
+      if (this.localDialogNotification.group_type==='team'){
+        var newObj = {
         type: "invite.response",
-        response: "FALSE",
+        response: "TRUE",
         sender_id: store.state.uid,
         receiver_id: this.localDialogNotification.by,
         team_id: this.localDialogNotification.forthing
       }
       ws.send(JSON.stringify(newObj));
+      } else {
+        var newObj = {
+        type: "invite.response",
+        response: "TRUE",
+        sender_id: store.state.uid,
+        receiver_id: this.localDialogNotification.by,
+        group_id: this.localDialogNotification.forthing
+      }
+      ws.send(JSON.stringify(newObj));
+      }
     },
     jumpToTeamDocument() {
       router.push('/'+this.localDialogNotification.group_id+'/'+this.localDialogNotification.project_id+'/'+this.localDialogNotification.item_id+'/DocumentPage')

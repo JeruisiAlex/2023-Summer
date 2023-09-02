@@ -1,4 +1,9 @@
 <template>
+      <div style="height: 30px;">
+        <el-row style=" color: black;">
+            <el-col :span="14" style="font-size: large; font-weight: bold; text-overflow: ellipsis;-o-text-overflow: ellipsis; white-space: nowrap; max-width: 100%; display: block;">{{ fileName }}</el-col>
+        </el-row>
+    </div>
     <div class="editor" v-if="editor">
       <menu-bar class="editor__header" :editor="editor" />
       <editor-content class="editor__content" :editor="editor" />
@@ -12,6 +17,9 @@
           </template>
         </div>
         <div class="editor__name">
+          <template v-if="status === 'connected'">
+            {{ editor.storage.characterCount.characters() }} characters
+          </template>
           <button @click="setName">
             {{ currentUser.name }}
           </button>
@@ -31,9 +39,15 @@
   import StarterKit from '@tiptap/starter-kit'
   import { Editor, EditorContent } from '@tiptap/vue-3'
   import * as Y from 'yjs'
+  import { getAText, saveText} from '@/api/text.js'
+  import { ElMessage } from 'element-plus'
   
   import { variables } from './variables.js'
   import MenuBar from './MenuBar.vue'
+  import Mention from '@tiptap/extension-mention'
+  import suggestion from './suggestion.js'
+import store from '@/store'
+
   
   const getRandomElement = list => {
     return list[Math.floor(Math.random() * list.length)]
@@ -53,56 +67,97 @@
   
     data() {
       return {
-        currentUser: JSON.parse(localStorage.getItem('currentUser')) || {
-          name: this.getRandomName(),
+        currentUser: {
+          name: store.state.isLogin?store.state.userName:'游客',
           color: this.getRandomColor(),
         },
         provider: null,
         editor: null,
         status: 'connecting',
-        room: 'test1',
+        room: '文档获取中...',
+        group_id: 0,
+        project_id: 0,
+        text_id: 0,
+        fileName: '文档获取中...',
+        edible: true,
+        shareable: true,
       }
     },
   
     mounted() {
+      var url = this.$route.path;
+      var infos = url.split('/');
+      this.group_id = parseInt(infos[1]);
+      this.project_id = parseInt(infos[2]);
+      this.text_id = parseInt(infos[3]);
       const ydoc = new Y.Doc()
-  
-      this.provider = new TiptapCollabProvider({
-        appId: 'x9ll8v9r',
-        name: this.room,
-        document: ydoc,
-      })
-  
-      this.provider.on('status', event => {
-        this.status = event.status
-      })
-  
-      this.editor = new Editor({
-        extensions: [
-          StarterKit.configure({
-            history: false,
-          }),
-          Highlight,
-          TaskList,
-          TaskItem,
-          Collaboration.configure({
-            document: ydoc,
-          }),
-          CollaborationCursor.configure({
-            provider: this.provider,
-            user: this.currentUser,
-          }),
-          CharacterCount.configure({
-            limit: 10000,
-          }),
-        ],
-        autofocus: 'end',
-      })
-  
-      localStorage.setItem('currentUser', JSON.stringify(this.currentUser))
+      var promise=getAText(parseInt(infos[3]),parseInt(infos[2]));
+      promise.then((result)=>{
+        if(this.MessageCatch(result, true)){
+        this.fileName = result.data.name;
+        this.room = this.fileName + ' - ID:' + this.text_id;
+        this.provider = new TiptapCollabProvider({
+          appId: 'x9ll8v9r',
+          name: this.room,
+          document: ydoc,
+        })
+    
+        this.provider.on('status', event => {
+          this.status = event.status
+        })
+    
+        this.editor = new Editor({
+          extensions: [
+            StarterKit.configure({
+              history: false,
+            }),
+            Highlight,
+            TaskList,
+            TaskItem,
+            Collaboration.configure({
+              document: ydoc,
+            }),
+            CollaborationCursor.configure({
+              provider: this.provider,
+              user: this.currentUser,
+            }),
+            CharacterCount.configure({
+              limit: 10000,
+            }),
+            Mention.configure({
+              HTMLAttributes: {
+                class: 'mention',
+              },
+              suggestion,
+            }),
+          ],
+          autofocus: 'end',
+        })
+        }
+      });
+      // localStorage.setItem('currentUser', JSON.stringify(this.currentUser))
     },
   
     methods: {
+      MessageCatch(data,opcode){
+      if(data.code!=0){
+        ElMessage({
+          message: data.msg,
+          grouping: true,
+          type: 'error',
+        })
+        return false;
+      }
+      if(opcode==true&&data.code==0){
+        ElMessage({
+          message: data.msg,
+          grouping: true,
+          type: 'success',
+        })
+      }
+      return true;
+    },
+
       setName() {
         const name = (window.prompt('Name') || '')
           .trim()
@@ -149,6 +204,36 @@
   </script>
   
   <style lang="scss">
+  
+  .mention {
+  border: 1px solid #000;
+  border-radius: 0.4rem;
+  padding: 0.1rem 0.3rem;
+  box-decoration-break: clone;
+  }
+
+  .notification-item {
+    align-items: center;
+    /*justify-content: center;*/
+    height: 30px;
+    line-height: 30px;
+    margin: 5px;
+    /*padding-left: 5px;*/
+    text-align: center;
+    border-radius: 4px;
+    color: black;
+    transition: 0.5s;
+    overflow: hidden;
+    border-bottom: rgba(42, 159, 235, 0.5) 1px solid;
+  }
+
+  .notification-item:hover {
+    cursor: pointer;
+    background: rgba(236, 245, 255, 1);
+    /* color: rgb(42, 159, 235); */
+    transition: 0.2s;
+  }
+
   .editor {
     background-color: #FFF;
     border: 3px solid #0D0D0D;

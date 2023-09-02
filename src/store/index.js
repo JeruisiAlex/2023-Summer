@@ -64,6 +64,17 @@ export default createStore({
           });
           return;
         }
+        if (data.type==='邀请'){
+          state.notificationUnread.unshift({ //对象数组
+            id: data.id,
+            t: data.type,
+            b: data.by,
+            f: data.forthing,
+            c: data.content,
+            group_type: data.group_type,
+          });
+          return;
+        }
         state.notificationUnread.unshift({ //对象数组
           id: data.id,
           t: data.type,
